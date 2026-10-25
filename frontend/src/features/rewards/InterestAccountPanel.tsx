@@ -87,6 +87,7 @@ export function InterestAccountPanel() {
             {account.member.birthdayWeek && (
               <li className="text-accent font-semibold">It’s your birthday week: double points!</li>
             )}
+            <li>Boosts don’t stack: each item earns at the single highest multiplier that applies.</li>
             {account.points.expiresAt && (
               <li>
                 Points expire on {longDate(account.points.expiresAt)} unless you order or visit before then.

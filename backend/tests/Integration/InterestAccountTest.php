@@ -191,14 +191,14 @@ final class InterestAccountTest extends IntegrationTestCase
         foreach (['preparing', 'ready', 'completed'] as $s) {
             $orders->updateStatus($ref, $s, null);
         }
-        // ₦37,000 of a featured dish (×2) on a Tuesday (×2) at Gold (×1.5): 185 × 2 × 2 × 1.5.
-        self::assertSame(2340 + 1110, $this->points($this->guestId()));
-        self::assertSame(1110, (int) $this->db->scalar('SELECT points_earned FROM orders WHERE reference = ?', [$ref]));
+        // ₦37,000 of a featured dish on a Tuesday at Gold: multipliers don't stack, the highest (2×) applies: 185 × 2.
+        self::assertSame(2340 + 370, $this->points($this->guestId()));
+        self::assertSame(370, (int) $this->db->scalar('SELECT points_earned FROM orders WHERE reference = ?', [$ref]));
         self::assertSame(8, (int) $this->db->scalar('SELECT stamps FROM loyalty_accounts WHERE user_id = ?', [$this->guestId()]));
 
         $id = (int) $this->db->scalar('SELECT id FROM orders WHERE reference = ?', [$ref]);
         $this->c->get(LoyaltyService::class)->onOrderCompleted($id);
-        self::assertSame(2340 + 1110, $this->points($this->guestId()), 'Processing twice changes nothing');
+        self::assertSame(2340 + 370, $this->points($this->guestId()), 'Processing twice changes nothing');
         self::assertTrue($this->c->get(Ledger::class)->reconcile($this->guestId())['ok']);
     }
 

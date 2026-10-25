@@ -117,28 +117,33 @@ final class LoyaltyRules
 
     /**
      * Points for an order. Base: N points per ₦1,000 of food spend (after discounts, before
-     * fees). Featured dishes and quiet days double; the tier and birthday week multiply.
+     * fees). Multipliers never stack: each line earns at the single highest one that applies
+     * (tier, double-points day, featured dish or birthday week).
      *
      * @param list<array{amountKobo: int, featured: bool}> $lines food spend per line, after discounts
      */
     public function pointsFor(array $lines, int $weekday, string $tier, bool $birthdayWeek): int
     {
         $per1000 = (int) ($this->settings['earn_points_per_1000_naira'] ?? 5);
-        $featuredMult = (int) ($this->settings['featured_dish_points_multiplier'] ?? 2);
-        // Work in "point-kobo" to avoid rounding each line separately.
-        $base = 0;
+        $orderMultiplier = $this->orderMultiplier($weekday, $tier, $birthdayWeek);
+        $featured = (float) ($this->settings['featured_dish_points_multiplier'] ?? 2);
+        // Sum lines in hundredths of a multiplier before rounding once, so nothing is lost per line.
+        $weighted = 0;
         foreach ($lines as $l) {
-            $base += max(0, $l['amountKobo']) * ($l['featured'] ? $featuredMult : 1);
+            $m = $l['featured'] ? max($orderMultiplier, $featured) : $orderMultiplier;
+            $weighted += max(0, $l['amountKobo']) * (int) round($m * 100);
         }
-        $points = intdiv($base * $per1000, 100000);
-        $multiplier = $this->tierMultiplier($tier);
-        if (in_array($weekday, array_map('intval', (array) ($this->settings['double_points_weekdays'] ?? [])), true)) {
-            $multiplier *= 2;
-        }
-        if ($birthdayWeek) {
-            $multiplier *= (float) ($this->settings['birthday_points_multiplier'] ?? 2);
-        }
-        return (int) floor($points * $multiplier + 1e-9);
+        return intdiv($weighted * $per1000, 100000 * 100);
+    }
+
+    /** The single multiplier an order earns at, ignoring featured dishes (for display). */
+    public function orderMultiplier(int $weekday, string $tier, bool $birthdayWeek): float
+    {
+        return max(
+            $this->tierMultiplier($tier),
+            in_array($weekday, array_map('intval', (array) ($this->settings['double_points_weekdays'] ?? [])), true) ? 2.0 : 1.0,
+            $birthdayWeek ? (float) ($this->settings['birthday_points_multiplier'] ?? 2) : 1.0,
+        );
     }
 
     /** Dining credit for points when converting (100 points = ₦1,000 by default). */

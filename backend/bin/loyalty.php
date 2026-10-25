@@ -9,10 +9,8 @@ declare(strict_types=1);
  *   php bin/loyalty.php interest [YYYY-MM]   pay monthly interest (default: last month)
  *   php bin/loyalty.php reconcile            check every cached balance against the ledgers
  *
- * Schedule (Africa/Lagos time):
- *   Linux cron:    10 0 * * *  php /path/to/backend/bin/loyalty.php daily
- *   Windows/XAMPP: Task Scheduler, daily 00:10, program C:\xampp\php\php.exe,
- *                  arguments C:\xampp\htdocs\SmallAfrica\backend\bin\loyalty.php daily
+ * Production: a daily cron job (see the deployment guide), Africa/Lagos time:
+ *   10 0 * * *  php /path/to/backend/bin/loyalty.php daily
  */
 
 use App\Loyalty\AlreadyPaid;

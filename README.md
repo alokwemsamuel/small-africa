@@ -56,9 +56,7 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    ```
    Optional asset rebuilds (design/tools): `npm run photos` (Unsplash photos → AVIF/WebP), `npm run hero` (hero poster + loop video; needs the dev server and ffmpeg), `npm run brand`, `npm run logo`.
 
-5. **Scheduled jobs** (Interest Account): run once a day, around 00:10 Lagos time. Every step is safe to repeat.
-   - Windows/XAMPP: Task Scheduler → daily → program `C:\xampp\php\php.exe`, arguments `C:\xampp\htdocs\SmallAfrica\backend\bin\loyalty.php daily`
-   - Linux: `10 0 * * * php /path/to/backend/bin/loyalty.php daily`
+5. **Scheduled jobs** (Interest Account): in production a daily cron job runs `php bin/loyalty.php daily` at about 00:10 Lagos time (set up in the deployment guide). Locally, run it by hand when you want to; every step is safe to repeat.
    - Also: `php bin/loyalty.php interest 2026-09` (pay one month) and `php bin/loyalty.php reconcile` (check every balance against its ledger).
 
 In development, emails are written to `backend/storage/mail/` as `.html` files rather than sent.

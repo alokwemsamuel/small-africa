@@ -89,9 +89,25 @@ final class LoyaltyRulesTest extends TestCase
         self::assertSame(50, $this->rules->pointsFor($line, 1, 'bronze', false), '5 per ₦1,000');
         self::assertSame(100, $this->rules->pointsFor($line, 2, 'bronze', false), 'Double on Tuesday');
         self::assertSame(75, $this->rules->pointsFor($line, 5, 'gold', false), 'Gold 1.5×');
-        self::assertSame(200, $this->rules->pointsFor($line, 3, 'black_diamond', false), 'Wednesday × Black Diamond');
+        self::assertSame(100, $this->rules->pointsFor($line, 3, 'black_diamond', false), 'Wednesday and Black Diamond: still 2×, not 4×');
         self::assertSame(100, $this->rules->pointsFor($line, 1, 'bronze', true), 'Birthday week 2×');
         self::assertSame(100, $this->rules->pointsFor([['amountKobo' => 1000000, 'featured' => true]], 1, 'bronze', false), 'Featured dish doubles');
+    }
+
+    public function testMultipliersNeverStack(): void
+    {
+        $featured = [['amountKobo' => 1000000, 'featured' => true]];
+        $plain = [['amountKobo' => 1000000, 'featured' => false]];
+        self::assertSame(100, $this->rules->pointsFor($featured, 2, 'gold', true), 'Gold + Tuesday + featured + birthday = 2× only');
+        self::assertSame(62, $this->rules->pointsFor($plain, 1, 'silver', false), 'Silver alone: 1.25× (62.5 rounded down)');
+        self::assertSame(100, $this->rules->pointsFor($featured, 1, 'silver', false), 'Featured 2× beats Silver 1.25×');
+        self::assertSame(
+            162,
+            $this->rules->pointsFor([...$featured, ['amountKobo' => 1000000, 'featured' => false]], 1, 'silver', false),
+            'Each line takes its own highest: 100 + 62.5',
+        );
+        self::assertSame(2.0, $this->rules->orderMultiplier(3, 'gold', false));
+        self::assertSame(1.5, $this->rules->orderMultiplier(5, 'gold', false));
         self::assertSame(9, $this->rules->pointsFor([['amountKobo' => 99900, 'featured' => false], ['amountKobo' => 99900, 'featured' => false]], 1, 'bronze', false), 'Two ₦999 lines: 9 points summed, not 4 + 4');
     }
 

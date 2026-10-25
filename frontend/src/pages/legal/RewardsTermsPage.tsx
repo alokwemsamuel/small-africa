@@ -91,8 +91,14 @@ export function RewardsTermsPage() {
         <ul>
           <li>
             You earn {l?.earnPointsPer1000Naira ?? 5} points per ₦1,000 spent on food and drink in completed
-            orders and dine-in bills (not on delivery fees, packaging or service charges). Tier multipliers,
-            double-points days, featured dishes and your birthday week can increase this.
+            orders and dine-in bills (not on delivery fees, packaging or service charges).
+          </li>
+          <li>
+            Some things earn more: your tier (for example 1.5× at Gold), double-points days (2× on Tuesdays
+            and Wednesdays), featured dishes (2×) and your birthday week (2×).{' '}
+            <strong>Multipliers don’t add up or multiply together:</strong> each item earns at the single
+            highest multiplier that applies to it. For example, a Gold member ordering a featured dish on a
+            Tuesday during their birthday week earns 2× on that dish, not more.
           </li>
           <li>Points are added when an order is delivered or collected.</li>
           <li>

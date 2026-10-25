@@ -160,6 +160,7 @@ describe('InterestAccountPanel', () => {
     expect(screen.getByText(/1 more visit this month for \+200 bonus points/)).toBeInTheDocument();
     expect(await screen.findByText('Interest for September 2026 (dining credit)')).toBeInTheDocument();
     expect(screen.getByText(/isn’t a bank account/)).toBeInTheDocument();
+    expect(screen.getByText(/Boosts don’t stack/)).toBeInTheDocument();
   });
 
   it('only lets members redeem what they can afford, after confirming', async () => {

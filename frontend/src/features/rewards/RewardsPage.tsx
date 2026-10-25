@@ -114,8 +114,9 @@ export function RewardsPage() {
               {l?.earnPointsPer1000Naira ?? 5} points for every ₦1,000
             </h2>
             <p className="text-secondary mt-5 max-w-prose text-lg">
-              Double points on Tuesdays and Wednesdays and on featured dishes. Swap points for dining credit
-              or a treat from the Rewards Menu.
+              Earn more as your tier grows, and double points on Tuesdays and Wednesdays, on featured dishes
+              and in your birthday week. Boosts don’t stack: you always get the single best one that applies.
+              Swap points for dining credit or a treat from the Rewards Menu.
             </p>
           </div>
           <ul className="flex flex-col gap-3">
