@@ -1,15 +1,15 @@
 {
-  "name": "tools",
+  "name": "small-africa-design-tools",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "Build scripts for Small Africa brand assets (logo, favicons, brand guide, social templates, menu card).",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "concepts": "node ../logo/concepts/build.mjs",
+    "logo": "node export-logo.mjs",
+    "brand": "node render-brand.mjs",
+    "all": "npm run logo && npm run brand"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "png-to-ico": "^2.1.8"
