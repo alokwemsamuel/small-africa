@@ -6,7 +6,20 @@ namespace App;
 
 use App\Audit\AuditLogger;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountDataController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReservationController;
+use App\Payments\HttpClient;
+use App\Payments\PaymentGateway;
+use App\Payments\PaystackGateway;
+use App\Payments\SimulatedGateway;
+use App\Services\CouponService;
+use App\Services\OrderService;
+use App\Services\PricingService;
+use App\Services\ReservationService;
+use App\Support\Settings;
 use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PublicController;
@@ -77,6 +90,40 @@ final class App
         ));
         $c->set(AuthController::class, fn (Container $c) => new AuthController($c->get(AuthService::class), $c->get(Csrf::class)));
         $c->set(AccountController::class, fn (Container $c) => new AccountController($c->get(UserRepository::class), $c->get(AuthService::class), $c->get(AuditLogger::class)));
+        $c->set(Settings::class, fn (Container $c) => new Settings($c->get(Database::class)));
+        $c->set(HttpClient::class, fn () => new HttpClient());
+        $c->set(PaymentGateway::class, function (Container $c) use ($config): PaymentGateway {
+            $driver = $config->str('PAYMENT_DRIVER', 'paystack');
+            if ($driver === 'simulated') {
+                if ($config->isProduction()) {
+                    throw new \RuntimeException('PAYMENT_DRIVER=simulated is not allowed in production.');
+                }
+                return new SimulatedGateway($c->get(Database::class));
+            }
+            return new PaystackGateway($config->str('PAYSTACK_SECRET_KEY', ''), $c->get(HttpClient::class));
+        });
+        $c->set(CouponService::class, fn (Container $c) => new CouponService($c->get(Database::class)));
+        $c->set(PricingService::class, fn (Container $c) => new PricingService(
+            $c->get(Database::class), $c->get(Settings::class), $c->get(CouponService::class), $c->get(Clock::class),
+        ));
+        $frontend = rtrim($config->str('FRONTEND_URL'), '/');
+        $c->set(OrderService::class, fn (Container $c) => new OrderService(
+            $c->get(Database::class), $c->get(PricingService::class), $c->get(PaymentGateway::class), $c->get(RateLimiter::class),
+            $c->get(Mailer::class), $c->get(EmailTemplates::class), $c->get(AuditLogger::class), $c->get(Clock::class),
+            $c->get(Logger::class), $c->get(Crypto::class), $frontend,
+        ));
+        $c->set(ReservationService::class, fn (Container $c) => new ReservationService(
+            $c->get(Database::class), $c->get(Settings::class), $c->get(RateLimiter::class), $c->get(Mailer::class),
+            $c->get(EmailTemplates::class), $c->get(AuditLogger::class), $c->get(Crypto::class), $c->get(Clock::class),
+            $c->get(Logger::class), $frontend,
+        ));
+        $c->set(CheckoutController::class, fn (Container $c) => new CheckoutController(
+            $c->get(PricingService::class), $c->get(OrderService::class), $c->get(PaymentGateway::class),
+            $c->get(RateLimiter::class), $c->get(Database::class), $c->get(Config::class),
+        ));
+        $c->set(OrderController::class, fn (Container $c) => new OrderController($c->get(OrderService::class), $c->get(Database::class), $c->get(Clock::class)));
+        $c->set(ReservationController::class, fn (Container $c) => new ReservationController($c->get(ReservationService::class)));
+        $c->set(AccountDataController::class, fn (Container $c) => new AccountDataController($c->get(Database::class), $c->get(RateLimiter::class), $c->get(AuditLogger::class)));
         $c->set(MenuRepository::class, fn (Container $c) => new MenuRepository($c->get(Database::class), $c->get(Clock::class)));
         $c->set(PublicController::class, fn (Container $c) => new PublicController($c->get(MenuRepository::class), $c->get(Database::class)));
         $c->set(EnquiryController::class, fn (Container $c) => new EnquiryController(
@@ -125,6 +172,18 @@ final class App
             $api->post('/newsletter', [EnquiryController::class, 'newsletter']);
             $api->post('/events/enquiries', [EnquiryController::class, 'eventEnquiry']);
 
+            $api->post('/checkout/quote', [CheckoutController::class, 'quote']);
+            $api->post('/orders', [CheckoutController::class, 'placeOrder']);
+            $api->get('/orders/{reference}', [OrderController::class, 'track']);
+            $api->post('/payments/verify', [CheckoutController::class, 'verifyPayment']);
+            $api->post('/payments/paystack/webhook', [CheckoutController::class, 'webhook']);
+            $api->post('/payments/simulate', [CheckoutController::class, 'simulate']);
+
+            $api->get('/reservations/availability', [ReservationController::class, 'availability']);
+            $api->post('/reservations', [ReservationController::class, 'create']);
+            $api->get('/reservations/{code}', [ReservationController::class, 'show']);
+            $api->post('/reservations/{code}/cancel', [ReservationController::class, 'cancel']);
+
             $api->group('/auth', function (RouteCollectorProxy $auth): void {
                 $auth->get('/csrf', [AuthController::class, 'csrf']);
                 $auth->get('/me', [AuthController::class, 'me']);
@@ -141,6 +200,15 @@ final class App
             $api->group('/account', function (RouteCollectorProxy $account): void {
                 $account->patch('/profile', [AccountController::class, 'updateProfile']);
                 $account->post('/password', [AccountController::class, 'changePassword']);
+                $account->get('/orders', [OrderController::class, 'mine']);
+                $account->post('/orders/{reference}/reorder', [OrderController::class, 'reorder']);
+                $account->get('/reservations', [ReservationController::class, 'mine']);
+                $account->get('/addresses', [AccountDataController::class, 'addresses']);
+                $account->post('/addresses', [AccountDataController::class, 'saveAddress']);
+                $account->patch('/addresses/{id:[0-9]+}', [AccountDataController::class, 'saveAddress']);
+                $account->delete('/addresses/{id:[0-9]+}', [AccountDataController::class, 'deleteAddress']);
+                $account->get('/reviews', [AccountDataController::class, 'reviews']);
+                $account->post('/reviews', [AccountDataController::class, 'createReview']);
                 $account->post('/2fa/setup', [AccountController::class, 'twoFactorSetup'])->add(RequireRole::staff());
                 $account->post('/2fa/confirm', [AccountController::class, 'twoFactorConfirm'])->add(RequireRole::staff());
                 $account->post('/2fa/disable', [AccountController::class, 'twoFactorDisable'])->add(RequireRole::staff());

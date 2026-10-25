@@ -41,6 +41,16 @@ final class Crypto
         return $prefix . $out;
     }
 
+    /**
+     * Unforgeable, stable token for a value (e.g. a tracking link for an order reference).
+     * Stateless: nothing is stored, and every link for the same value is identical.
+     */
+    public function mac(string $purpose, string $value): string
+    {
+        $raw = hash_hmac('sha256', $purpose . '|' . $value, $this->key, true);
+        return rtrim(strtr(base64_encode(substr($raw, 0, 24)), '+/', '-_'), '=');
+    }
+
     public function encrypt(string $plaintext): string
     {
         $iv = random_bytes(12);

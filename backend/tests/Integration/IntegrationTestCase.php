@@ -37,7 +37,8 @@ abstract class IntegrationTestCase extends TestCase
             ->with('APP_ENV', 'testing')
             ->with('APP_BASE_PATH', '')
             ->with('FRONTEND_URL', 'http://localhost:5173')
-            ->with('CORS_ALLOWED_ORIGINS', 'http://localhost:5173');
+            ->with('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')
+            ->with('PAYMENT_DRIVER', 'simulated');
         $this->c = App::container($config);
         $this->session = new ArraySession();
         $this->mailer = new LogMailer(null);
@@ -70,20 +71,22 @@ abstract class IntegrationTestCase extends TestCase
     /**
      * Sends a request through the full middleware stack.
      *
-     * @param array<string, mixed>|null $body
+     * @param array<string, mixed>|string|null $body array → JSON; string → sent raw (e.g. webhooks)
      * @param array<string, string> $headers
      * @return array{0: ResponseInterface, 1: array<string, mixed>}
      */
-    protected function request(string $method, string $path, ?array $body = null, array $headers = []): array
+    protected function request(string $method, string $path, array|string|null $body = null, array $headers = []): array
     {
         $app = App::create($this->c);
         $request = (new ServerRequestFactory())->createServerRequest($method, $path, ['REMOTE_ADDR' => '203.0.113.10']);
+        parse_str((string) parse_url($path, PHP_URL_QUERY), $query);
+        $request = $request->withQueryParams($query);
         foreach ($headers as $name => $value) {
             $request = $request->withHeader($name, $value);
         }
         if ($body !== null) {
             $request = $request->withHeader('Content-Type', 'application/json');
-            $request->getBody()->write(json_encode($body));
+            $request->getBody()->write(is_string($body) ? $body : json_encode($body));
             $request->getBody()->rewind();
         }
         $response = $app->handle($request);
