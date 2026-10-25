@@ -1,0 +1,73 @@
+{
+  "fileKey": "GMM3GijPaKNRKhMYksZAV1",
+  "pages": {
+    "Style Guide": "0:1",
+    "Screens — Customer": "1:114",
+    "Screens — Admin": "1:115"
+  },
+  "theme": {
+    "color/bg/base": "VariableID:1:71",
+    "color/bg/surface": "VariableID:1:72",
+    "color/bg/light": "VariableID:1:73",
+    "color/bg/muted": "VariableID:1:74",
+    "color/text/on-dark": "VariableID:1:75",
+    "color/text/on-light": "VariableID:1:76",
+    "color/text/muted": "VariableID:1:77",
+    "color/text/accent": "VariableID:1:78",
+    "color/accent/primary": "VariableID:1:79",
+    "color/accent/primary-hover": "VariableID:1:80",
+    "color/accent/nigerian": "VariableID:1:81",
+    "color/accent/palm": "VariableID:1:82",
+    "color/accent/polish": "VariableID:1:83",
+    "color/border/gold": "VariableID:1:84",
+    "color/border/subtle": "VariableID:1:85"
+  },
+  "dims": {
+    "spacing/1": "VariableID:1:87",
+    "spacing/2": "VariableID:1:88",
+    "spacing/3": "VariableID:1:89",
+    "spacing/4": "VariableID:1:90",
+    "spacing/6": "VariableID:1:91",
+    "spacing/8": "VariableID:1:92",
+    "spacing/12": "VariableID:1:93",
+    "spacing/16": "VariableID:1:94",
+    "spacing/24": "VariableID:1:95",
+    "spacing/32": "VariableID:1:96",
+    "radius/none": "VariableID:1:97",
+    "radius/sm": "VariableID:1:98",
+    "radius/md": "VariableID:1:99",
+    "radius/lg": "VariableID:1:100",
+    "radius/full": "VariableID:1:101"
+  },
+  "styles": {
+    "Display": "S:e5fe0e1664a96d7478853882669ba676adfe0311,",
+    "Heading/H1": "S:2c33bd425f3f69db8d12f03822066f9198b2a7aa,",
+    "Heading/H2": "S:9a3332aeeac7e1e39e06c6f03df5c354741a6da2,",
+    "Heading/H3": "S:d1bb24f92677d237cf3f31f8d84b8949e6f5c73d,",
+    "Heading/H4": "S:cd9bb7092b76706871218b4fdb9a3b57471e269f,",
+    "Body/Large": "S:1442b90a1f37288443a4434fcee9d11bdede0ae3,",
+    "Body/Default": "S:8be5e5c4ae4a3419129c4a3dc997c9d8e29c7672,",
+    "Body/Small": "S:92e74cd71efb5a2efcd6762608fa9e38282a3f8d,",
+    "Label/Button": "S:9e7af72666144f64f09aeda1adfb699e70a35027,",
+    "Label/Overline": "S:6856e37ce487dd1222d526e64152d7f8837f88d7,",
+    "Label/Price": "S:b01ac80fdbf9f2c0b3e8b58f7a17f4a2b5d72665,",
+    "Accent/Script": "S:6caa157137e3f574f625c4a0d884a36365f865e0,"
+  },
+  "completed": [
+    "foundations",
+    "components"
+  ],
+  "components": {
+    "Logo/Crest": "2:3",
+    "Button": "2:70",
+    "Input": "2:84",
+    "Badge": "2:91",
+    "Dish Card": "2:92",
+    "Components (main) frame": "2:2"
+  },
+  "pending": [
+    "style-guide-board",
+    "customer screens (desktop 1440 + mobile 390)",
+    "admin screens"
+  ]
+}

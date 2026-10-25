@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Builds & caches
+dist/
+build/
+coverage/
+.vite/
+*.log
+.phpunit.result.cache
+
+# Uploads (runtime, outside git)
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
