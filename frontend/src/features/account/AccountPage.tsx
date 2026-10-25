@@ -13,7 +13,9 @@ import { ThemeSegmented } from '@/features/theme/ThemeSwitcher';
 import type { User } from '@/features/auth/types';
 import { ApiError } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
+import { cn } from '@/lib/cn';
 import { initials } from '@/lib/format';
+import { AddressesPanel, OrdersPanel, ReservationsPanel, ReviewsPanel } from './AccountPanels';
 
 export function AccountPage() {
   const { data: user } = useMe();
@@ -46,7 +48,94 @@ export function AccountPage() {
 
       {!user.emailVerified && <VerifyBanner />}
 
-      <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_1fr]">
+      <AccountTabs />
+    </div>
+  );
+}
+
+const TABS = [
+  ['orders', 'Orders'],
+  ['reservations', 'Reservations'],
+  ['addresses', 'Addresses'],
+  ['reviews', 'Reviews'],
+  ['settings', 'Settings'],
+] as const;
+type Tab = (typeof TABS)[number][0];
+
+function AccountTabs() {
+  const [params, setParams] = useSearchParams();
+  const requested = params.get('tab');
+  const tab: Tab = TABS.some(([t]) => t === requested) ? (requested as Tab) : 'orders';
+  const select = (t: Tab) =>
+    setParams(
+      (p) => {
+        p.set('tab', t);
+        p.delete('welcome');
+        return p;
+      },
+      { replace: true },
+    );
+  // Roving arrow-key focus, per the WAI-ARIA tabs pattern.
+  const onKey = (e: React.KeyboardEvent, i: number) => {
+    const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (!d) return;
+    const next = TABS[(i + d + TABS.length) % TABS.length]![0];
+    select(next);
+    document.getElementById(`tab-${next}`)?.focus();
+  };
+
+  return (
+    <>
+      <div
+        role="tablist"
+        aria-label="Account sections"
+        className="border-line mt-10 flex gap-1 overflow-x-auto border-b"
+      >
+        {TABS.map(([t, label], i) => (
+          <button
+            key={t}
+            id={`tab-${t}`}
+            role="tab"
+            type="button"
+            aria-selected={tab === t}
+            aria-controls={`panel-${t}`}
+            tabIndex={tab === t ? 0 : -1}
+            onClick={() => select(t)}
+            onKeyDown={(e) => onKey(e, i)}
+            className={cn(
+              'tracking-button -mb-px min-h-12 shrink-0 border-b-2 px-4 text-xs font-semibold uppercase transition-colors',
+              tab === t
+                ? 'border-accent text-accent'
+                : 'text-secondary hover:text-primary border-transparent',
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div
+        role="tabpanel"
+        id={`panel-${tab}`}
+        aria-labelledby={`tab-${tab}`}
+        tabIndex={0}
+        className="mt-8 focus:outline-none"
+      >
+        {tab === 'orders' && <OrdersPanel />}
+        {tab === 'reservations' && <ReservationsPanel />}
+        {tab === 'addresses' && <AddressesPanel />}
+        {tab === 'reviews' && <ReviewsPanel />}
+        {tab === 'settings' && <SettingsPanel />}
+      </div>
+    </>
+  );
+}
+
+function SettingsPanel() {
+  const { data: user } = useMe();
+  if (!user) return null;
+  return (
+    <>
+      <div className="grid gap-12 lg:grid-cols-[1fr_1fr]">
         <section
           aria-labelledby="profile-h"
           className="border-accent/15 bg-surface-raised rounded-md border p-6 sm:p-8"
@@ -77,11 +166,7 @@ export function AccountPage() {
         <p className="text-muted mt-2 text-sm">Saved to your account, so it follows you to every device.</p>
         <ThemeSegmented className="mt-6" />
       </section>
-
-      <p className="text-muted mt-12 text-sm">
-        Orders, reservations, saved addresses and your Interest Account membership card will appear here.
-      </p>
-    </div>
+    </>
   );
 }
 

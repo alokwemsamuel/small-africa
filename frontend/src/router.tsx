@@ -42,6 +42,13 @@ const ForgotPasswordPage = page(
 );
 const ResetPasswordPage = page(() => import('./features/auth/pages/ResetPasswordPage'), 'ResetPasswordPage');
 const VerifyEmailPage = page(() => import('./features/auth/pages/VerifyEmailPage'), 'VerifyEmailPage');
+const CheckoutPage = page(() => import('./features/checkout/CheckoutPage'), 'CheckoutPage');
+const OrderTrackingPage = page(() => import('./features/orders/OrderTrackingPage'), 'OrderTrackingPage');
+const ReservationsPage = page(() => import('./features/reservations/ReservationsPage'), 'ReservationsPage');
+const ManageReservationPage = page(
+  () => import('./features/reservations/ManageReservationPage'),
+  'ManageReservationPage',
+);
 const AccountPage = page(() => import('./features/account/AccountPage'), 'AccountPage');
 const AdminHomePage = page(() => import('./pages/AdminHomePage'), 'AdminHomePage');
 
@@ -62,6 +69,8 @@ export const routes: RouteObject[] = [
       { path: 'menu', element: <MenuPage /> },
       { path: 'menu/:slug', element: <DishDetailPage /> },
       { path: 'cart', element: <CartPage /> },
+      { path: 'checkout', element: <CheckoutPage /> },
+      { path: 'orders/:reference', element: <OrderTrackingPage /> },
       { path: 'about', element: <AboutPage /> },
       { path: 'gallery', element: <GalleryPage /> },
       { path: 'events', element: <EventsPage /> },
@@ -91,7 +100,8 @@ export const routes: RouteObject[] = [
           </RequireAuth>
         ),
       },
-      placeholder('reservations', 'Reservations', 'Phase 4'),
+      { path: 'reservations', element: <ReservationsPage /> },
+      { path: 'reservations/:code', element: <ManageReservationPage /> },
       placeholder('rewards', 'Interest Account', 'Phase 5'),
       placeholder('rewards-terms', 'Rewards Terms', 'Phase 5'),
       { path: '*', element: <NotFoundPage /> },

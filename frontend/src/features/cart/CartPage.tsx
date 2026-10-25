@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Alert } from '@/components/ui/Alert';
 import { ButtonLink } from '@/components/ui/Button';
 import { Photo } from '@/components/ui/Photo';
 import { dishPhoto } from '@/content/photoKeys';
@@ -8,7 +7,7 @@ import { formatNaira } from '@/lib/format';
 import { useSeo } from '@/lib/seo';
 import { cart, useCart } from './cart';
 
-/** Phase 3: review the order. Phase 4 adds delivery/pickup, coupons, wallet and Paystack checkout. */
+/** Review the order. Prices here are indicative; checkout shows the server-calculated total. */
 export function CartPage() {
   useSeo({ title: 'Your order' });
   const { items, count, subtotalKobo } = useCart();
@@ -92,9 +91,9 @@ export function CartPage() {
               <p className="text-muted text-sm">
                 Prices include VAT. Delivery fee, coupons and dining credit are applied at checkout.
               </p>
-              <Alert tone="info">
-                Checkout with Paystack, delivery and pickup arrive in the next build phase.
-              </Alert>
+              <ButtonLink to="/checkout" size="lg">
+                Checkout
+              </ButtonLink>
               <button
                 type="button"
                 onClick={() => cart.clear()}

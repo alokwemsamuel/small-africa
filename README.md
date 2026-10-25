@@ -75,7 +75,7 @@ These exist for demos and testing only. Remove or change them before going live.
 - [x] **Phase 1 — Brand & design**: logo (SA Monogram Crest) and exports, brand guide PDF, Instagram templates, A4 menu card, Figma tokens and components
 - [x] **Phase 2 — Foundation**: schema (40 tables) + seeds, secure auth API, frontend shell, auth pages, living style guide (`/style-guide`)
 - [x] **Phase 3 — Public site**: 3D hero (with poster and video fallbacks), menu with filters (incl. No pork), dish detail, basket, about, gallery, events, contact, FAQ, privacy (NDPA 2023), terms; Dark/Light/System appearance
-- [ ] Phase 4 — Reservations & ordering (cart, Paystack, tracking, emails)
+- [x] Phase 4 — Reservations & ordering (cart, Paystack, tracking, emails)
 - [ ] Phase 5 — Interest Account (wallet, interest, points, tiers, referrals)
 - [ ] Phase 6 — Admin panel
 - [ ] Phase 7 — Demo mode, testing & hardening
