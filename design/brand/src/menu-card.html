@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Small Africa — Menu Card (A4)</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  html, body { width: 210mm; background: var(--ivory); color: var(--obsidian); }
+  .sheet { position: relative; width: 210mm; height: 297mm; padding: 15mm 16mm 15mm; display: flex; flex-direction: column; overflow: hidden; }
+  .border { position: absolute; inset: 7mm; border: .6pt solid var(--gold); pointer-events: none; }
+  .border::after { content: ''; position: absolute; inset: 1.4mm; border: .3pt solid var(--gold); }
+  header { text-align: center; }
+  header img { width: 21mm; height: 21mm; }
+  header h1 { font-family: var(--serif); font-weight: 600; font-size: 30pt; letter-spacing: .18em; margin-top: 2mm; }
+  header .script { font-size: 14pt; color: var(--gold-dark); margin-top: 1mm; }
+  .orn { display: flex; align-items: center; justify-content: center; gap: 3mm; margin: 4mm 0 2mm; }
+  .orn i { width: 22mm; height: .5pt; background: var(--gold); }
+  .orn b { width: 2.2mm; height: 2.2mm; background: var(--gold); transform: rotate(45deg); }
+  .kitchen { margin-top: 3.5mm; }
+  .kitchen h2 { display: flex; align-items: baseline; gap: 4mm; font-family: var(--serif); font-weight: 600; font-size: 17pt; }
+  .kitchen h2 span { font-family: var(--sans); font-weight: 600; font-size: 7pt; letter-spacing: .22em; text-transform: uppercase; color: var(--smoke-dark); }
+  .kitchen h2::after { content: ''; flex: 1; height: .5pt; background: var(--gold); transform: translateY(-1.2mm); }
+  .items { display: grid; grid-template-columns: 1fr 1fr; column-gap: 10mm; row-gap: 3mm; margin-top: 3mm; }
+  .item .row { display: flex; align-items: baseline; gap: 2mm; }
+  .item .name { font-family: var(--serif); font-weight: 700; font-size: 11.5pt; }
+  .item .dots { flex: 1; border-bottom: .6pt dotted var(--smoke); transform: translateY(-1mm); }
+  .item .price { font-weight: 600; font-size: 9pt; }
+  .item p { font-size: 7.6pt; line-height: 1.45; color: var(--smoke-dark); margin-top: .6mm; }
+  .tags { white-space: nowrap; font-size: 6.6pt; font-weight: 600; letter-spacing: .08em; color: var(--terracotta); text-transform: uppercase; }
+  .tasting { margin-top: 6mm; padding: 4mm 6mm; border: .6pt solid var(--gold); text-align: center; background: rgba(231,217,196,.45); }
+  .tasting h3 { font-family: var(--serif); font-weight: 600; font-size: 14pt; }
+  .tasting p { font-size: 8pt; color: var(--smoke-dark); margin-top: 1mm; }
+  footer { margin-top: auto; padding-top: 3mm; text-align: center; font-size: 7pt; color: var(--smoke-dark); line-height: 1.6; }
+  footer strong { color: var(--obsidian); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<main class="sheet">
+  <div class="border"></div>
+  <header>
+    <img src="../../logo/small-africa-mark-obsidian.svg" alt="Small Africa">
+    <h1>SMALL AFRICA</h1>
+    <div class="script">Three kitchens. One table.</div>
+    <div class="orn"><i></i><b></b><i></i></div>
+  </header>
+
+  <section class="kitchen">
+    <h2>Nigerian Kitchen <span>Lagos · Abeokuta · Delta</span></h2>
+    <div class="items">
+      <div class="item"><div class="row"><span class="name">Smoky Party Jollof</span><span class="dots"></span><span class="price">₦18,500</span></div><p>Firewood-smoked jollof rice, grilled chicken, sweet plantain, pepper relish. <span class="tags">Spice ●●</span></p></div>
+      <div class="item"><div class="row"><span class="name">Egusi &amp; Pounded Yam</span><span class="dots"></span><span class="price">₦16,000</span></div><p>Melon-seed soup with bitter leaf, smoked fish and assorted meat, hand-pounded yam.</p></div>
+      <div class="item"><div class="row"><span class="name">Ofada with Ayamase</span><span class="dots"></span><span class="price">₦15,500</span></div><p>Local ofada rice, green pepper "designer stew", boiled egg, dodo. <span class="tags">Spice ●●●</span></p></div>
+      <div class="item"><div class="row"><span class="name">Beef Suya Platter</span><span class="dots"></span><span class="price">₦14,500</span></div><p>Flame-grilled sirloin in yaji spice, red onion, tomato, cabbage. <span class="tags">Contains nuts · Spice ●●</span></p></div>
+      <div class="item"><div class="row"><span class="name">Catfish Pepper Soup</span><span class="dots"></span><span class="price">₦12,000</span></div><p>Fresh point-and-kill catfish in a fragrant uziza and utazi broth. <span class="tags">Spice ●●●</span></p></div>
+    </div>
+  </section>
+
+  <section class="kitchen">
+    <h2>Polish Kitchen <span>Kraków · Gdańsk · Podhale</span></h2>
+    <div class="items">
+      <div class="item"><div class="row"><span class="name">Pierogi Ruskie</span><span class="dots"></span><span class="price">₦13,500</span></div><p>Hand-pinched dumplings of potato and twaróg cheese, caramelised onion, sour cream. <span class="tags">Vegetarian</span></p></div>
+      <div class="item"><div class="row"><span class="name">Żurek in Bread</span><span class="dots"></span><span class="price">₦12,500</span></div><p>Sour rye soup with white kiełbasa and egg, served in a crusty bread bowl.</p></div>
+      <div class="item"><div class="row"><span class="name">Barszcz with Uszka</span><span class="dots"></span><span class="price">₦11,000</span></div><p>Clear beetroot consommé with tiny wild-mushroom dumplings. <span class="tags">Vegetarian</span></p></div>
+      <div class="item"><div class="row"><span class="name">Kotlet Schabowy</span><span class="dots"></span><span class="price">₦19,000</span></div><p>Golden breaded pork loin, buttered dill potatoes, mizeria cucumber salad.</p></div>
+      <div class="item"><div class="row"><span class="name">Sernik</span><span class="dots"></span><span class="price">₦8,500</span></div><p>Baked Polish cheesecake, vanilla and lemon zest, berry compote.</p></div>
+    </div>
+  </section>
+
+  <section class="kitchen">
+    <h2>Continental Kitchen <span>Paris · London · Rome</span></h2>
+    <div class="items">
+      <div class="item"><div class="row"><span class="name">Beef Wellington</span><span class="dots"></span><span class="price">₦48,000</span></div><p>Fillet in mushroom duxelles and puff pastry, red wine jus. For one, carved tableside.</p></div>
+      <div class="item"><div class="row"><span class="name">Ribeye, Peppercorn</span><span class="dots"></span><span class="price">₦42,000</span></div><p>300g aged ribeye, green peppercorn sauce, triple-cooked chips.</p></div>
+      <div class="item"><div class="row"><span class="name">Lobster Thermidor</span><span class="dots"></span><span class="price">₦65,000</span></div><p>Half lobster baked in a cognac and gruyère cream, herb salad.</p></div>
+      <div class="item"><div class="row"><span class="name">Grilled Salmon</span><span class="dots"></span><span class="price">₦36,000</span></div><p>Crisp-skinned salmon, lemon-butter sauce, crushed new potatoes, greens. <span class="tags">Gluten-free</span></p></div>
+      <div class="item"><div class="row"><span class="name">Chocolate Fondant</span><span class="dots"></span><span class="price">₦9,500</span></div><p>Molten dark chocolate pudding, vanilla bean ice cream. Allow 15 minutes.</p></div>
+    </div>
+  </section>
+
+  <div class="tasting">
+    <h3>Chef's Tasting Menu — Three Kitchens</h3>
+    <p>Seven courses travelling from Lagos to Kraków and back · ₦95,000 per guest · wine pairing ₦55,000</p>
+  </div>
+
+  <footer>
+    <p><strong>Small Africa · Lagos</strong></p>
+    <p>Prices include VAT. A 10% service charge applies. Please tell your server about any allergies before ordering.</p>
+    <p>Wine &amp; spirits served to guests aged 18+ only.</p>
+  </footer>
+</main>
+</body>
+</html>

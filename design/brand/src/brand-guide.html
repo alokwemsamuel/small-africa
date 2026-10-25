@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Small Africa — Brand Guide</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  body { width: 297mm; }
+  .page { position: relative; width: 297mm; height: 210mm; padding: 18mm 20mm; overflow: hidden; page-break-after: always; break-after: page; display: flex; flex-direction: column; }
+  .page.light { background: var(--ivory); color: var(--obsidian); }
+  .page.light .muted { color: var(--smoke-dark); }
+  .pnum { position: absolute; right: 20mm; bottom: 10mm; font-size: 8pt; letter-spacing: .2em; color: var(--smoke); }
+  .light .pnum { color: var(--smoke-dark); }
+  .eyebrow { color: var(--gold); }
+  .light .eyebrow { color: var(--gold-dark); }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 34pt; line-height: 1.05; margin: 3mm 0 4mm; }
+  .lead { font-size: 10.5pt; line-height: 1.6; max-width: 150mm; }
+  .grid { display: grid; gap: 8mm; margin-top: 8mm; flex: 1; }
+  .card { border: .5pt solid rgba(201,162,75,.45); border-radius: 2mm; padding: 6mm; display: flex; flex-direction: column; gap: 3mm; }
+  .card h3 { font-family: var(--serif); font-weight: 600; font-size: 15pt; }
+  .card p, .card li { font-size: 8.6pt; line-height: 1.55; }
+  .card ul { padding-left: 4mm; }
+
+  /* Cover */
+  .cover { justify-content: center; align-items: center; text-align: center; }
+  .cover .bg { position: absolute; inset: 0; opacity: .07; }
+  .cover .glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, rgba(201,162,75,.18), transparent 55%); }
+  .cover img { width: 70mm; position: relative; }
+  .cover h1 { font-family: var(--serif); font-weight: 600; font-size: 46pt; letter-spacing: .16em; margin-top: 8mm; position: relative; }
+  .cover .script { font-size: 20pt; color: var(--gold-light); position: relative; }
+  .cover .overline { margin-top: 10mm; color: var(--smoke); position: relative; }
+
+  /* Logo */
+  .logo-row { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 6mm; margin-top: 6mm; }
+  .tile { border-radius: 2mm; display: flex; align-items: center; justify-content: center; padding: 8mm; height: 62mm; position: relative; }
+  .tile img { max-height: 100%; max-width: 100%; }
+  .tile small { position: absolute; left: 4mm; bottom: 3mm; font-size: 7pt; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
+  .t-dark { background: var(--obsidian); color: var(--ivory); border: .5pt solid rgba(201,162,75,.35); }
+  .t-light { background: var(--ivory); color: var(--obsidian); }
+  .t-terra { background: var(--terracotta); color: var(--ivory); }
+  .rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; margin-top: 6mm; }
+  .clear { position: relative; height: 34mm; display: flex; align-items: center; justify-content: center; }
+  .clear .box { position: absolute; inset: 0 auto 0 50%; transform: translateX(-50%); width: 34mm; border: .5pt dashed var(--gold); }
+  .clear img { height: 22mm; position: relative; }
+  .sizes { display: flex; align-items: flex-end; gap: 6mm; height: 34mm; }
+  .sizes figure { text-align: center; font-size: 7pt; color: var(--smoke); }
+
+  /* Don'ts */
+  .donts { grid-template-columns: repeat(4, 1fr); }
+  .dont { position: relative; height: 44mm; border-radius: 2mm; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--ebony); }
+  .dont img { height: 30mm; }
+  .dont::after { content: '✕'; position: absolute; right: 3mm; top: 2mm; color: var(--terracotta); font-size: 14pt; font-weight: 600; }
+  .dont-cap { font-size: 8.4pt; margin-top: 2.5mm; }
+
+  /* Colour */
+  .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4mm; margin-top: 6mm; }
+  .sw .chip { height: 26mm; border-radius: 1.5mm; border: .5pt solid rgba(201,162,75,.3); }
+  .sw b { display: block; font-family: var(--serif); font-size: 12pt; margin-top: 2mm; }
+  .sw span { display: block; font-size: 7.4pt; color: var(--smoke); line-height: 1.5; }
+  .contrast { margin-top: 7mm; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; }
+  .pair { border-radius: 1.5mm; padding: 4mm; font-size: 9pt; display: flex; justify-content: space-between; align-items: baseline; }
+  .pair em { font-style: normal; font-weight: 600; font-size: 8pt; }
+
+  /* Type */
+  .type { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8mm; margin-top: 6mm; }
+  .specimen .big { font-size: 48pt; line-height: 1; margin: 2mm 0 3mm; }
+  .scale { margin-top: 6mm; display: flex; flex-direction: column; gap: 2.5mm; border-top: .5pt solid rgba(201,162,75,.35); padding-top: 5mm; }
+  .scale div { display: grid; grid-template-columns: 52mm 1fr; align-items: baseline; }
+  .scale small { font-size: 7.4pt; color: var(--smoke-dark); }
+
+  /* Motifs & voice */
+  .motif { height: 40mm; border-radius: 2mm; }
+  .voice td, .voice th { font-size: 8.6pt; padding: 2.2mm 3mm; text-align: left; vertical-align: top; border-bottom: .5pt solid rgba(201,162,75,.3); line-height: 1.5; }
+  .voice th { font-weight: 600; font-size: 7.4pt; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+
+  /* Applications */
+  .apps { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8mm; margin-top: 6mm; flex: 1; }
+  .apps img { width: 100%; border-radius: 2mm; display: block; }
+  .favs { display: flex; gap: 5mm; align-items: flex-end; margin-top: 4mm; }
+  .favs img { width: auto; }
+</style>
+</head>
+<body>
+
+<!-- 1. Cover -->
+<section class="page cover grain">
+  <div class="bg pattern"></div><div class="glow"></div>
+  <img src="../../logo/small-africa-mark-gold.svg" alt="Small Africa crest">
+  <h1>SMALL AFRICA</h1>
+  <div class="script">Three kitchens. One table.</div>
+  <div class="overline">Brand Guide · Version 1.0 · 2026</div>
+</section>
+
+<!-- 2. Logo -->
+<section class="page">
+  <div class="overline eyebrow">01 — Logo</div>
+  <h2>The crest</h2>
+  <p class="lead muted">An "SA" monogram in Cormorant Garamond, held in a crest ringed with 48 small diamonds. The diamonds nod to West African textile patterning; the star above marks the meeting point of three kitchens. Use the crest alone where space is tight, and the lockups wherever the name must be read.</p>
+  <div class="logo-row">
+    <div class="tile t-dark"><img src="../../logo/small-africa-stacked-gold.svg" alt=""><small>Primary · Gold on obsidian</small></div>
+    <div class="tile t-light"><img src="../../logo/small-africa-stacked-obsidian.svg" alt=""><small>Obsidian on ivory</small></div>
+    <div class="tile t-terra"><img src="../../logo/small-africa-stacked-ivory.svg" alt=""><small>Single colour</small></div>
+  </div>
+  <div class="rules">
+    <div>
+      <div class="overline eyebrow">Clear space</div>
+      <div class="clear"><div class="box"></div><img src="../../logo/small-africa-mark-gold.svg" alt=""></div>
+      <p class="muted" style="font-size:8pt">Keep clear space equal to the height of the "S" on every side.</p>
+    </div>
+    <div>
+      <div class="overline eyebrow">Minimum size</div>
+      <div class="sizes">
+        <figure><img src="../../logo/favicon/favicon-48.png" width="48" height="48" alt=""><figcaption>Favicon art ≤48px</figcaption></figure>
+        <figure><img src="../../logo/small-africa-mark-gold.svg" style="width:15mm" alt=""><figcaption>Crest ≥ 15mm / 56px</figcaption></figure>
+        <figure><img src="../../logo/small-africa-stacked-gold.svg" style="width:22mm" alt=""><figcaption>Stacked ≥ 22mm</figcaption></figure>
+      </div>
+    </div>
+    <div>
+      <div class="overline eyebrow">Lockups</div>
+      <div style="height:34mm;display:flex;align-items:center"><img src="../../logo/small-africa-horizontal-gold.svg" style="width:100%" alt=""></div>
+      <p class="muted" style="font-size:8pt">Horizontal lockup for website header, email and signage fascia.</p>
+    </div>
+  </div>
+  <div class="pnum">02</div>
+</section>
+
+<!-- 3. Logo misuse -->
+<section class="page">
+  <div class="overline eyebrow">01 — Logo</div>
+  <h2>Please don't</h2>
+  <p class="lead muted">The crest is the most recognisable thing we own. Keep it calm, gold, and uncluttered.</p>
+  <div class="grid donts">
+    <div><div class="dont"><img src="../../logo/small-africa-mark-gold.svg" style="transform:scaleX(1.5)" alt=""></div><p class="dont-cap">Stretch, squash or skew the crest.</p></div>
+    <div><div class="dont"><img src="../../logo/small-africa-mark-gold.svg" style="filter:hue-rotate(160deg) saturate(3)" alt=""></div><p class="dont-cap">Recolour it outside the brand palette.</p></div>
+    <div><div class="dont"><img src="../../logo/small-africa-mark-gold.svg" style="filter:drop-shadow(3mm 3mm 2mm #000) drop-shadow(0 0 4mm #f0f)" alt=""></div><p class="dont-cap">Add shadows, glows, bevels or gradients.</p></div>
+    <div><div class="dont" style="background:repeating-linear-gradient(45deg,#B4492F 0 4mm,#2E4A3B 4mm 8mm,#C9A24B 8mm 12mm)"><img src="../../logo/small-africa-mark-gold.svg" alt=""></div><p class="dont-cap">Place it on busy patterns or photos without a calm backing.</p></div>
+    <div><div class="dont"><img src="../../logo/small-africa-mark-gold.svg" style="transform:rotate(-24deg)" alt=""></div><p class="dont-cap">Rotate it.</p></div>
+    <div><div class="dont"><img src="../../logo/small-africa-mark-gold.svg" style="opacity:.25" alt=""></div><p class="dont-cap">Fade it below full opacity on dark backgrounds.</p></div>
+    <div><div class="dont" style="background:var(--ivory)"><img src="../../logo/small-africa-mark-gold.svg" alt=""></div><p class="dont-cap">Use gold on ivory: it fails contrast (2.1:1). Use obsidian.</p></div>
+    <div><div class="dont"><div style="font-family:Georgia;font-size:30pt;color:var(--gold);font-style:italic">S.Africa</div></div><p class="dont-cap">Re-type, abbreviate or redraw the name.</p></div>
+  </div>
+  <div class="pnum">03</div>
+</section>
+
+<!-- 4. Colour -->
+<section class="page">
+  <div class="overline eyebrow">02 — Colour</div>
+  <h2>Obsidian, gold &amp; three accents</h2>
+  <p class="lead muted">Dark luxury is our default: obsidian grounds every page, gold leads the eye. Ivory sections give menus room to breathe. Terracotta, crimson and palm each speak for one kitchen, so use them for small accents, never large fields.</p>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#0E0C0A"></div><b>Obsidian</b><span>#0E0C0A · 14 12 10<br>Main background</span></div>
+    <div class="sw"><div class="chip" style="background:#1A1612"></div><b>Ebony</b><span>#1A1612 · 26 22 18<br>Cards on dark</span></div>
+    <div class="sw"><div class="chip" style="background:#C9A24B"></div><b>Gold</b><span>#C9A24B · 201 162 75<br>Primary accent, CTAs</span></div>
+    <div class="sw"><div class="chip" style="background:#E6C97A"></div><b>Gold Light</b><span>#E6C97A · 230 201 122<br>Hover, highlights</span></div>
+    <div class="sw"><div class="chip" style="background:#7D5E1F"></div><b>Gold Dark</b><span>#7D5E1F · 125 94 31<br>Gold text on light</span></div>
+    <div class="sw"><div class="chip" style="background:#F6EFE3"></div><b>Ivory</b><span>#F6EFE3 · 246 239 227<br>Light sections, text</span></div>
+    <div class="sw"><div class="chip" style="background:#E7D9C4"></div><b>Sand</b><span>#E7D9C4 · 231 217 196<br>Muted bg, borders</span></div>
+    <div class="sw"><div class="chip" style="background:#8A8178"></div><b>Smoke</b><span>#8A8178 · 138 129 120<br>Secondary text on dark</span></div>
+    <div class="sw"><div class="chip" style="background:#665D55"></div><b>Smoke Dark</b><span>#665D55 · 102 93 85<br>Secondary text on light</span></div>
+    <div class="sw"><div class="chip" style="background:#B4492F"></div><b>Terracotta</b><span>#B4492F · 180 73 47<br>Nigerian kitchen</span></div>
+    <div class="sw"><div class="chip" style="background:#A3243B"></div><b>Crimson</b><span>#A3243B · 163 36 59<br>Polish kitchen</span></div>
+    <div class="sw"><div class="chip" style="background:#2E4A3B"></div><b>Palm</b><span>#2E4A3B · 46 74 59<br>Continental, success</span></div>
+  </div>
+  <div class="contrast">
+    <div class="pair" style="background:#0E0C0A;color:#F6EFE3;border:.5pt solid #C9A24B55">Ivory on obsidian <em>17.1 : 1 · AAA</em></div>
+    <div class="pair" style="background:#0E0C0A;color:#C9A24B;border:.5pt solid #C9A24B55">Gold on obsidian <em>8.1 : 1 · AAA</em></div>
+    <div class="pair" style="background:#F6EFE3;color:#665D55">Smoke Dark on ivory <em>5.6 : 1 · AA</em></div>
+    <div class="pair" style="background:#B4492F;color:#F6EFE3">Ivory on terracotta <em>4.7 : 1 · AA</em></div>
+  </div>
+  <div class="pnum">04</div>
+</section>
+
+<!-- 5. Typography -->
+<section class="page light">
+  <div class="overline eyebrow">03 — Typography</div>
+  <h2>Editorial serif, quiet sans</h2>
+  <div class="type">
+    <div class="specimen"><div class="overline muted">Headings</div><div class="big serif">Aa</div><b class="serif" style="font-size:16pt">Cormorant Garamond</b><p class="muted" style="font-size:8.6pt;margin-top:1mm">SemiBold 600 · Bold 700. Headlines, dish names, prices on print. Tight leading (1.05–1.2).</p></div>
+    <div class="specimen"><div class="overline muted">Body &amp; UI</div><div class="big" style="font-family:var(--sans);font-weight:500">Aa</div><b style="font-size:13pt;font-weight:600">Manrope</b><p class="muted" style="font-size:8.6pt;margin-top:1mm">Regular 400 · Medium 500 · SemiBold 600. Paragraphs, buttons, labels, forms. Leading 1.5–1.6.</p></div>
+    <div class="specimen"><div class="overline muted">Accent (sparingly)</div><div class="big script">Aa</div><b class="script" style="font-size:16pt">Italiana</b><p class="muted" style="font-size:8.6pt;margin-top:1mm">One short phrase per layout at most: the tagline, "Chef's Special". Never for body or prices.</p></div>
+  </div>
+  <div class="scale">
+    <div><small>Display · 80 / 104%</small><span class="serif" style="font-size:30pt">Three kitchens. One table.</span></div>
+    <div><small>H1 · 56 · H2 · 40</small><span class="serif" style="font-size:22pt">From Lagos to Kraków, with love</span></div>
+    <div><small>H3 · 28 · H4 · 22 Bold</small><span style="font-family:var(--serif);font-weight:700;font-size:15pt">Smoky Party Jollof</span></div>
+    <div><small>Body · Manrope 16 / 160%</small><span style="font-size:10.5pt">Every dish is made to order in one of our three kitchens.</span></div>
+    <div><small>Overline · 12 / +20% caps</small><span class="overline" style="font-size:8pt">Nigerian kitchen · Spice level 2</span></div>
+    <div><small>Price · Manrope SemiBold</small><span style="font-weight:600;font-size:11pt">₦18,500</span></div>
+  </div>
+  <div class="pnum">05</div>
+</section>
+
+<!-- 6. Motifs & voice -->
+<section class="page">
+  <div class="overline eyebrow">04 — Motifs &amp; voice</div>
+  <h2>How we look and sound</h2>
+  <div class="grid" style="grid-template-columns:1fr 1.3fr">
+    <div style="display:flex;flex-direction:column;gap:4mm">
+      <div class="motif pattern" style="background-color:var(--ebony);background-size:20mm 20mm"></div>
+      <p class="muted" style="font-size:8.4pt;line-height:1.55">Our own zigzag-and-diamond pattern, inspired by West African textile banding and the crest's diamond ring. Use it at 5–10% opacity behind headings, on packaging and menu covers. Pair with thin gold rules, generous whitespace and full-bleed food photography.</p>
+      <div class="motif photo" style="height:30mm"></div>
+      <p class="muted" style="font-size:8.4pt">Photography: warm, low-key light; food fills the frame; real Lagos ambience. No stock watermarks, no other brands in shot.</p>
+    </div>
+    <table class="voice" style="border-collapse:collapse;width:100%;align-self:start">
+      <tr><th>We are</th><th>So we say</th><th>Not</th></tr>
+      <tr><td>Luxurious</td><td>"Slow-smoked over firewood, finished at your table."</td><td>"Best jollof in Lagos!!! 🔥🔥"</td></tr>
+      <tr><td>Warm</td><td>"Welcome back, Adaeze. Your usual table is ready."</td><td>"Dear valued customer"</td></tr>
+      <tr><td>Confident</td><td>"Three kitchens. One table."</td><td>"We try to offer a bit of everything"</td></tr>
+      <tr><td>Welcoming</td><td>"First time with pierogi? Start with Ruskie."</td><td>Unexplained jargon or menu snobbery</td></tr>
+      <tr><td>Elegant</td><td>One idea per sentence. Short headlines.</td><td>Exclamation marks, ALL CAPS sentences</td></tr>
+    </table>
+  </div>
+  <div class="pnum">06</div>
+</section>
+
+<!-- 7. Applications -->
+<section class="page">
+  <div class="overline eyebrow">05 — Applications</div>
+  <h2>In use</h2>
+  <div class="apps">
+    <div>
+      <img src="../../logo/og-image-1200x630.png" alt="Social share card">
+      <p class="muted" style="font-size:8pt;margin-top:2mm">Social share card (1200×630) used for link previews.</p>
+    </div>
+    <div>
+      <div class="overline eyebrow">Favicon &amp; app icon</div>
+      <div class="favs">
+        <img src="../../logo/favicon/favicon-512.png" style="height:36mm" alt="">
+        <img src="../../logo/favicon/apple-touch-icon.png" style="height:18mm" alt="">
+        <img src="../../logo/favicon/favicon-48.png" style="height:12mm" alt="">
+        <img src="../../logo/favicon/favicon-32.png" style="height:8mm" alt="">
+        <img src="../../logo/favicon/favicon-16.png" style="height:4.5mm" alt="">
+      </div>
+      <p class="muted" style="font-size:8pt;margin-top:4mm">Below 48px the crest drops its diamond ring and star so "SA" stays legible.</p>
+      <div class="overline eyebrow" style="margin-top:8mm">Templates</div>
+      <p class="muted" style="font-size:8.4pt;margin-top:2mm;line-height:1.6">Instagram post (1080×1350), Instagram story (1080×1920) and the A4 menu card live in <b style="color:var(--ivory)">design/brand/</b>. Edit the HTML sources and run <b style="color:var(--ivory)">npm run brand</b> in design/tools to re-export.</p>
+    </div>
+  </div>
+  <div class="pnum">07</div>
+</section>
+
+</body>
+</html>

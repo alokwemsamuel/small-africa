@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Small Africa — Instagram Story (1080×1920)</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  .story { position: relative; width: 1080px; height: 1920px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  /* Keep content inside Instagram's safe zone: ~250px clear at top and bottom. */
+  .frame { position: absolute; inset: 40px; border: 1.5px solid rgba(201,162,75,.55); pointer-events: none; z-index: 2; }
+  .head { padding-top: 220px; display: flex; flex-direction: column; align-items: center; gap: 22px; z-index: 1; }
+  .head img { width: 150px; height: 150px; }
+  .head .overline { color: var(--gold); font-size: 17px; }
+  .photo { width: 860px; height: 600px; margin-top: 48px; border-radius: 430px 430px 6px 6px; border: 1.5px solid rgba(201,162,75,.6); }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: 104px; line-height: 1; margin-top: 48px; }
+  h1 em { font-style: italic; color: var(--gold-light); }
+  .sub { font-size: 30px; color: var(--sand); margin-top: 26px; }
+  .cta { margin-top: 40px; background: var(--gold); color: var(--obsidian); font-weight: 600; font-size: 24px; letter-spacing: .14em; text-transform: uppercase; padding: 26px 60px; border-radius: 999px; }
+  .link { margin-top: 22px; font-size: 20px; color: var(--smoke); letter-spacing: .2em; text-transform: uppercase; }
+  .bg { position: absolute; inset: 0; opacity: .08; }
+</style>
+</head>
+<body>
+  <!-- Template: replace headline, sub-line, CTA and photo (set --photo on .photo and add .has-photo). -->
+  <article class="story grain">
+    <div class="bg pattern"></div>
+    <div class="frame"></div>
+    <div class="head">
+      <img src="../../logo/small-africa-mark-gold.svg" alt="Small Africa">
+      <span class="overline">Lagos · Nigerian · Polish · Continental</span>
+    </div>
+    <div class="photo" role="img" aria-label="Dish or dining room photo"></div>
+    <h1>Tonight at<br><em>Small Africa</em></h1>
+    <p class="sub">Pierogi Fridays · Live highlife &amp; jazz from 8pm</p>
+    <div class="cta">Book your table</div>
+    <div class="link">Link in bio</div>
+  </article>
+</body>
+</html>

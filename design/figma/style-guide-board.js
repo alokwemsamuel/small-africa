@@ -38,7 +38,7 @@ for (const v of prims) {
   r.strokes = [{ type: 'SOLID', color: { r: 0.79, g: 0.64, b: 0.29 }, opacity: 0.25 }]; r.strokeWeight = 1; sw.appendChild(r);
   sw.appendChild(await text(key, 'H4')); sw.appendChild(await text(`${h} · ${uses[key]}`, 'Small', 'text/muted', 232));
 }
-col.appendChild(await text('Contrast (WCAG AA): ivory on obsidian 17.4:1 · gold on obsidian 8.6:1 · obsidian on ivory 17.4:1 · smoke on obsidian 5.0:1. Gold is not used for body text on ivory (2.0:1).', 'Small', 'text/muted', 1100));
+col.appendChild(await text('Contrast (WCAG AA): ivory on obsidian 17.1:1 · gold on obsidian 8.1:1 · obsidian on ivory 17.1:1 · smoke on obsidian 5.1:1. On ivory use smoke-dark #665D55 (5.6:1) and gold-dark #7D5E1F (5.3:1); never gold text on ivory (2.1:1).', 'Small', 'text/muted', 1100));
 
 // Typography
 const ty = await section('02 — Foundations', 'Typography');

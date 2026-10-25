@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Small Africa — Instagram Post (1080×1350)</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  .post { position: relative; width: 1080px; height: 1350px; padding: 56px; display: flex; flex-direction: column; }
+  .frame { position: absolute; inset: 28px; border: 1.5px solid rgba(201,162,75,.55); pointer-events: none; }
+  .top { display: flex; justify-content: space-between; align-items: center; padding: 0 8px 28px; }
+  .top img { width: 76px; height: 76px; }
+  .top .overline { color: var(--gold); font-size: 15px; }
+  .photo { flex: 1; border-radius: 4px; }
+  .photo::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(14,12,10,.85)); }
+  .tag { position: absolute; left: 36px; top: 36px; background: var(--terracotta); color: var(--ivory); padding: 10px 18px; border-radius: 999px; font-size: 14px; }
+  .copy { padding: 40px 8px 8px; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: 92px; line-height: .98; letter-spacing: -.5px; }
+  .sub { font-size: 24px; color: var(--sand); margin-top: 18px; }
+  .price { font-family: var(--sans); font-weight: 600; font-size: 34px; color: var(--gold); border: 1.5px solid var(--gold); border-radius: 999px; padding: 14px 28px; white-space: nowrap; }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding: 24px 8px 0; border-top: 1px solid rgba(201,162,75,.35); }
+  .foot .script { font-size: 34px; color: var(--gold-light); }
+  .foot .overline { font-size: 15px; color: var(--ivory); }
+</style>
+</head>
+<body>
+  <!-- Template: replace the headline, sub-line, price, kitchen tag and photo (set --photo on .photo and add .has-photo). -->
+  <article class="post grain">
+    <div class="frame"></div>
+    <header class="top">
+      <img src="../../logo/small-africa-mark-gold.svg" alt="Small Africa">
+      <span class="overline">Signature dish · Nigerian kitchen</span>
+    </header>
+    <div class="photo" role="img" aria-label="Dish photo">
+      <span class="tag overline">Nigerian</span>
+    </div>
+    <div class="copy">
+      <div>
+        <h1>Smoky Party<br>Jollof</h1>
+        <p class="sub">Firewood-smoked, with grilled chicken &amp; sweet plantain.</p>
+      </div>
+      <div class="price">₦18,500</div>
+    </div>
+    <footer class="foot">
+      <span class="script">Three kitchens. One table.</span>
+      <span class="overline">Reserve · smallafrica.ng</span>
+    </footer>
+  </article>
+</body>
+</html>

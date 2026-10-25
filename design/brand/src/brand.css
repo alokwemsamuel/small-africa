@@ -1,0 +1,40 @@
+/* Shared styles for printable/social brand assets. Fonts load from design/fonts (OFL). */
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 600; src: url('../../fonts/CormorantGaramond-SemiBold.ttf'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 600; font-style: italic; src: url('../../fonts/CormorantGaramond-SemiBoldItalic.ttf'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 700; src: url('../../fonts/CormorantGaramond-Bold.ttf'); }
+@font-face { font-family: 'Manrope'; font-weight: 400; src: url('../../fonts/Manrope-Regular.ttf'); }
+@font-face { font-family: 'Manrope'; font-weight: 500; src: url('../../fonts/Manrope-Medium.ttf'); }
+@font-face { font-family: 'Manrope'; font-weight: 600; src: url('../../fonts/Manrope-SemiBold.ttf'); }
+@font-face { font-family: 'Italiana'; font-weight: 400; src: url('../../fonts/Italiana-Regular.ttf'); }
+
+:root {
+  --obsidian: #0E0C0A; --ebony: #1A1612; --gold: #C9A24B; --gold-light: #E6C97A; --gold-dark: #7D5E1F;
+  --terracotta: #B4492F; --palm: #2E4A3B; --crimson: #A3243B;
+  --ivory: #F6EFE3; --sand: #E7D9C4; --smoke: #8A8178; --smoke-dark: #665D55;
+  --serif: 'Cormorant Garamond', Georgia, serif; --sans: 'Manrope', system-ui, sans-serif; --script: 'Italiana', serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: var(--sans); color: var(--ivory); background: var(--obsidian); }
+
+.serif { font-family: var(--serif); font-weight: 600; }
+.script { font-family: var(--script); }
+.overline { font-family: var(--sans); font-weight: 600; text-transform: uppercase; letter-spacing: .2em; font-size: 12px; }
+.rule { width: 64px; height: 1px; background: var(--gold); }
+.muted { color: var(--smoke); }
+
+/* Original geometric pattern (zigzag band + diamonds), echoing the crest's diamond ring. */
+.pattern { background-image: url('pattern.svg'); background-size: 96px 96px; }
+/* Grain overlay to soften flat fills. */
+.grain::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .07; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Photo slot: swap the placeholder by setting --photo: url('your-photo.webp') on the element. */
+.photo {
+  position: relative; overflow: hidden; background-color: #2a1c12;
+  background-image: var(--photo, url('plate.svg'), radial-gradient(circle at 50% 45%, #7a3a1c 0%, #3a2214 45%, #160f0b 100%));
+  background-size: var(--photo-size, 70% auto, cover); background-position: center; background-repeat: no-repeat;
+}
+.photo.has-photo { background-size: cover; }
