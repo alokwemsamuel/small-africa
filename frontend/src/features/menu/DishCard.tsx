@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/Badge';
 import { DietaryTags } from '@/components/ui/DietaryTags';
 import { Photo } from '@/components/ui/Photo';
 import { dishPhoto } from '@/content/photoKeys';
+import { env } from '@/lib/env';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
 import { KITCHEN_LABEL, quickAdd } from './actions';
@@ -29,6 +30,7 @@ export function DishCard({
       <Link to={`/menu/${dish.slug}`} className="relative block" tabIndex={-1} aria-hidden="true">
         <Photo
           name={dishPhoto(dish.slug)}
+          src={dish.imageUrl ? `${env.apiBase}${dish.imageUrl}` : null}
           alt=""
           sizes="(min-width: 1280px) 400px, (min-width: 640px) 50vw, 100vw"
           priority={priority}

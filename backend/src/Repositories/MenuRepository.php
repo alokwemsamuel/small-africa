@@ -120,7 +120,7 @@ final class MenuRepository
             'isFeatured' => (bool) $d['is_featured'],
             'isAvailable' => !$soldOut,
             'popularity' => (int) $d['popularity'],
-            'imageUrl' => $d['image_path'] ? '/uploads/' . $d['image_path'] : null,
+            'imageUrl' => $d['image_path'] ? '/media/' . $d['image_path'] : null, // relative to the API base
             'imageAlt' => $d['image_alt'] ?: $d['name'],
             'options' => ['portion' => $options['portion'] ?? [], 'addon' => $options['addon'] ?? []],
         ];

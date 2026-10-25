@@ -44,7 +44,7 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    cp .env.example .env          # set DB_PASSWORD
    php bin/generate-key.php      # paste the APP_KEY line into .env
    composer fresh                # migrate + seed (incl. demo members, orders and Interest Account history; never use --demo in production)
-   composer test                 # 110 tests
+   composer test                 # 124 tests
    ```
    Check it works: <http://localhost/SmallAfrica/backend/public/api/health>
 4. **Frontend**:
@@ -80,7 +80,7 @@ These exist for demos and testing only. Remove or change them before going live.
 - [x] **Phase 3 — Public site**: 3D hero (with poster and video fallbacks), menu with filters (incl. No pork), dish detail, basket, about, gallery, events, contact, FAQ, privacy (NDPA 2023), terms; Dark/Light/System appearance
 - [x] **Phase 4 — Reservations & ordering**: checkout (delivery/pickup, scheduling, coupons), Paystack + simulated payments, order tracking, reservations with live availability, account tabs
 - [x] **Phase 5 — Interest Account**: dining wallet with Paystack top-ups and bonus, monthly interest job, points, tiers, stamp card, streaks, birthday/anniversary/referral rewards, win-back and favourite-kitchen offers, notification centre, append-only ledgers
-- [ ] Phase 6 — Admin panel
+- [x] **Phase 6 — Admin panel**: role-based panel (Super Admin, Manager, front desk, kitchen) with dashboard and charts, orders and kitchen tickets, reservations and capacity, menu manager with secure photo uploads, customers and dine-in bills, Interest Account & Rewards manager, reviews, coupons, enquiries, staff, settings and audit log
 - [ ] Phase 7 — Demo mode, testing & hardening
 - [ ] Phase 8 — Deploy & deliver
 

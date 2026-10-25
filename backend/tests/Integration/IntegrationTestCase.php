@@ -38,7 +38,8 @@ abstract class IntegrationTestCase extends TestCase
             ->with('APP_BASE_PATH', '')
             ->with('FRONTEND_URL', 'http://localhost:5173')
             ->with('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')
-            ->with('PAYMENT_DRIVER', 'simulated');
+            ->with('PAYMENT_DRIVER', 'simulated')
+            ->with('DEMO_TOOLS', 'false');
         $this->c = App::container($config);
         $this->session = new ArraySession();
         $this->mailer = new LogMailer(null);

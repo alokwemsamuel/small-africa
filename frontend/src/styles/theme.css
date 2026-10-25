@@ -18,6 +18,7 @@
   --sa-accent-hover: #e6c97a; /* gold-light */
   --sa-accent-fill: #c9a24b; /* gold: button and pill backgrounds */
   --sa-accent-fill-hover: #e6c97a;
+  --sa-chart: #b48c3b; /* single-series chart marks: validated L band + 3:1 on surface-raised */
   --sa-on-accent: #0e0c0a; /* text on accent-fill */
   --sa-danger: #e0806a;
   --sa-success: #8fc3a0;
@@ -41,6 +42,7 @@
   --sa-accent-hover: #5e4615;
   --sa-accent-fill: #c9a24b; /* gold buttons keep obsidian text (8.1:1) */
   --sa-accent-fill-hover: #b8913e;
+  --sa-chart: #a8812f;
   --sa-on-accent: #0e0c0a;
   --sa-danger: #a63a24;
   --sa-success: #2e4a3b; /* palm */

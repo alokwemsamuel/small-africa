@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { RequireAuth } from './features/auth/RequireAuth';
@@ -52,7 +52,7 @@ const ManageReservationPage = page(
 const RewardsPage = page(() => import('./features/rewards/RewardsPage'), 'RewardsPage');
 const RewardsTermsPage = page(() => import('./pages/legal/RewardsTermsPage'), 'RewardsTermsPage');
 const AccountPage = page(() => import('./features/account/AccountPage'), 'AccountPage');
-const AdminHomePage = page(() => import('./pages/AdminHomePage'), 'AdminHomePage');
+const AdminApp = page(() => import('./features/admin/AdminApp'), 'AdminApp');
 
 const devRoutes: RouteObject[] = import.meta.env.DEV
   ? [{ path: '__hero-capture', Component: lazy(() => import('./features/home/hero/HeroCapture')) }]
@@ -89,20 +89,23 @@ export const routes: RouteObject[] = [
           </RequireAuth>
         ),
       },
-      {
-        path: 'admin/*',
-        element: (
-          <RequireAuth roles={STAFF_ROLES}>
-            <AdminHomePage />
-          </RequireAuth>
-        ),
-      },
       { path: 'reservations', element: <ReservationsPage /> },
       { path: 'reservations/:code', element: <ManageReservationPage /> },
       { path: 'rewards', element: <RewardsPage /> },
       { path: 'rewards-terms', element: <RewardsTermsPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
+  },
+  {
+    // The admin panel has its own layout (no public header, footer or smooth scroll).
+    path: 'admin/*',
+    element: (
+      <RequireAuth roles={STAFF_ROLES}>
+        <Suspense fallback={null}>
+          <AdminApp />
+        </Suspense>
+      </RequireAuth>
+    ),
   },
   ...devRoutes,
 ];

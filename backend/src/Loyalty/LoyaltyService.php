@@ -303,14 +303,51 @@ final class LoyaltyService
         $this->recalculateTier($userId, false);
     }
 
-    /** Sum of food spend on completed orders over the last 12 months (decides the tier). */
+    /** Food spend on completed orders and recorded dine-in bills over the last 12 months (decides the tier). */
     public function spend12m(int $userId): int
     {
+        $since = $this->clock->sql($this->clock->now()->modify('-12 months'));
         return (int) $this->db->scalar(
             "SELECT COALESCE(SUM(subtotal_kobo - discount_kobo - voucher_discount_kobo), 0) FROM orders
              WHERE user_id = ? AND payment_status = 'paid' AND status IN ('delivered', 'completed') AND placed_at >= ?",
-            [$userId, $this->clock->sql($this->clock->now()->modify('-12 months'))],
+            [$userId, $since],
+        ) + (int) $this->db->scalar('SELECT COALESCE(SUM(amount_kobo), 0) FROM dine_in_visits WHERE user_id = ? AND visited_at >= ?', [$userId, $since]);
+    }
+
+    /**
+     * A dine-in bill recorded by the front desk: points, a stamp, streak and tier, like an order.
+     *
+     * @return array{reference: string, points: int}
+     */
+    public function recordVisit(int $userId, int $amountKobo, int $actorId, ?string $note = null): array
+    {
+        if (!$this->db->scalar("SELECT 1 FROM users WHERE id = ? AND role = 'customer' AND is_active = 1", [$userId])) {
+            throw HttpError::notFound('We couldn’t find that member.');
+        }
+        if ($amountKobo < 100000 || $amountKobo > 500000000) {
+            throw ValidationError::field('amount_naira', 'Enter the bill amount (₦1,000 to ₦5,000,000).');
+        }
+        // Guard against recording the same bill twice by accident.
+        $recent = $this->db->scalar(
+            'SELECT 1 FROM dine_in_visits WHERE user_id = ? AND amount_kobo = ? AND visited_at >= ?',
+            [$userId, $amountKobo, $this->clock->sql($this->clock->now()->modify('-10 minutes'))],
         );
+        if ($recent) {
+            throw HttpError::conflict('That bill was already recorded a moment ago.');
+        }
+        do {
+            $reference = Crypto::code(6, 'DINE-');
+        } while ($this->db->scalar('SELECT 1 FROM dine_in_visits WHERE reference = ?', [$reference]));
+        $now = $this->clock->now();
+        $id = $this->db->insert('dine_in_visits', [
+            'reference' => $reference, 'user_id' => $userId, 'amount_kobo' => $amountKobo, 'note' => $note,
+            'recorded_by_user_id' => $actorId, 'visited_at' => $this->clock->sql($now), 'created_at' => $this->clock->sql($now),
+        ]);
+        $this->recordSpend($userId, $reference, [['amountKobo' => $amountKobo, 'featured' => false]], $now);
+        $points = (int) $this->db->scalar('SELECT points FROM points_ledger WHERE idempotency_key = ?', ["earn:{$reference}"]);
+        $this->db->run('UPDATE dine_in_visits SET points_earned = ? WHERE id = ?', [$points, $id]);
+        $this->audit->record($actorId, 'loyalty.visit_recorded', 'user', $userId, ['reference' => $reference, 'amount_kobo' => $amountKobo]);
+        return ['reference' => $reference, 'points' => $points];
     }
 
     /**

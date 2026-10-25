@@ -9,7 +9,20 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountDataController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Admin\AuditController;
+use App\Http\Controllers\Admin\ContentController;
+use App\Http\Controllers\Admin\CustomersController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LoyaltyAdminController;
+use App\Http\Controllers\Admin\MenuController as AdminMenuController;
+use App\Http\Controllers\Admin\OrdersController as AdminOrdersController;
+use App\Http\Controllers\Admin\ReservationsController as AdminReservationsController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\LoyaltyController;
+use App\Http\Controllers\MediaController;
+use App\Http\Middleware\RequirePermission;
+use App\Media\ImageUploads;
 use App\Loyalty\InterestService;
 use App\Loyalty\Ledger;
 use App\Loyalty\LoyaltyJobs;
@@ -147,6 +160,22 @@ final class App
             $c->get(Ledger::class), $c->get(Notifier::class), $c->get(Clock::class), $c->get(Logger::class), $frontend,
         ));
         $c->set(LoyaltyController::class, fn (Container $c) => new LoyaltyController($c->get(LoyaltyService::class), $c->get(WalletService::class), $c->get(Database::class)));
+        $c->set(ImageUploads::class, fn () => new ImageUploads($root . '/storage/uploads'));
+        $c->set(MediaController::class, fn (Container $c) => new MediaController($c->get(ImageUploads::class)));
+        $c->set(DashboardController::class, fn (Container $c) => new DashboardController($c->get(Database::class), $c->get(Clock::class), $c->get(Config::class)));
+        $c->set(AdminOrdersController::class, fn (Container $c) => new AdminOrdersController($c->get(Database::class), $c->get(OrderService::class), $c->get(AuditLogger::class)));
+        $c->set(AdminReservationsController::class, fn (Container $c) => new AdminReservationsController(
+            $c->get(Database::class), $c->get(ReservationService::class), $c->get(AuditLogger::class), $c->get(Clock::class),
+        ));
+        $c->set(AdminMenuController::class, fn (Container $c) => new AdminMenuController($c->get(Database::class), $c->get(ImageUploads::class), $c->get(AuditLogger::class), $c->get(Clock::class)));
+        $c->set(CustomersController::class, fn (Container $c) => new CustomersController($c->get(Database::class), $c->get(LoyaltyService::class)));
+        $c->set(LoyaltyAdminController::class, fn (Container $c) => new LoyaltyAdminController(
+            $c->get(Database::class), $c->get(Settings::class), $c->get(InterestService::class), $c->get(AuditLogger::class), $c->get(Clock::class), $c->get(Config::class),
+        ));
+        $c->set(SettingsController::class, fn (Container $c) => new SettingsController($c->get(Database::class), $c->get(Settings::class), $c->get(AuditLogger::class)));
+        $c->set(ContentController::class, fn (Container $c) => new ContentController($c->get(Database::class), $c->get(AuditLogger::class), $c->get(Clock::class)));
+        $c->set(StaffController::class, fn (Container $c) => new StaffController($c->get(Database::class), $c->get(UserRepository::class), $c->get(AuthService::class), $c->get(AuditLogger::class)));
+        $c->set(AuditController::class, fn (Container $c) => new AuditController($c->get(Database::class)));
         $c->set(ReservationService::class, fn (Container $c) => new ReservationService(
             $c->get(Database::class), $c->get(Settings::class), $c->get(RateLimiter::class), $c->get(Mailer::class),
             $c->get(EmailTemplates::class), $c->get(AuditLogger::class), $c->get(Crypto::class), $c->get(Clock::class),
@@ -215,6 +244,7 @@ final class App
             $api->post('/payments/paystack/webhook', [CheckoutController::class, 'webhook']);
             $api->post('/payments/simulate', [CheckoutController::class, 'simulate']);
             $api->get('/rewards', [LoyaltyController::class, 'catalog']);
+            $api->get('/media/dishes/{file:[a-z0-9-]+\.webp}', [MediaController::class, 'dish']);
 
             $api->get('/reservations/availability', [ReservationController::class, 'availability']);
             $api->post('/reservations', [ReservationController::class, 'create']);
@@ -233,6 +263,76 @@ final class App
                 $auth->post('/verify-email', [AuthController::class, 'verifyEmail']);
                 $auth->post('/resend-verification', [AuthController::class, 'resendVerification'])->add(RequireRole::signedIn());
             });
+
+            // Admin panel: every route checks its own permission on the server (see Permissions::MAP).
+            $api->group('/admin', function (RouteCollectorProxy $a): void {
+                $p = static fn (string $permission) => new RequirePermission($permission);
+                $a->get('/me', [DashboardController::class, 'me']);
+                $a->get('/dashboard', [DashboardController::class, 'show'])->add($p('dashboard.view'));
+
+                $a->get('/orders', [AdminOrdersController::class, 'index'])->add($p('orders.view'));
+                $a->get('/orders/{reference}', [AdminOrdersController::class, 'show'])->add($p('orders.view'));
+                $a->post('/orders/{reference}/status', [AdminOrdersController::class, 'updateStatus'])->add($p('orders.status'));
+                $a->post('/orders/{reference}/refund-flag', [AdminOrdersController::class, 'refundFlag'])->add($p('orders.refund'));
+
+                $a->get('/reservations', [AdminReservationsController::class, 'index'])->add($p('reservations.manage'));
+                $a->patch('/reservations/{code}', [AdminReservationsController::class, 'update'])->add($p('reservations.manage'));
+                $a->get('/capacity', [AdminReservationsController::class, 'capacity'])->add($p('reservations.manage'));
+                $a->put('/capacity', [AdminReservationsController::class, 'setCapacity'])->add($p('reservations.capacity'));
+                $a->delete('/capacity/{id:[0-9]+}', [AdminReservationsController::class, 'clearCapacity'])->add($p('reservations.capacity'));
+
+                $a->get('/menu', [AdminMenuController::class, 'index'])->add($p('menu.availability'));
+                $a->post('/dishes', [AdminMenuController::class, 'create'])->add($p('menu.manage'));
+                $a->patch('/dishes/{id:[0-9]+}', [AdminMenuController::class, 'update'])->add($p('menu.manage'));
+                $a->delete('/dishes/{id:[0-9]+}', [AdminMenuController::class, 'delete'])->add($p('menu.manage'));
+                $a->post('/dishes/{id:[0-9]+}/availability', [AdminMenuController::class, 'availability'])->add($p('menu.availability'));
+                $a->post('/dishes/{id:[0-9]+}/image', [AdminMenuController::class, 'image'])->add($p('menu.manage'));
+                $a->delete('/dishes/{id:[0-9]+}/image', [AdminMenuController::class, 'removeImage'])->add($p('menu.manage'));
+                $a->post('/categories', [AdminMenuController::class, 'saveCategory'])->add($p('menu.manage'));
+                $a->patch('/categories/{id:[0-9]+}', [AdminMenuController::class, 'saveCategory'])->add($p('menu.manage'));
+                $a->patch('/kitchens/{id:[0-9]+}', [AdminMenuController::class, 'saveKitchen'])->add($p('menu.manage'));
+
+                $a->get('/customers', [CustomersController::class, 'index'])->add($p('customers.view'));
+                $a->get('/customers/{id:[0-9]+}', [CustomersController::class, 'show'])->add($p('customers.view'));
+                $a->get('/customers/{id:[0-9]+}/history', [CustomersController::class, 'history'])->add($p('customers.view'));
+                $a->post('/customers/{id:[0-9]+}/visits', [CustomersController::class, 'recordVisit'])->add($p('customers.visits'));
+                $a->post('/customers/{id:[0-9]+}/adjust', [CustomersController::class, 'adjust'])->add($p('loyalty.adjust'));
+
+                $a->get('/loyalty/settings', [LoyaltyAdminController::class, 'settings'])->add($p('loyalty.manage'));
+                $a->put('/loyalty/settings', [LoyaltyAdminController::class, 'saveSettings'])->add($p('loyalty.manage'));
+                $a->post('/loyalty/rewards', [LoyaltyAdminController::class, 'saveReward'])->add($p('loyalty.manage'));
+                $a->patch('/loyalty/rewards/{id:[0-9]+}', [LoyaltyAdminController::class, 'saveReward'])->add($p('loyalty.manage'));
+                $a->get('/loyalty/analytics', [LoyaltyAdminController::class, 'analytics'])->add($p('loyalty.manage'));
+                $a->get('/loyalty/ledger', [LoyaltyAdminController::class, 'ledger'])->add($p('loyalty.manage'));
+                $a->post('/loyalty/interest-runs', [LoyaltyAdminController::class, 'runInterest'])->add($p('loyalty.interest'));
+                $a->post('/loyalty/interest-runs/simulate', [LoyaltyAdminController::class, 'simulateInterest'])->add($p('loyalty.interest'));
+
+                $a->get('/reviews', [ContentController::class, 'reviews'])->add($p('reviews.moderate'));
+                $a->patch('/reviews/{id:[0-9]+}', [ContentController::class, 'moderateReview'])->add($p('reviews.moderate'));
+                $a->get('/coupons', [ContentController::class, 'coupons'])->add($p('coupons.manage'));
+                $a->post('/coupons', [ContentController::class, 'saveCoupon'])->add($p('coupons.manage'));
+                $a->patch('/coupons/{id:[0-9]+}', [ContentController::class, 'saveCoupon'])->add($p('coupons.manage'));
+                $a->post('/coupons/{id:[0-9]+}/expire', [ContentController::class, 'expireCoupon'])->add($p('coupons.manage'));
+                $a->get('/enquiries', [ContentController::class, 'enquiries'])->add($p('enquiries.manage'));
+                $a->patch('/enquiries/{id:[0-9]+}', [ContentController::class, 'updateEnquiry'])->add($p('enquiries.manage'));
+                $a->get('/messages', [ContentController::class, 'messages'])->add($p('enquiries.manage'));
+                $a->patch('/messages/{id:[0-9]+}', [ContentController::class, 'updateMessage'])->add($p('enquiries.manage'));
+
+                $a->get('/staff', [StaffController::class, 'index'])->add($p('staff.manage'));
+                $a->post('/staff', [StaffController::class, 'create'])->add($p('staff.manage'));
+                $a->patch('/staff/{id:[0-9]+}', [StaffController::class, 'update'])->add($p('staff.manage'));
+                $a->post('/staff/{id:[0-9]+}/reset-2fa', [StaffController::class, 'resetTwoFactor'])->add($p('staff.manage'));
+                $a->post('/staff/{id:[0-9]+}/invite', [StaffController::class, 'resendInvite'])->add($p('staff.manage'));
+
+                $a->get('/settings', [SettingsController::class, 'index'])->add($p('settings.manage'));
+                $a->put('/settings/hours', [SettingsController::class, 'saveHours'])->add($p('settings.manage'));
+                $a->post('/settings/zones', [SettingsController::class, 'saveZone'])->add($p('settings.manage'));
+                $a->patch('/settings/zones/{id:[0-9]+}', [SettingsController::class, 'saveZone'])->add($p('settings.manage'));
+                $a->patch('/settings/seating/{id:[0-9]+}', [SettingsController::class, 'saveSeating'])->add($p('settings.manage'));
+                $a->put('/settings/{group:restaurant|pricing|ordering|reservations}', [SettingsController::class, 'saveGroup'])->add($p('settings.manage'));
+
+                $a->get('/audit', [AuditController::class, 'index'])->add($p('audit.view'));
+            })->add(RequireRole::staff());
 
             $api->group('/account', function (RouteCollectorProxy $account): void {
                 $account->patch('/profile', [AccountController::class, 'updateProfile']);

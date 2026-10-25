@@ -43,6 +43,20 @@ final class EmailTemplates
     }
 
     /** @return array{subject: string, html: string, text: string} */
+    public function staffInvite(string $firstName, string $inviterName, string $roleLabel, string $token): array
+    {
+        $url = $this->frontendUrl . '/reset-password?token=' . rawurlencode($token);
+        return $this->render(
+            'You’re invited to the Small Africa admin',
+            'Welcome to the team, ' . $firstName,
+            "{$inviterName} has given you {$roleLabel} access to the Small Africa admin panel. Choose your password to get started.",
+            'Choose my password',
+            $url,
+            'This link expires in 72 hours and can be used once. Managers should turn on two-factor sign-in from their account page.',
+        );
+    }
+
+    /** @return array{subject: string, html: string, text: string} */
     public function passwordChanged(string $firstName): array
     {
         return $this->render(

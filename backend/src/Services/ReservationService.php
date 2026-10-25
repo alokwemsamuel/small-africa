@@ -181,6 +181,78 @@ final class ReservationService
         return $this->toPublic($row);
     }
 
+    /** Status moves the front desk may make. */
+    public const STAFF_TRANSITIONS = [
+        'pending' => ['confirmed', 'cancelled'],
+        'confirmed' => ['seated', 'cancelled', 'no_show'],
+        'seated' => ['completed'],
+        'completed' => [],
+        'cancelled' => ['confirmed'],
+        'no_show' => ['confirmed'],
+    ];
+
+    /**
+     * Front-desk changes: status, table, seating area. Moving to another area re-checks capacity.
+     *
+     * @param array{status?: ?string, table_label?: ?string, area?: ?string, reason?: ?string} $data
+     * @return array<string, mixed> the updated row
+     */
+    public function staffUpdate(string $code, array $data, int $actorId): array
+    {
+        $changes = $this->db->transaction(function () use ($code, $data): array {
+            $row = $this->db->one('SELECT * FROM reservations WHERE code = ? FOR UPDATE', [strtoupper($code)]);
+            if (!$row) {
+                throw HttpError::notFound('We couldn’t find that booking.');
+            }
+            $set = [];
+            if (!empty($data['status']) && $data['status'] !== $row['status']) {
+                if (!in_array($data['status'], self::STAFF_TRANSITIONS[$row['status']] ?? [], true)) {
+                    throw HttpError::conflict("A booking that is {$row['status']} can’t become {$data['status']}.");
+                }
+                $set['status'] = $data['status'];
+                if ($data['status'] === 'cancelled') {
+                    $set['cancelled_reason'] = $data['reason'] ?? 'Cancelled by the restaurant';
+                }
+            }
+            if (array_key_exists('table_label', $data)) {
+                $set['table_label'] = $data['table_label'];
+            }
+            if (!empty($data['area'])) {
+                $area = $this->db->one('SELECT * FROM seating_areas WHERE slug = ? AND is_active = 1', [$data['area']]);
+                if (!$area) {
+                    throw HttpError::badRequest('Unknown seating area.');
+                }
+                if ((int) $area['id'] !== (int) $row['seating_area_id']) {
+                    $time = substr((string) $row['start_time'], 0, 5);
+                    $booked = (int) $this->db->scalar(
+                        "SELECT COALESCE(SUM(party_size), 0) FROM reservations WHERE seating_area_id = ? AND service_date = ? AND start_time = ?
+                         AND status IN ('pending', 'confirmed', 'seated') FOR UPDATE",
+                        [$area['id'], $row['service_date'], $row['start_time']],
+                    );
+                    if ($booked + (int) $row['party_size'] > $this->capacity((int) $area['id'], (string) $row['service_date'], $time, (int) $area['covers_per_slot'])) {
+                        throw HttpError::conflict("{$area['name']} is full at that time.", 'slot_taken');
+                    }
+                    $set['seating_area_id'] = (int) $area['id'];
+                }
+            }
+            if ($set) {
+                $this->db->run(
+                    'UPDATE reservations SET ' . implode(', ', array_map(static fn ($c) => "{$c} = ?", array_keys($set))) . ' WHERE id = ?',
+                    [...array_values($set), $row['id']],
+                );
+            }
+            return ['before' => $row, 'set' => $set];
+        });
+        $row = $this->db->one('SELECT * FROM reservations WHERE id = ?', [$changes['before']['id']]) ?? [];
+        if ($changes['set']) {
+            $this->audit->record($actorId, 'reservation.updated', 'reservation', $row['code'], $changes['set']);
+        }
+        if (($changes['set']['status'] ?? null) === 'cancelled') {
+            $this->deliver($row, $this->emails->reservationCancelled($row));
+        }
+        return $row;
+    }
+
     /** @return list<array<string, mixed>> */
     public function listForUser(int $userId, string $email): array
     {

@@ -34,10 +34,33 @@ Code: `Security/NativeSession.php`, `Security/Csrf.php`, `Http/Middleware/Verify
 
 Roles: **Super Admin**, **Manager**, **Staff** (kitchen / front desk), **Customer**.
 
-- Every protected endpoint is guarded **on the server** by `RequireRole` middleware. Hiding buttons in the UI is a convenience, never the security boundary.
+- Every protected endpoint is guarded **on the server**: `RequireRole` for account areas, and for the admin panel a named permission per route (`RequirePermission`, map in `App\Security\Permissions`). Hiding menu items in the UI is a convenience, never the security boundary; every role/route combination is tested.
+
+  | Area | Super Admin | Manager | Front desk | Kitchen |
+  |---|:-:|:-:|:-:|:-:|
+  | Dashboard, orders (view, move along) | ✓ | ✓ | ✓ | ✓ (kitchen stages only) |
+  | Cancel orders, flag refunds | ✓ | ✓ | | |
+  | Reservations | ✓ | ✓ | ✓ | |
+  | Capacity overrides | ✓ | ✓ | | |
+  | Sold-out / on-menu switches | ✓ | ✓ | | ✓ |
+  | Menu editing, photos | ✓ | ✓ | | |
+  | Customers, dine-in bills | ✓ | ✓ | ✓ | |
+  | Interest Account rules, rewards, ledger, analytics | ✓ | ✓ | | |
+  | **Balance adjustments, interest runs** | ✓ | | | |
+  | Reviews, coupons, settings, audit log | ✓ | ✓ | | |
+  | Enquiries and messages | ✓ | ✓ | ✓ | |
+  | **Staff & roles** | ✓ | | | |
+
+- Staff safeguards: nobody can change their own role or suspend themselves; the last active Super Admin can't be removed; changing a role or suspending signs the person out everywhere (session version bump). New staff get a single-use 72-hour link to set their own password; nobody ever sees or sends a password.
 - Responses never include password hashes, 2FA secrets or lockout counters (`UserRepository::toPublic`).
-- Inputs are whitelisted: unexpected fields such as `role` in a profile update are dropped (tested).
-- Wallet/points adjustments will require **Super Admin + a written reason**, and are audit-logged *(Phase 6)*.
+- Inputs are whitelisted: unexpected fields such as `role` in a profile update are dropped (tested). Admin forms validate every field server-side (e.g. the whole Interest Account rule set, opening hours, coupon limits).
+- Wallet/points adjustments require **Super Admin + a written reason**; the ledger row records who made it and the audit log records why (tested).
+- The demo-only "Simulate month-end interest" endpoint answers 404 unless `DEMO_TOOLS=true`, and never in production.
+
+### Image uploads (menu manager)
+
+- 5 MB limit; the real type is detected from the bytes (`finfo`), not the browser's claim; only JPEG/PNG/WebP between 400×300 and 8000×8000 pixels.
+- Every upload is decoded and **re-encoded to WebP with GD** (drops EXIF/GPS metadata and anything hidden in the file), saved **outside the web root** (`backend/storage/uploads`) under a random name, and served only by `GET /api/media/dishes/<slug>-<hex>.webp` with `Content-Type: image/webp`, `nosniff` and a `default-src 'none'` CSP. Path traversal is impossible: the route accepts nothing else (tested). Replaced photos are deleted.
 
 ## 4. Input handling & injection
 
@@ -45,7 +68,7 @@ Roles: **Super Admin**, **Manager**, **Staff** (kitchen / front desk), **Custome
 - **Validation**: every endpoint validates server-side (`Support/Validator.php`) and returns only declared fields; the frontend mirrors rules with Zod.
 - **XSS**: React escapes all output by default; no `dangerouslySetInnerHTML` with user content. Emails escape every dynamic value. The API itself serves JSON with `Content-Security-Policy: default-src 'none'` and `nosniff`.
 - **Request size**: JSON bodies over 1 MB are rejected (413).
-- **Uploads** *(Phase 6)*: type and size checks, images re-encoded with GD (strips scripts/metadata), random filenames, stored outside executable paths.
+- **Uploads**: type and size checks, images re-encoded with GD (strips scripts/metadata), random filenames, stored outside the web root (see "Image uploads" above).
 
 ## 5. Transport & HTTP headers
 
@@ -117,12 +140,12 @@ Exceeding a limit returns `429` with a `Retry-After` header and a friendly messa
 - **Monthly interest** is paid on the lowest balance held through the month. A run must first claim its month (`interest_runs.period` is unique; a completed month is refused), and each credit carries the key `interest:{month}:{member}`, so a crashed run can be re-run safely and a month can never be paid twice (tested).
 - **Checkout with dining credit**: the credit is debited when the order is created (under the account lock) and returned automatically if the order is cancelled or expires unpaid. Reward vouchers are claimed with a conditional update, so one voucher can't be used on two orders.
 - **Referrals** pay only after the friend's first completed order and email verification, and are rejected for self-referral, the referrer's phone number, a phone or device already rewarded (keyed hash of a random browser id, never the id itself) and above a monthly limit. Redemptions are rate-limited (10/hour).
-- Manual credit/debit adjustments require a reason and are audit-logged with the admin's id *(admin screen in Phase 6)*.
+- Manual credit/debit adjustments require a reason and are audit-logged with the admin's id (Admin → Customers).
 - Wallet and interest are **dining credit only**: not cash, not withdrawable or transferable (stated in the Rewards Terms).
 
 ## 9. Audit trail
 
-`audit_logs` records who did what, when, from which IP: sign-ins, lockouts, 2FA changes, password changes, profile edits, and (Phase 6) every admin action. The table is append-only at the database level.
+`audit_logs` records who did what, when, from which IP: sign-ins, lockouts, 2FA changes, password changes, profile edits, and every admin action (Admin → Audit log). The table is append-only at the database level.
 
 ## 10. Errors & logging
 
@@ -142,14 +165,14 @@ Exceeding a limit returns `429` with a `Retry-After` header and a friendly messa
 - **Lawful basis & consent**: marketing emails are strictly opt-in (unchecked by default) and can be withdrawn at any time.
 - **Data minimisation**: we collect only what's needed to serve guests (name, contact, delivery address, optional birthday for rewards).
 - **Security of processing**: the measures above (encryption in transit, hashing, access control, audit logs).
-- **Data subject rights**: guests can view and update their profile; export and deletion requests are handled by the Super Admin *(tooling in Phase 6)*.
+- **Data subject rights**: guests can view and update their profile; export and deletion requests are handled by the Super Admin on request (a manual process; the steps will be in the operations guide).
 - **Retention**: rate-limit and session data expire automatically; audit logs are retained for accountability.
 - The Privacy Policy *(Phase 3)* explains all of this in plain language.
 
 ## 13. Testing
 
-- **Backend (PHPUnit, 110 tests)**: Interest Account rules (interest, caps and rounding, top-up bonus, tiers, points multipliers, stamps, streaks, expiry, birthday week, referral anti-abuse); top-ups credited once, interest paid once, dining-credit holds returned on expiry, vouchers single-use, referral device checks; payment retries with fresh references; TOTP against RFC 6238 vectors; password policy; validator mass-assignment protection; encryption tamper detection; registration, lockout, enumeration resistance, rate limits, reset flow signing out sessions, 2FA enrolment and login, append-only ledgers; HTTP security headers on success and error responses, CSRF, Origin checks, CORS, RBAC.
-- **Frontend (Vitest, 113 tests)**: checkout sends identifiers only (never prices) with an idempotency key, dining-credit checkout, top-up and redemption flows; password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard, WCAG AA contrast of every theme token pair, theme persistence and the no-flash bootstrap, menu filters (incl. No pork), cart storage holding no secrets.
+- **Backend (PHPUnit, 124 tests)**: admin RBAC for every role (customer, kitchen, front desk, manager, Super Admin), order moves by position, menu edits audited, image upload validation and re-encoding, rules validation, adjustments, dine-in bills, capacity, staff safeguards; Interest Account rules (interest, caps and rounding, top-up bonus, tiers, points multipliers, stamps, streaks, expiry, birthday week, referral anti-abuse); top-ups credited once, interest paid once, dining-credit holds returned on expiry, vouchers single-use, referral device checks; payment retries with fresh references; TOTP against RFC 6238 vectors; password policy; validator mass-assignment protection; encryption tamper detection; registration, lockout, enumeration resistance, rate limits, reset flow signing out sessions, 2FA enrolment and login, append-only ledgers; HTTP security headers on success and error responses, CSRF, Origin checks, CORS, RBAC.
+- **Frontend (Vitest, 119 tests)**: admin navigation per role, dashboard figures and chart table views, kitchen order flow; checkout sends identifiers only (never prices) with an idempotency key, dining-credit checkout, top-up and redemption flows; password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard, WCAG AA contrast of every theme token pair, theme persistence and the no-flash bootstrap, menu filters (incl. No pork), cart storage holding no secrets.
 - `composer audit` and `npm audit` are run before each commit; high and critical issues are fixed.
 
 ## 14. Backups *(see DEPLOYMENT.md)*

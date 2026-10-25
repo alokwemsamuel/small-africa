@@ -17,6 +17,7 @@
   --color-accent-hover: var(--sa-accent-hover);
   --color-accent-fill: var(--sa-accent-fill);
   --color-accent-fill-hover: var(--sa-accent-fill-hover);
+  --color-chart: var(--sa-chart);
   --color-on-accent: var(--sa-on-accent);
   --color-danger: var(--sa-danger);
   --color-success: var(--sa-success);
@@ -120,5 +121,15 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Printing (kitchen tickets, the menu): plain white paper, small margins. */
+@media print {
+  @page {
+    margin: 4mm;
+  }
+  body {
+    background: #fff !important;
   }
 }

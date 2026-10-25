@@ -22,6 +22,8 @@ type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export interface RequestOptions {
   method?: Method;
   body?: unknown;
+  /** Multipart upload (e.g. an image); sent instead of a JSON body. */
+  formData?: FormData;
   signal?: AbortSignal;
   idempotencyKey?: string;
 }
@@ -53,7 +55,8 @@ async function request<T>(path: string, options: RequestOptions, retried: boolea
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (method !== 'GET') {
     headers['X-CSRF-Token'] = csrfToken ?? (await fetchCsrfToken());
-    headers['Content-Type'] = 'application/json';
+    // The browser sets the multipart boundary itself for FormData.
+    if (!options.formData) headers['Content-Type'] = 'application/json';
   }
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
 
@@ -63,7 +66,7 @@ async function request<T>(path: string, options: RequestOptions, retried: boolea
       method,
       headers,
       credentials: 'include',
-      body: method === 'GET' ? undefined : JSON.stringify(options.body ?? {}),
+      body: method === 'GET' ? undefined : (options.formData ?? JSON.stringify(options.body ?? {})),
       signal: options.signal,
     });
   } catch (e) {

@@ -30,8 +30,10 @@ Everything that must be confirmed or switched before Small Africa takes real ord
 - [ ] Demo accounts removed or given new passwords; demo data never seeded in production (`--demo` is refused when `APP_ENV=production`).
 - [ ] Super Admin and Manager accounts use strong passwords and two-factor authentication.
 - [ ] `APP_KEY` generated for production and backed up securely (it encrypts 2FA secrets).
-- [ ] SMTP email configured (`MAIL_DRIVER=smtp`) and a test email received.
-- [ ] Database backups scheduled and one restore tested.
+- [ ] SMTP email configured (`MAIL_DRIVER=smtp`) and a test email received (staff invitations, receipts and interest emails depend on it).
+- [ ] Database backups scheduled and one restore tested; `backend/storage/uploads` (menu photos) included in the backups.
+- [ ] `DEMO_TOOLS=false` (the "Simulate month-end interest" button is refused in production anyway).
+- [ ] Real staff invited from Admin → Staff & roles; demo staff accounts suspended.
 
 ## Security and quality
 

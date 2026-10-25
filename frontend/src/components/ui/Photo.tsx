@@ -25,15 +25,41 @@ interface PhotoProps {
   /** Shown when no photo exists for `name`: an elegant illustrated placeholder in kitchen colours. */
   fallbackKitchen?: string | null;
   fallbackLabel?: string;
+  /** An uploaded photo (admin menu manager) that replaces the stock one. */
+  src?: string | null;
 }
 
 /**
  * Responsive AVIF/WebP image from frontend/public/img with a blurred placeholder,
  * explicit aspect ratio (no layout shift) and lazy loading.
  */
-export function Photo({ name, alt, sizes, className, priority, fallbackKitchen, fallbackLabel }: PhotoProps) {
+export function Photo({
+  name,
+  alt,
+  sizes,
+  className,
+  priority,
+  fallbackKitchen,
+  fallbackLabel,
+  src,
+}: PhotoProps) {
   const photo = PHOTOS[name];
   const [loaded, setLoaded] = useState(false);
+
+  if (src) {
+    return (
+      <div className={cn(position(className), 'bg-surface-inset overflow-hidden', className)}>
+        <img
+          src={src}
+          alt={alt ?? ''}
+          sizes={sizes}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          className="relative size-full object-cover"
+        />
+      </div>
+    );
+  }
 
   if (!photo) {
     const art = KITCHEN_ART[fallbackKitchen ?? 'bar'] ?? KITCHEN_ART.bar!;

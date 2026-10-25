@@ -212,6 +212,23 @@ final class AuthService
         $this->audit->record((int) $user['id'], 'auth.password_reset_requested', 'user', $user['id']);
     }
 
+    /**
+     * Invites a new or re-activated staff member to choose their password (link valid 72 hours,
+     * single use; it uses the password-reset mechanism).
+     */
+    public function inviteStaff(int $userId, string $inviterName, string $roleLabel): void
+    {
+        $user = $this->users->find($userId) ?? throw HttpError::notFound();
+        $token = Crypto::token();
+        $this->db->run('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL', [$this->clock->sql(), $userId]);
+        $this->db->insert('password_resets', [
+            'user_id' => $userId,
+            'token_hash' => Crypto::hashToken($token),
+            'expires_at' => $this->clock->sql($this->clock->now()->modify('+72 hours')),
+        ]);
+        $this->deliver($user, $this->emails->staffInvite($user['first_name'], $inviterName, $roleLabel, $token));
+    }
+
     public function resetPassword(string $token, string $password, string $ip): void
     {
         $this->limiter->hit("reset-complete:ip:{$ip}", 10, 900);
