@@ -8,7 +8,9 @@ Every external asset used in Small Africa is listed here with its source and lic
 |---|---|---|---|
 | Cormorant Garamond (SemiBold) | https://fonts.google.com/specimen/Cormorant+Garamond | OFL 1.1 | Headings, logo lettering (`design/fonts/`) |
 | Manrope (Medium, SemiBold) | https://fonts.google.com/specimen/Manrope | OFL 1.1 | Body/UI, logo tagline (`design/fonts/`) |
-| Italiana | https://fonts.google.com/specimen/Italiana | OFL 1.1 | Accent script (web only, via Google Fonts) |
+| Italiana | https://fonts.google.com/specimen/Italiana | OFL 1.1 | Accent script |
+
+On the website the fonts are self-hosted from the `@fontsource/cormorant-garamond`, `@fontsource-variable/manrope` and `@fontsource/italiana` npm packages (package code MIT, fonts OFL 1.1). Self-hosting avoids a third-party request to Google.
 
 ## Original artwork (created for this project)
 
@@ -19,4 +21,4 @@ Every external asset used in Small Africa is listed here with its source and lic
 
 ## Code libraries
 
-Listed in `frontend/package.json` and `backend/composer.json` as they are added (MIT/Apache/BSD/OFL only).
+All open-source under MIT, Apache-2.0, BSD or ISC licences. Full lists are in `frontend/package.json` and `backend/composer.json`. Main libraries: React, React Router, TanStack Query, React Hook Form, Zod, Tailwind CSS, Vite (MIT); Slim, Slim-Psr7, phpdotenv (MIT/BSD); PHPMailer (LGPL-2.1, used unmodified as a library).

@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+/* Brand tokens: mirror design/brand and the Figma "Theme" variables. */
+@theme {
+  --color-obsidian: #0e0c0a;
+  --color-ebony: #1a1612;
+  --color-gold: #c9a24b;
+  --color-gold-light: #e6c97a;
+  --color-gold-dark: #7d5e1f; /* gold text on light backgrounds (5.3:1 on ivory) */
+  --color-terracotta: #b4492f;
+  --color-palm: #2e4a3b;
+  --color-crimson: #a3243b;
+  --color-ivory: #f6efe3;
+  --color-sand: #e7d9c4;
+  --color-smoke: #8a8178;
+  --color-smoke-dark: #665d55; /* secondary text on light backgrounds (5.6:1 on ivory) */
+  --color-danger: #e0806a; /* error text on dark (5.9:1 on obsidian) */
+
+  --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Manrope Variable', 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-script: 'Italiana', 'Cormorant Garamond', serif;
+
+  --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --tracking-overline: 0.2em;
+  --tracking-button: 0.08em;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-obsidian text-ivory font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif font-semibold text-balance;
+  }
+  ::selection {
+    @apply bg-gold text-obsidian;
+  }
+  /* Visible, on-brand focus for keyboard users only. */
+  :focus-visible {
+    @apply outline-gold-light outline-2 outline-offset-2;
+  }
+  [data-theme='light'] {
+    color-scheme: light;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply tracking-overline font-sans text-xs font-semibold uppercase;
+  }
+  .gold-rule {
+    @apply bg-gold h-px w-16;
+  }
+  .container-luxe {
+    @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-10;
+  }
+  .bg-pattern {
+    background-image: url('/brand/pattern.svg');
+    background-size: 96px 96px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

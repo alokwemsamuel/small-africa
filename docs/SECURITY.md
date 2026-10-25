@@ -1,0 +1,133 @@
+# Small Africa — Security & Data Protection
+
+This document explains how the Small Africa platform protects guests, their payments and their data. It is written for the restaurant's management and for any technical reviewer. Each section names where the protection lives in the code.
+
+> Status: **Phase 2 (foundation)** measures are implemented and tested. Items marked *(Phase n)* arrive with that feature.
+
+---
+
+## 1. Accounts & passwords
+
+| Measure | Detail | Code |
+|---|---|---|
+| Strong password hashing | Argon2id (`password_hash`, memory-hard), rehashed automatically if parameters change | `backend/src/Security/PasswordPolicy.php` |
+| Password rules | ≥ 10 characters, at least 3 of lower/upper/digit/symbol, blocks common passwords and the user's own name/email. The same rules run in the browser for instant feedback, but the server decides | `PasswordPolicy.php`, `frontend/src/features/auth/schemas.ts` |
+| Account lockout | 5 wrong passwords lock the account for 15 minutes (logged in the audit trail) | `AuthService::recordFailedLogin` |
+| No account enumeration | Unknown emails get the same error *and the same response time* as wrong passwords (a real dummy hash is checked). "Forgot password" always replies the same way | `AuthService::login`, `requestPasswordReset` |
+| Email verification | Single-use link, valid 24 h | `AuthService::verifyEmail` |
+| Password reset | Single-use link, valid 60 min; older links are cancelled; on success **all other sessions are signed out** and a "password changed" email is sent | `AuthService::resetPassword` |
+| Change password | Requires current password; signs out every other device | `AuthService::changePassword` |
+| Two-factor authentication | TOTP (Google Authenticator, Authy, 1Password…) for staff/admin accounts. Secrets are **encrypted at rest** (AES-256-GCM with `APP_KEY`); a code can't be replayed | `Security/Totp.php`, `Security/Crypto.php` |
+| One-time tokens stored hashed | Verification and reset tokens are stored only as SHA-256 hashes, so a database leak cannot be used to take over accounts | `Crypto::hashToken` |
+
+## 2. Sessions, cookies & CSRF
+
+- **Cookie-based sessions** (`sa_session`): `HttpOnly` (JavaScript can't read it), `Secure` in production (HTTPS only), `SameSite=Lax`. **No tokens are ever stored in `localStorage`**; an ESLint rule blocks it.
+- Session ID is **regenerated** on sign-in, 2FA and password change (prevents session fixation). Strict mode rejects unknown session IDs.
+- **Idle timeout** of 120 minutes, enforced server-side.
+- **Session versioning**: a password reset or change bumps `users.session_version`, instantly invalidating sessions on other devices.
+- **CSRF protection** on every state-changing request: a per-session synchronizer token sent in the `X-CSRF-Token` header (constant-time compare), **plus** an `Origin`/`Referer` allow-list check. The token is rotated at sign-in/out. Payment webhooks are exempt and verified by signature instead *(Phase 4)*.
+
+Code: `Security/NativeSession.php`, `Security/Csrf.php`, `Http/Middleware/VerifyCsrf.php`, `frontend/src/lib/api.ts`.
+
+## 3. Authorisation (RBAC)
+
+Roles: **Super Admin**, **Manager**, **Staff** (kitchen / front desk), **Customer**.
+
+- Every protected endpoint is guarded **on the server** by `RequireRole` middleware. Hiding buttons in the UI is a convenience, never the security boundary.
+- Responses never include password hashes, 2FA secrets or lockout counters (`UserRepository::toPublic`).
+- Inputs are whitelisted: unexpected fields such as `role` in a profile update are dropped (tested).
+- Wallet/points adjustments will require **Super Admin + a written reason**, and are audit-logged *(Phase 6)*.
+
+## 4. Input handling & injection
+
+- **SQL injection**: every query uses PDO prepared statements with native (non-emulated) prepares. The only identifiers ever interpolated (table/column names in the insert helper) are pattern-whitelisted.
+- **Validation**: every endpoint validates server-side (`Support/Validator.php`) and returns only declared fields; the frontend mirrors rules with Zod.
+- **XSS**: React escapes all output by default; no `dangerouslySetInnerHTML` with user content. Emails escape every dynamic value. The API itself serves JSON with `Content-Security-Policy: default-src 'none'` and `nosniff`.
+- **Request size**: JSON bodies over 1 MB are rejected (413).
+- **Uploads** *(Phase 6)*: type and size checks, images re-encoded with GD (strips scripts/metadata), random filenames, stored outside executable paths.
+
+## 5. Transport & HTTP headers
+
+Every API response carries:
+
+| Header | Value |
+|---|---|
+| `Content-Security-Policy` | `default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'` |
+| `X-Frame-Options` | `DENY` (clickjacking) |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | camera, microphone and geolocation disabled; payment limited to Paystack |
+| `Cross-Origin-Opener-Policy` / `Cross-Origin-Resource-Policy` | `same-origin` / `same-site` |
+| `Strict-Transport-Security` | 1 year, including subdomains (production / HTTPS) |
+| `Cache-Control` | `no-store` (no personal data in shared caches) |
+
+The website (SPA) itself gets its own CSP from the web server, allowing only our own scripts plus Paystack checkout. See `docs/DEPLOYMENT.md` *(Phase 8)*.
+
+**CORS** is restricted to an explicit allow-list of origins (`CORS_ALLOWED_ORIGINS`); credentials are never shared with other sites. `X-Forwarded-For` is only trusted from configured proxy IPs.
+
+## 6. Abuse protection (rate limiting)
+
+Database-backed fixed-window limits (shared across all server workers):
+
+| Action | Limit |
+|---|---|
+| Sign-in | 20 / 10 min per IP **and** 10 / 15 min per email |
+| 2FA code | 5 / 5 min per pending sign-in |
+| Sign-up | 5 / hour per IP |
+| Password reset request | 5 / 15 min per IP **and** 3 / hour per email |
+| Resend verification | 3 / hour per user |
+| Reservations, checkout, referrals, redemptions | *(Phases 4–5)* |
+
+Exceeding a limit returns `429` with a `Retry-After` header and a friendly message.
+
+## 7. Payments *(Phase 4)*
+
+- Prices and totals are **always recalculated on the server**; amounts from the browser are ignored.
+- Every Paystack transaction is **verified server-side** with the secret key before an order is marked paid or a wallet is credited.
+- Webhooks are accepted only with a valid `x-paystack-signature` (HMAC-SHA512) and are de-duplicated (`webhook_events`).
+- Order creation and top-ups use **idempotency keys**, so double-clicks or retries never create duplicate orders or credits.
+- Card details never touch our servers (Paystack Inline checkout).
+
+## 8. Interest Account integrity
+
+- Every movement of dining credit or points is a row in an **append-only ledger** (`wallet_ledger`, `points_ledger`). **Database triggers reject any UPDATE or DELETE** on these tables and on `audit_logs` (tested).
+- Cached balances are written in the same transaction as the ledger row, and can be reconciled from the ledger at any time.
+- Wallet operations run in **database transactions with row locks**. The monthly interest run is keyed by month (`interest_runs.period` is unique), so it can never pay twice *(Phase 5)*.
+- Wallet and interest are **dining credit only**: not cash, not withdrawable or transferable (stated in the Rewards Terms).
+
+## 9. Audit trail
+
+`audit_logs` records who did what, when, from which IP: sign-ins, lockouts, 2FA changes, password changes, profile edits, and (Phase 6) every admin action. The table is append-only at the database level.
+
+## 10. Errors & logging
+
+- Users see friendly messages; unexpected errors show a short **reference ID** only.
+- Full details (exception, file, stack trace) go to `backend/storage/logs/` as JSON lines and are never sent to the browser. PHP `display_errors` is off.
+- Logs and session files are excluded from git.
+
+## 11. Secrets & configuration
+
+- All secrets live in `backend/.env` (git-ignored). `.env.example` documents every variable without values.
+- `APP_KEY` (32 random bytes) encrypts 2FA secrets: generate with `php bin/generate-key.php`, back it up securely, and never change it casually.
+- The database user `small_africa` has rights only on the Small Africa databases.
+- On XAMPP, `.htaccess` files deny web access to everything outside `backend/public` (`.env`, `vendor/`, `storage/`, source); this is verified with HTTP checks. In production the document root is `backend/public` only.
+
+## 12. Data protection: Nigeria Data Protection Act 2023
+
+- **Lawful basis & consent**: marketing emails are strictly opt-in (unchecked by default) and can be withdrawn at any time.
+- **Data minimisation**: we collect only what's needed to serve guests (name, contact, delivery address, optional birthday for rewards).
+- **Security of processing**: the measures above (encryption in transit, hashing, access control, audit logs).
+- **Data subject rights**: guests can view and update their profile; export and deletion requests are handled by the Super Admin *(tooling in Phase 6)*.
+- **Retention**: rate-limit and session data expire automatically; audit logs are retained for accountability.
+- The Privacy Policy *(Phase 3)* explains all of this in plain language.
+
+## 13. Testing
+
+- **Backend (PHPUnit, 44 tests)**: TOTP against RFC 6238 vectors; password policy; validator mass-assignment protection; encryption tamper detection; registration, lockout, enumeration resistance, rate limits, reset flow signing out sessions, 2FA enrolment and login, append-only ledgers; HTTP security headers on success and error responses, CSRF, Origin checks, CORS, RBAC.
+- **Frontend (Vitest)**: password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard.
+- `composer audit` and `npm audit` are run before each commit; high and critical issues are fixed.
+
+## 14. Backups *(see DEPLOYMENT.md)*
+
+Daily `mysqldump` with 30-day retention, stored off-server and encrypted; monthly restore test. Instructions in `docs/DEPLOYMENT.md`.
