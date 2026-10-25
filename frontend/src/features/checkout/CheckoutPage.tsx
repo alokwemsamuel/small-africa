@@ -90,7 +90,15 @@ export function CheckoutPage() {
 
   const schedule = useMemo(() => scheduleOptions(site?.openingHours ?? []), [site?.openingHours]);
   const scheduledFor = when === 'later' && schedDate && schedTime ? `${schedDate} ${schedTime}` : null;
-  const email = form.watch('email');
+  // Email only matters to the quote for per-guest coupon limits, so re-quote once typing pauses
+  // and the address looks complete, not on every keystroke.
+  const typedEmail = form.watch('email');
+  const [email, setEmail] = useState('');
+  useEffect(() => {
+    const next = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(typedEmail) ? typedEmail : '';
+    const t = setTimeout(() => setEmail(next), 600);
+    return () => clearTimeout(t);
+  }, [typedEmail]);
 
   const baseReq: CheckoutRequest = {
     fulfilment,

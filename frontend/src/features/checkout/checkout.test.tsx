@@ -174,6 +174,13 @@ describe('CheckoutPage', () => {
     expect(keys[0]).toBe(keys[1]);
   });
 
+  it('does not re-quote on every keystroke of the email address', async () => {
+    const { calls } = setup();
+    await fillAndPay();
+    const quotes = calls.filter((c) => c.path === '/checkout/quote');
+    expect(quotes.length).toBeLessThanOrEqual(3);
+  });
+
   it('validates contact details before placing the order', async () => {
     const { calls } = setup();
     const user = userEvent.setup();
