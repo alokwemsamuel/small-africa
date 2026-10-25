@@ -2,7 +2,7 @@
 
 This document explains how the Small Africa platform protects guests, their payments and their data. It is written for the restaurant's management and for any technical reviewer. Each section names where the protection lives in the code.
 
-> Status: **Phase 2 (foundation)** measures are implemented and tested. Items marked *(Phase n)* arrive with that feature.
+> Status: measures for **Phases 1–3** are implemented and tested. Items marked *(Phase n)* arrive with that feature.
 
 ---
 
@@ -66,6 +66,21 @@ The website (SPA) itself gets its own CSP from the web server, allowing only our
 
 **CORS** is restricted to an explicit allow-list of origins (`CORS_ALLOWED_ORIGINS`); credentials are never shared with other sites. `X-Forwarded-For` is only trusted from configured proxy IPs.
 
+## 5b. Website (SPA) Content-Security-Policy
+
+`frontend/public/.htaccess` (copied into the build) sends, for the website itself:
+
+```
+default-src 'self'; script-src 'self' https://js.paystack.co; style-src 'self' https://paystack.com;
+img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.paystack.co;
+frame-src https://checkout.paystack.com https://www.google.com; object-src 'none';
+base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+```
+
+- **No inline scripts.** Fonts and every photo are self-hosted, so the site makes no third-party requests except Paystack at checkout.
+- The Google map on the Contact page loads **only after the visitor clicks “Show map”** (privacy by default).
+- Public read endpoints (`/api/menu`, `/api/site`) are cacheable only privately (`Cache-Control: private, max-age=60`); everything else is `no-store`.
+
 ## 6. Abuse protection (rate limiting)
 
 Database-backed fixed-window limits (shared across all server workers):
@@ -77,6 +92,9 @@ Database-backed fixed-window limits (shared across all server workers):
 | Sign-up | 5 / hour per IP |
 | Password reset request | 5 / 15 min per IP **and** 3 / hour per email |
 | Resend verification | 3 / hour per user |
+| Contact form | 5 / hour per IP (plus a hidden honeypot field for bots) |
+| Newsletter sign-up | 10 / hour per IP (same response whether or not the email is already subscribed) |
+| Event enquiries | 5 / hour per IP |
 | Reservations, checkout, referrals, redemptions | *(Phases 4–5)* |
 
 Exceeding a limit returns `429` with a `Retry-After` header and a friendly message.
@@ -124,8 +142,8 @@ Exceeding a limit returns `429` with a `Retry-After` header and a friendly messa
 
 ## 13. Testing
 
-- **Backend (PHPUnit, 44 tests)**: TOTP against RFC 6238 vectors; password policy; validator mass-assignment protection; encryption tamper detection; registration, lockout, enumeration resistance, rate limits, reset flow signing out sessions, 2FA enrolment and login, append-only ledgers; HTTP security headers on success and error responses, CSRF, Origin checks, CORS, RBAC.
-- **Frontend (Vitest)**: password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard.
+- **Backend (PHPUnit, 58 tests)**: TOTP against RFC 6238 vectors; password policy; validator mass-assignment protection; encryption tamper detection; registration, lockout, enumeration resistance, rate limits, reset flow signing out sessions, 2FA enrolment and login, append-only ledgers; HTTP security headers on success and error responses, CSRF, Origin checks, CORS, RBAC.
+- **Frontend (Vitest, 90 tests)**: password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard, WCAG AA contrast of every theme token pair, theme persistence and the no-flash bootstrap, menu filters (incl. No pork), cart storage holding no secrets.
 - `composer audit` and `npm audit` are run before each commit; high and critical issues are fixed.
 
 ## 14. Backups *(see DEPLOYMENT.md)*

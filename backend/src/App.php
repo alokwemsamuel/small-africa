@@ -7,7 +7,9 @@ namespace App;
 use App\Audit\AuditLogger;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\PublicController;
 use App\Http\ErrorHandler;
 use App\Http\Middleware\Cors;
 use App\Http\Middleware\RequestContext;
@@ -19,6 +21,7 @@ use App\Mail\EmailTemplates;
 use App\Mail\LogMailer;
 use App\Mail\Mailer;
 use App\Mail\SmtpMailer;
+use App\Repositories\MenuRepository;
 use App\Repositories\UserRepository;
 use App\Security\Crypto;
 use App\Security\Csrf;
@@ -74,6 +77,12 @@ final class App
         ));
         $c->set(AuthController::class, fn (Container $c) => new AuthController($c->get(AuthService::class), $c->get(Csrf::class)));
         $c->set(AccountController::class, fn (Container $c) => new AccountController($c->get(UserRepository::class), $c->get(AuthService::class), $c->get(AuditLogger::class)));
+        $c->set(MenuRepository::class, fn (Container $c) => new MenuRepository($c->get(Database::class), $c->get(Clock::class)));
+        $c->set(PublicController::class, fn (Container $c) => new PublicController($c->get(MenuRepository::class), $c->get(Database::class)));
+        $c->set(EnquiryController::class, fn (Container $c) => new EnquiryController(
+            $c->get(Database::class), $c->get(RateLimiter::class), $c->get(Mailer::class), $c->get(EmailTemplates::class),
+            $c->get(Config::class), $c->get(Clock::class), $c->get(Logger::class),
+        ));
         $c->set(HealthController::class, fn (Container $c) => new HealthController($c->get(Database::class), $c->get(Clock::class)));
         return $c;
     }
@@ -109,6 +118,12 @@ final class App
     {
         $app->group('/api', function (RouteCollectorProxy $api): void {
             $api->get('/health', HealthController::class);
+            $api->get('/site', [PublicController::class, 'site']);
+            $api->get('/menu', [PublicController::class, 'menu']);
+            $api->get('/menu/{slug}', [PublicController::class, 'dish']);
+            $api->post('/contact', [EnquiryController::class, 'contact']);
+            $api->post('/newsletter', [EnquiryController::class, 'newsletter']);
+            $api->post('/events/enquiries', [EnquiryController::class, 'eventEnquiry']);
 
             $api->group('/auth', function (RouteCollectorProxy $auth): void {
                 $auth->get('/csrf', [AuthController::class, 'csrf']);

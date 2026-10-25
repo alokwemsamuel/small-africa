@@ -2,7 +2,7 @@
 
 **Three kitchens. One table.** A fine-dining restaurant and lounge platform for Lagos, serving Nigerian, Polish and Continental cuisine. It covers online ordering, reservations, the *Small Africa Interest Account* loyalty programme, and a full admin panel.
 
-> 🚧 In development. Phases 1 (brand) and 2 (foundation) are complete. See *Build progress* below.
+> 🚧 In development. Phases 1–3 are complete. See *Build progress* below.
 
 ## Tech stack
 
@@ -43,8 +43,8 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    composer install
    cp .env.example .env          # set DB_PASSWORD
    php bin/generate-key.php      # paste the APP_KEY line into .env
-   composer fresh                # migrate + seed
-   composer test                 # 44 tests
+   composer fresh                # migrate + seed (incl. demo reviews; never use --demo in production)
+   composer test                 # 58 tests
    ```
    Check it works: <http://localhost/SmallAfrica/backend/public/api/health>
 4. **Frontend**:
@@ -54,6 +54,7 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    npm run dev                   # http://localhost:5173 (proxies /api to XAMPP)
    npm test
    ```
+   Optional asset rebuilds (design/tools): `npm run photos` (Unsplash photos → AVIF/WebP), `npm run hero` (hero poster + loop video; needs the dev server and ffmpeg), `npm run brand`, `npm run logo`.
 
 In development, emails are written to `backend/storage/mail/` as `.html` files rather than sent.
 
@@ -73,7 +74,7 @@ These exist for demos and testing only. Remove or change them before going live.
 
 - [x] **Phase 1 — Brand & design**: logo (SA Monogram Crest) and exports, brand guide PDF, Instagram templates, A4 menu card, Figma tokens and components
 - [x] **Phase 2 — Foundation**: schema (40 tables) + seeds, secure auth API, frontend shell, auth pages, living style guide (`/style-guide`)
-- [ ] Phase 3 — Public site (3D hero, menu, about, gallery, events, legal)
+- [x] **Phase 3 — Public site**: 3D hero (with poster and video fallbacks), menu with filters (incl. No pork), dish detail, basket, about, gallery, events, contact, FAQ, privacy (NDPA 2023), terms; Dark/Light/System appearance
 - [ ] Phase 4 — Reservations & ordering (cart, Paystack, tracking, emails)
 - [ ] Phase 5 — Interest Account (wallet, interest, points, tiers, referrals)
 - [ ] Phase 6 — Admin panel

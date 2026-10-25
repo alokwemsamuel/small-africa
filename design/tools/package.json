@@ -8,10 +8,14 @@
     "concepts": "node ../logo/concepts/build.mjs",
     "logo": "node export-logo.mjs",
     "brand": "node render-brand.mjs",
-    "all": "npm run logo && npm run brand"
+    "all": "npm run logo && npm run brand",
+    "photos": "node build-photos.mjs",
+    "hero": "node render-hero.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
-    "png-to-ico": "^2.1.8"
+    "png-to-ico": "^2.1.8",
+    "puppeteer-core": "^25.16.0",
+    "sharp": "^0.35.5"
   }
 }

@@ -1,7 +1,14 @@
-import { Outlet, ScrollRestoration } from 'react-router-dom';
+import { Suspense } from 'react';
+import { Outlet } from 'react-router-dom';
+import { PageTransition } from '@/components/motion/PageTransition';
+import { SmoothScroll } from '@/components/motion/SmoothScroll';
+import { Spinner } from '@/components/ui/Spinner';
+import { Toaster } from '@/components/ui/Toaster';
 import { env } from '@/lib/env';
+import { CookieNotice } from './CookieNotice';
 import { SiteFooter } from './SiteFooter';
 import { SiteHeader } from './SiteHeader';
+import { WhatsAppButton } from './WhatsAppButton';
 
 export function AppLayout() {
   return (
@@ -17,12 +24,25 @@ export function AppLayout() {
           Demo version: no real payments or bookings
         </div>
       )}
+      <SmoothScroll />
       <SiteHeader />
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="text-accent grid min-h-[60vh] place-items-center">
+              <Spinner label="Loading page" />
+            </div>
+          }
+        >
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
+        </Suspense>
       </main>
       <SiteFooter />
-      <ScrollRestoration />
+      <WhatsAppButton />
+      <CookieNotice />
+      <Toaster />
     </div>
   );
 }

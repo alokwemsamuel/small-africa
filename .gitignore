@@ -7,6 +7,7 @@ vendor/
 .env.*
 !.env.example
 !frontend/.env.demo
+!frontend/.env.production
 
 # Builds & caches
 dist/
@@ -33,3 +34,10 @@ backend/storage/logs/*
 backend/storage/mail/*
 backend/storage/sessions/*
 !backend/storage/*/.gitkeep
+
+# Full-size photo downloads (re-fetched by design/tools/build-photos.mjs)
+design/photos/originals/
+
+# Generated at build time by frontend/scripts/sitemap.mjs
+frontend/public/sitemap.xml
+frontend/public/robots.txt

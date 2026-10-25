@@ -29,8 +29,11 @@ final class SecurityHeaders implements MiddlewareInterface
             ->withHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.paystack.com")')
             ->withHeader('Cross-Origin-Opener-Policy', 'same-origin')
             ->withHeader('Cross-Origin-Resource-Policy', 'same-site')
-            ->withHeader('Cache-Control', 'no-store')
             ->withoutHeader('X-Powered-By');
+        // Default: never cache. Public read endpoints opt into short private caching.
+        if (!$response->hasHeader('Cache-Control')) {
+            $response = $response->withHeader('Cache-Control', 'no-store');
+        }
         if ($this->https) {
             $response = $response->withHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }

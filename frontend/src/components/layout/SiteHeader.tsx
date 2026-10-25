@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useLogout, useMe } from '@/features/auth/hooks';
+import { useCart } from '@/features/cart/cart';
 import { isStaff } from '@/features/auth/types';
 import { ThemeMenu, ThemeSegmented } from '@/features/theme/ThemeSwitcher';
 import { cn } from '@/lib/cn';
@@ -11,6 +12,7 @@ import { NAV } from './nav';
 export function SiteHeader() {
   const { data: user } = useMe();
   const logout = useLogout();
+  const { count } = useCart();
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
@@ -74,30 +76,34 @@ export function SiteHeader() {
             </Link>
           )}
           <ThemeMenu />
+          <CartLink count={count} />
           <ButtonLink to="/reservations" size="sm">
             Reserve
           </ButtonLink>
         </div>
 
-        <button
-          type="button"
-          className="border-accent/40 text-accent grid size-11 place-items-center rounded-full border lg:hidden"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? 'Close menu' : 'Open menu'}
-          onClick={() => setOpen((o) => !o)}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="size-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
+        <div className="flex items-center gap-2 lg:hidden">
+          <CartLink count={count} />
+          <button
+            type="button"
+            className="border-accent/40 text-accent grid size-11 place-items-center rounded-full border"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            onClick={() => setOpen((o) => !o)}
           >
-            {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 8h16M4 16h16" />}
-          </svg>
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+            >
+              {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 8h16M4 16h16" />}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -156,5 +162,38 @@ export function SiteHeader() {
         </nav>
       )}
     </header>
+  );
+}
+
+function CartLink({ count }: { count: number }) {
+  const label = count ? `Your order, ${count} ${count === 1 ? 'item' : 'items'}` : 'Your order (empty)';
+  return (
+    <Link
+      to="/cart"
+      className="border-accent/40 text-accent hover:border-accent relative grid size-10 place-items-center rounded-full border transition-colors"
+      aria-label={label}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className="size-[18px]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z" />
+        <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+      </svg>
+      {count > 0 && (
+        <span
+          className="bg-accent-fill text-on-accent absolute -top-1 -right-1 grid min-w-5 place-items-center rounded-full px-1 text-[0.65rem] font-bold"
+          aria-hidden="true"
+        >
+          {count}
+        </span>
+      )}
+    </Link>
   );
 }

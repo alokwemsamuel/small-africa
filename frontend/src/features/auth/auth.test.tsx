@@ -83,11 +83,14 @@ describe('LoginPage', () => {
     const { router } = renderRoutes(routes, '/account');
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
 
-    await userEvent.type(await screen.findByLabelText('Email'), 'guest@smallafrica.demo');
+    await userEvent.type(
+      await screen.findByLabelText('Email', {}, { timeout: 5000 }),
+      'guest@smallafrica.demo',
+    );
     await userEvent.type(screen.getByLabelText('Password'), 'SmallAfrica@Guest2026');
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(await screen.findByText('Account area')).toBeInTheDocument();
+    expect(await screen.findByText('Account area', {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('moves to the 2FA step when the server asks for it', async () => {

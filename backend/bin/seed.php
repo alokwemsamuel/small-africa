@@ -7,10 +7,12 @@ declare(strict_types=1);
  *
  *   php bin/seed.php           seed DB_DATABASE
  *   php bin/seed.php --test    seed DB_TEST_DATABASE
+ *   php bin/seed.php --demo    also seed invented demo data (reviews…): NEVER in production
  *
  * For a clean slate locally: composer fresh  (migrate --fresh + seed)
  */
 
+use App\Seeds\DemoSeeder;
 use App\Seeds\ReferenceSeeder;
 use App\Support\Config;
 use App\Support\Database;
@@ -30,6 +32,14 @@ if ((int) $db->scalar('SELECT COUNT(*) FROM users') > 0) {
 
 $start = microtime(true);
 (new ReferenceSeeder($db, dirname(__DIR__) . '/seeds'))->run();
+if (in_array('--demo', array_slice($argv, 1), true)) {
+    if ($config->isProduction()) {
+        fwrite(STDERR, "Refusing to seed demo data with APP_ENV=production.\n");
+        exit(1);
+    }
+    (new DemoSeeder($db))->run();
+    echo "Seeded demo data (invented reviews). Do not use in production.\n";
+}
 
 printf(
     "Seeded %s in %.1fs: %d users, %d dishes, %d dish options, %d coupons.\n",

@@ -1,0 +1,39 @@
+# Production config when the built frontend (dist/) is served by Apache.
+# The PHP API lives under /api on the same domain (see docs/DEPLOYMENT.md).
+
+Options -Indexes -MultiViews
+
+<IfModule mod_headers.c>
+  # Strict CSP: no inline scripts (the theme bootstrap is /theme-init.js). Paystack is the only
+  # third-party script; Google Maps is framed only after the visitor clicks "Show map".
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://js.paystack.co; style-src 'self' https://paystack.com; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.paystack.co; frame-src https://checkout.paystack.com https://www.google.com; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(self \"https://checkout.paystack.com\")"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" "expr=%{HTTPS} == 'on'"
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+
+  # Hashed build assets never change: cache for a year. HTML must always revalidate.
+  <FilesMatch "\.(js|css|woff2?|avif|webp|svg|png|ico|mp4|webm)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Never rewrite API calls or real files.
+  RewriteRule ^api/ - [L]
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  # Single-page app: every other path renders index.html.
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>

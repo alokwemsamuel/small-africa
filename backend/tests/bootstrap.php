@@ -12,7 +12,7 @@ if (is_file(dirname(__DIR__) . '/.env')) {
 
 $php = escapeshellarg(PHP_BINARY);
 $bin = escapeshellarg(dirname(__DIR__) . '/bin');
-foreach (["{$php} {$bin}/migrate.php --fresh --test", "{$php} {$bin}/seed.php --test"] as $cmd) {
+foreach (["{$php} {$bin}/migrate.php --fresh --test", "{$php} {$bin}/seed.php --test --demo"] as $cmd) {
     exec($cmd . ' 2>&1', $out, $code);
     if ($code !== 0) {
         fwrite(STDERR, "Test database setup failed:\n" . implode("\n", $out) . "\n");
