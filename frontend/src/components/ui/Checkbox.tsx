@@ -20,10 +20,10 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
           type="checkbox"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${inputId}-error` : undefined}
-          className="border-sand/40 bg-ebony accent-gold mt-0.5 size-5 shrink-0 cursor-pointer rounded-sm"
+          className="border-input bg-surface-raised accent-accent-fill mt-0.5 size-5 shrink-0 cursor-pointer rounded-sm"
           {...rest}
         />
-        <label htmlFor={inputId} className="text-sand cursor-pointer text-sm leading-relaxed">
+        <label htmlFor={inputId} className="text-secondary cursor-pointer text-sm leading-relaxed">
           {label}
         </label>
       </div>

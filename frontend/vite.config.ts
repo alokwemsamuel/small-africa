@@ -42,7 +42,8 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
-      css: false,
+      // Only theme.css is loaded (as ?raw) so the contrast test can read the tokens.
+      css: { include: [/theme\.css/] },
       restoreMocks: true,
     },
   };

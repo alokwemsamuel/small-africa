@@ -4,9 +4,9 @@ import { cn } from '@/lib/cn';
 type Tone = 'error' | 'success' | 'info';
 
 const tones: Record<Tone, string> = {
-  error: 'border-danger/60 bg-danger/10 text-ivory',
-  success: 'border-palm bg-palm/30 text-ivory',
-  info: 'border-gold/50 bg-gold/10 text-ivory',
+  error: 'border-danger/60 bg-danger/10 text-primary',
+  success: 'border-success/60 bg-success/15 text-primary',
+  info: 'border-accent/50 bg-accent-fill/10 text-primary',
 };
 const marks: Record<Tone, string> = { error: '!', success: '✓', info: 'i' };
 
@@ -31,10 +31,10 @@ export function Alert({
         className={cn(
           'mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold',
           tone === 'error'
-            ? 'bg-danger text-obsidian'
+            ? 'bg-danger text-surface'
             : tone === 'success'
-              ? 'bg-palm text-ivory'
-              : 'bg-gold text-obsidian',
+              ? 'bg-success text-surface'
+              : 'bg-accent-fill text-on-accent',
         )}
       >
         {marks[tone]}

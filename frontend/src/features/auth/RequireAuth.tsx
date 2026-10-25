@@ -14,7 +14,7 @@ export function RequireAuth({ roles, children }: { roles?: Role[]; children: Rea
 
   if (isPending) {
     return (
-      <div className="text-gold grid min-h-[50vh] place-items-center">
+      <div className="text-accent grid min-h-[50vh] place-items-center">
         <Spinner label="Checking your session" />
       </div>
     );

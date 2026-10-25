@@ -114,6 +114,7 @@ final class ReferenceSeeder
                 'is_vegetarian' => (int) ($d['veg'] ?? false),
                 'is_gluten_free' => (int) ($d['gf'] ?? false),
                 'contains_nuts' => (int) ($d['nuts'] ?? false),
+                'contains_pork' => (int) ($d['pork'] ?? false),
                 'is_alcoholic' => (int) ($d['alcohol'] ?? false),
                 'is_featured' => (int) ($d['featured'] ?? false),
                 'popularity' => $d['popularity'] ?? 0,

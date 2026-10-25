@@ -28,7 +28,7 @@ export function VerifyEmailPage() {
         <Alert tone="error">This link is incomplete. Please use the full link from your email.</Alert>
       )}
       {verify.isPending && (
-        <div className="text-gold flex items-center gap-3">
+        <div className="text-accent flex items-center gap-3">
           <Spinner label="" /> Confirming…
         </div>
       )}

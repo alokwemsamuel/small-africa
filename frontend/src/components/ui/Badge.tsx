@@ -22,7 +22,7 @@ export function Badge({
     <span
       className={cn(
         'tracking-overline inline-flex items-center rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase',
-        kitchen ? kitchenTone[kitchen] : 'border-gold/50 text-gold border',
+        kitchen ? kitchenTone[kitchen] : 'border-accent/50 text-accent border',
         className,
       )}
     >

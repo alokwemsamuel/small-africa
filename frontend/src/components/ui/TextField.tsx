@@ -22,7 +22,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <label htmlFor={inputId} className="text-smoke eyebrow">
+      <label htmlFor={inputId} className="text-muted eyebrow">
         {label}
       </label>
       <div className="relative">
@@ -33,9 +33,9 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            'bg-ebony text-ivory placeholder:text-smoke/80 min-h-12 w-full rounded-sm border px-4 py-3 text-base transition-colors duration-200',
-            'focus:border-gold focus:outline-none focus-visible:outline-none',
-            error ? 'border-danger' : 'border-sand/25 hover:border-sand/40',
+            'bg-surface-raised text-primary placeholder:text-muted/80 min-h-12 w-full rounded-sm border px-4 py-3 text-base transition-colors duration-200',
+            'focus:border-accent focus:outline-none focus-visible:outline-none',
+            error ? 'border-danger' : 'border-input hover:border-accent',
             revealable && 'pr-20',
           )}
           {...rest}
@@ -44,7 +44,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
           <button
             type="button"
             onClick={() => setRevealed((r) => !r)}
-            className="tracking-button text-gold hover:text-gold-light absolute inset-y-0 right-0 px-4 text-xs font-semibold uppercase"
+            className="tracking-button text-accent hover:text-accent-hover absolute inset-y-0 right-0 px-4 text-xs font-semibold uppercase"
             aria-label={revealed ? 'Hide password' : 'Show password'}
             aria-pressed={revealed}
           >
@@ -53,7 +53,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         )}
       </div>
       {hint && !error && (
-        <div id={hintId} className="text-smoke text-sm">
+        <div id={hintId} className="text-muted text-sm">
           {hint}
         </div>
       )}

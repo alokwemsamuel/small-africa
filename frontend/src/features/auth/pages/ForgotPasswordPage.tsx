@@ -39,7 +39,7 @@ export function ForgotPasswordPage() {
           <Alert tone="success" title="Check your inbox">
             {sent} The link expires in 60 minutes.
           </Alert>
-          <Link to="/login" className="text-gold text-sm underline-offset-4 hover:underline">
+          <Link to="/login" className="text-accent text-sm underline-offset-4 hover:underline">
             Back to sign in
           </Link>
         </div>
@@ -56,7 +56,7 @@ export function ForgotPasswordPage() {
           <Button type="submit" size="lg" loading={formState.isSubmitting}>
             Send reset link
           </Button>
-          <Link to="/login" className="text-gold text-center text-sm underline-offset-4 hover:underline">
+          <Link to="/login" className="text-accent text-center text-sm underline-offset-4 hover:underline">
             Back to sign in
           </Link>
         </form>

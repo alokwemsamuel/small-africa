@@ -18,6 +18,7 @@ const guest: User = {
   favouriteKitchenId: null,
   referralCode: 'GUEST2026',
   marketingOptIn: false,
+  themePreference: null,
   twoFactorEnabled: false,
   createdAt: '2026-01-01 00:00:00',
 };

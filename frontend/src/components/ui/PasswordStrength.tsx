@@ -13,12 +13,12 @@ export function PasswordStrength({ password }: { password: string }) {
             key={i}
             className={cn(
               'h-1 flex-1 rounded-full transition-colors duration-300',
-              i <= score ? (score >= 3 ? 'bg-gold' : 'bg-terracotta') : 'bg-sand/15',
+              i <= score ? (score >= 3 ? 'bg-accent-fill' : 'bg-terracotta') : 'bg-line',
             )}
           />
         ))}
       </div>
-      <span className="text-smoke w-20 text-right text-xs">{password ? labels[score] : ''}</span>
+      <span className="text-muted w-20 text-right text-xs">{password ? labels[score] : ''}</span>
     </div>
   );
 }

@@ -10,7 +10,7 @@ final class UserRepository
 {
     private const UPDATABLE = [
         'first_name', 'last_name', 'phone', 'password_hash', 'email_verified_at', 'birthday', 'favourite_kitchen_id',
-        'marketing_opt_in', 'totp_secret_enc', 'totp_enabled_at', 'totp_last_used_step', 'failed_logins',
+        'marketing_opt_in', 'theme_preference', 'totp_secret_enc', 'totp_enabled_at', 'totp_last_used_step', 'failed_logins',
         'locked_until', 'last_login_at', 'is_active', 'role', 'staff_position',
     ];
 
@@ -93,6 +93,7 @@ final class UserRepository
             'favouriteKitchenId' => $u['favourite_kitchen_id'] !== null ? (int) $u['favourite_kitchen_id'] : null,
             'referralCode' => $u['referral_code'],
             'marketingOptIn' => (bool) $u['marketing_opt_in'],
+            'themePreference' => $u['theme_preference'] ?? null,
             'twoFactorEnabled' => $u['totp_enabled_at'] !== null,
             'createdAt' => $u['created_at'],
         ];

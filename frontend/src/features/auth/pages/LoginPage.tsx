@@ -45,7 +45,7 @@ export function LoginPage() {
         ) : (
           <>
             New here?{' '}
-            <Link to="/register" className="text-gold underline-offset-4 hover:underline">
+            <Link to="/register" className="text-accent underline-offset-4 hover:underline">
               Create an account
             </Link>{' '}
             and start earning dining credit.
@@ -103,7 +103,7 @@ function PasswordForm({ onDone, onTwoFactor }: { onDone: (u: User) => void; onTw
         {...register('password')}
       />
       <div className="-mt-2 text-right">
-        <Link to="/forgot-password" className="text-gold text-sm underline-offset-4 hover:underline">
+        <Link to="/forgot-password" className="text-accent text-sm underline-offset-4 hover:underline">
           Forgot your password?
         </Link>
       </div>
@@ -154,14 +154,14 @@ function TwoFactorForm({ onDone }: { onDone: (u: User) => void }) {
 
 function DemoCredentials() {
   return (
-    <details className="border-gold/30 bg-ebony/60 mt-10 rounded-sm border p-4 text-sm open:pb-5">
-      <summary className="text-gold cursor-pointer font-semibold">Demo credentials</summary>
+    <details className="border-accent/30 bg-surface-raised/60 mt-10 rounded-sm border p-4 text-sm open:pb-5">
+      <summary className="text-accent cursor-pointer font-semibold">Demo credentials</summary>
       <ul className="mt-4 flex flex-col gap-3">
         {DEMO_ACCOUNTS.map((a) => (
           <li key={a.email} className="grid gap-0.5">
-            <span className="text-smoke eyebrow">{a.role}</span>
-            <span className="text-ivory font-mono text-xs">{a.email}</span>
-            <span className="text-sand font-mono text-xs">{a.password}</span>
+            <span className="text-muted eyebrow">{a.role}</span>
+            <span className="text-primary font-mono text-xs">{a.email}</span>
+            <span className="text-secondary font-mono text-xs">{a.password}</span>
           </li>
         ))}
       </ul>

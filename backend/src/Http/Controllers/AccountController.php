@@ -29,6 +29,7 @@ final class AccountController
             'birthday' => 'nullable|date',
             'favourite_kitchen_id' => 'nullable|int|in:1,2,3',
             'marketing_opt_in' => 'nullable|bool',
+            'theme_preference' => 'nullable|string|in:dark,light,system',
         ]);
         // Names and opt-in can't be nulled; birthday can only be set once (it drives birthday rewards).
         foreach (['first_name', 'last_name', 'marketing_opt_in'] as $f) {

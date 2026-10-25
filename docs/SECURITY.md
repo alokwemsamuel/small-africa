@@ -62,7 +62,7 @@ Every API response carries:
 | `Strict-Transport-Security` | 1 year, including subdomains (production / HTTPS) |
 | `Cache-Control` | `no-store` (no personal data in shared caches) |
 
-The website (SPA) itself gets its own CSP from the web server, allowing only our own scripts plus Paystack checkout. See `docs/DEPLOYMENT.md` *(Phase 8)*.
+The website (SPA) itself gets its own CSP from the web server, allowing only our own scripts plus Paystack checkout. There is **no inline script**: the appearance bootstrap that prevents a flash of the wrong theme is an external file (`/theme-init.js`), so `script-src` never needs `unsafe-inline`. `localStorage` holds only the appearance preference (`sa-theme`), never authentication data. See `docs/DEPLOYMENT.md` *(Phase 8)*.
 
 **CORS** is restricted to an explicit allow-list of origins (`CORS_ALLOWED_ORIGINS`); credentials are never shared with other sites. `X-Forwarded-For` is only trusted from configured proxy IPs.
 

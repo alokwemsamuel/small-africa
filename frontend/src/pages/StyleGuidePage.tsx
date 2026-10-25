@@ -1,26 +1,52 @@
+import type { ReactNode } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { DietaryTags } from '@/components/ui/DietaryTags';
 import { Logo } from '@/components/ui/Logo';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { TextField } from '@/components/ui/TextField';
+import { ThemeSegmented } from '@/features/theme/ThemeSwitcher';
 import { formatNaira } from '@/lib/format';
 
-const COLORS = [
-  ['obsidian', '#0E0C0A', 'Main background'],
-  ['ebony', '#1A1612', 'Cards on dark'],
-  ['gold', '#C9A24B', 'Primary accent'],
-  ['gold-light', '#E6C97A', 'Hover, highlights'],
-  ['gold-dark', '#7D5E1F', 'Gold text on light'],
-  ['ivory', '#F6EFE3', 'Light sections, text'],
-  ['sand', '#E7D9C4', 'Muted bg, borders'],
-  ['smoke', '#8A8178', 'Secondary text (dark)'],
-  ['smoke-dark', '#665D55', 'Secondary text (light)'],
+const PALETTE = [
+  ['obsidian', '#0E0C0A', 'Dark surface'],
+  ['ebony', '#1A1612', 'Dark raised surface'],
+  ['gold', '#C9A24B', 'Accent fill (both themes)'],
+  ['gold-light', '#E6C97A', 'Accent hover (dark)'],
+  ['gold-dark', '#7D5E1F', 'Accent text (light)'],
+  ['ivory', '#F6EFE3', 'Light surface / dark text'],
+  ['sand', '#E7D9C4', 'Secondary text (dark)'],
+  ['smoke', '#8A8178', 'Muted text (dark)'],
+  ['smoke-dark', '#665D55', 'Muted text (light)'],
   ['terracotta', '#B4492F', 'Nigerian kitchen'],
   ['crimson', '#A3243B', 'Polish kitchen'],
-  ['palm', '#2E4A3B', 'Continental, success'],
+  ['palm', '#2E4A3B', 'Continental, success (light)'],
 ] as const;
+
+const TOKENS = [
+  ['bg-surface', 'Page background', 'obsidian', 'ivory'],
+  ['bg-surface-raised', 'Cards, panels, menus', 'ebony', '#FFFBF5'],
+  ['bg-surface-inset', 'Form fields', '#14110E', 'white'],
+  ['text-primary', 'Headings, body', 'ivory', 'obsidian'],
+  ['text-secondary', 'Supporting copy', 'sand', '#3E3731'],
+  ['text-muted', 'Hints, meta', 'smoke', 'smoke-dark'],
+  ['text-accent', 'Links, eyebrows, prices', 'gold', 'gold-dark'],
+  ['bg-accent-fill', 'Primary buttons', 'gold', 'gold'],
+  ['text-on-accent', 'Text on gold', 'obsidian', 'obsidian'],
+  ['border-input', 'Field borders (3:1)', '#6F665D', '#8E8479'],
+  ['border-line', 'Dividers', 'sand 14%', 'obsidian 12%'],
+] as const;
+
+const SAMPLE_DISH = {
+  spiceLevel: 0,
+  isVegetarian: false,
+  isGlutenFree: false,
+  containsNuts: false,
+  containsPork: true,
+  isAlcoholic: false,
+};
 
 /**
  * Living style guide: the in-app source of truth for tokens and components
@@ -32,19 +58,57 @@ export function StyleGuidePage() {
       <header className="flex flex-col items-start gap-8 sm:flex-row sm:items-center">
         <Logo variant="mark" className="w-28" />
         <div>
-          <p className="text-gold eyebrow">Design system</p>
+          <p className="text-accent eyebrow">Design system</p>
           <h1 className="mt-2 text-5xl sm:text-6xl">Style guide</h1>
-          <p className="font-script text-gold-light mt-3 text-2xl">Three kitchens. One table.</p>
+          <p className="font-script text-accent mt-3 text-2xl">Three kitchens. One table.</p>
         </div>
       </header>
 
-      <Section eyebrow="01 — Foundations" title="Colour">
+      <Section eyebrow="00 — Appearance" title="Dark, Light & System">
+        <p className="text-secondary max-w-2xl leading-relaxed">
+          Dark is the default. Light uses ivory surfaces with obsidian text and gold-dark accents. System
+          follows the device and updates live. The choice is saved on this device and, when signed in, on the
+          guest’s profile.
+        </p>
+        <ThemeSegmented className="mt-6" legend="Try it" />
+        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+          <ThemePanel theme="dark" />
+          <ThemePanel theme="light" />
+        </div>
+        <div className="mt-10 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <caption className="text-muted mb-3 text-left">
+              Semantic tokens: use these, never raw palette colours.
+            </caption>
+            <thead className="text-muted eyebrow">
+              <tr className="border-line border-b">
+                <th className="py-3 pr-4 font-semibold">Token</th>
+                <th className="py-3 pr-4 font-semibold">Use</th>
+                <th className="py-3 pr-4 font-semibold">Dark</th>
+                <th className="py-3 font-semibold">Light</th>
+              </tr>
+            </thead>
+            <tbody className="text-secondary">
+              {TOKENS.map(([token, use, dark, light]) => (
+                <tr key={token} className="border-line border-b">
+                  <td className="text-primary py-2.5 pr-4 font-mono text-xs">{token}</td>
+                  <td className="py-2.5 pr-4">{use}</td>
+                  <td className="py-2.5 pr-4">{dark}</td>
+                  <td className="py-2.5">{light}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Section>
+
+      <Section eyebrow="01 — Foundations" title="Brand palette">
         <ul className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
-          {COLORS.map(([name, hex, use]) => (
+          {PALETTE.map(([name, hex, use]) => (
             <li key={name}>
-              <div className="border-gold/20 h-24 rounded-sm border" style={{ background: hex }} />
+              <div className="border-line h-24 rounded-sm border" style={{ background: hex }} />
               <p className="mt-2 font-serif text-lg">{name}</p>
-              <p className="text-smoke text-xs">
+              <p className="text-muted text-xs">
                 {hex} · {use}
               </p>
             </li>
@@ -59,20 +123,20 @@ export function StyleGuidePage() {
           <h3 className="text-4xl">H2: Signature dishes</h3>
           <h4 className="text-3xl">H3: Private dining</h4>
           <p className="font-serif text-2xl font-bold">H4: Smoky Party Jollof</p>
-          <p className="text-sand max-w-2xl text-lg leading-relaxed">
+          <p className="text-secondary max-w-2xl text-lg leading-relaxed">
             Body large: slow-cooked over firewood, finished with a whisper of smoke and served with sweet
             plantain.
           </p>
-          <p className="text-sand max-w-2xl leading-relaxed">
+          <p className="text-secondary max-w-2xl leading-relaxed">
             Body: every dish is made to order in one of our three kitchens.
           </p>
-          <p className="text-gold eyebrow">Overline · Nigerian kitchen</p>
-          <p className="text-gold font-semibold">{formatNaira(1850000)}</p>
-          <p className="font-script text-gold-light text-3xl">Chef’s Special</p>
+          <p className="text-accent eyebrow">Eyebrow · Nigerian kitchen</p>
+          <p className="text-accent font-semibold">{formatNaira(1850000)}</p>
+          <p className="font-script text-accent text-3xl">Chef’s Special</p>
         </div>
       </Section>
 
-      <Section eyebrow="03 — Components" title="Buttons & badges">
+      <Section eyebrow="03 — Components" title="Buttons, badges & tags">
         <div className="flex flex-wrap items-center gap-4">
           <Button>Reserve a table</Button>
           <Button variant="secondary">Add to order</Button>
@@ -86,6 +150,17 @@ export function StyleGuidePage() {
           <Badge kitchen="continental">Continental</Badge>
           <Badge>Chef’s pick</Badge>
         </div>
+        <DietaryTags
+          className="mt-6"
+          info={{
+            spiceLevel: 2,
+            isVegetarian: true,
+            isGlutenFree: true,
+            containsNuts: true,
+            containsPork: true,
+            isAlcoholic: true,
+          }}
+        />
       </Section>
 
       <Section eyebrow="03 — Components" title="Forms & feedback">
@@ -110,18 +185,46 @@ export function StyleGuidePage() {
   );
 }
 
-function Section({
-  eyebrow,
-  title,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+/** A fixed-theme preview: tokens resolve from the nearest [data-theme] ancestor. */
+function ThemePanel({ theme }: { theme: 'dark' | 'light' }) {
+  return (
+    <div data-theme={theme} className="bg-surface text-primary border-line rounded-md border p-6 sm:p-8">
+      <div className="flex items-center justify-between gap-4">
+        <Logo className="h-10" />
+        <span className="eyebrow text-muted">{theme === 'dark' ? 'Dark' : 'Light'}</span>
+      </div>
+      <div className="bg-surface-raised border-line mt-6 rounded-md border p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Badge kitchen="polish">Polish</Badge>
+            <h3 className="mt-3 text-2xl">Kotlet Schabowy</h3>
+          </div>
+          <p className="text-accent font-semibold">{formatNaira(1900000)}</p>
+        </div>
+        <p className="text-secondary mt-2 text-sm leading-relaxed">
+          Golden breaded pork loin, buttered dill potatoes, mizeria salad.
+        </p>
+        <DietaryTags className="mt-3" info={SAMPLE_DISH} />
+        <p className="text-muted mt-3 text-xs">Earn 95 points</p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Button size="sm">Add to order</Button>
+          <Button size="sm" variant="secondary">
+            Details
+          </Button>
+        </div>
+      </div>
+      <TextField className="mt-6" label="Email" placeholder="you@example.com" />
+      <Alert tone="error" className="mt-4">
+        Enter a valid email address.
+      </Alert>
+    </div>
+  );
+}
+
+function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: ReactNode }) {
   return (
     <section>
-      <p className="text-gold eyebrow">{eyebrow}</p>
+      <p className="text-accent eyebrow">{eyebrow}</p>
       <h2 className="mt-2 text-4xl">{title}</h2>
       <div className="gold-rule mt-4 mb-8" />
       {children}

@@ -38,7 +38,7 @@ export function ResetPasswordPage() {
         <Alert tone="error">
           This reset link is missing its token. Please use the full link from your email.
         </Alert>
-        <Link to="/forgot-password" className="text-gold mt-6 inline-block text-sm underline">
+        <Link to="/forgot-password" className="text-accent mt-6 inline-block text-sm underline">
           Request a new link
         </Link>
       </AuthLayout>

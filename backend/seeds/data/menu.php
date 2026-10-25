@@ -6,6 +6,7 @@ declare(strict_types=1);
  * Small Africa menu: original descriptions written for this project.
  * Prices are in naira here and converted to kobo by the seeder.
  * kitchen: nigerian | polish | continental | null (bar / spans all kitchens)
+ * pork: true for any dish with pork, bacon, ham, lard or pork sausage (drives the "No pork" filter)
  * allergens: gluten, dairy, egg, nuts, peanuts, fish, shellfish, soy, sesame, celery, mustard, sulphites
  */
 
@@ -121,20 +122,20 @@ return [
         'ingredients' => 'Wheat flour, egg, potato, twaróg (farmer’s cheese), onion, butter, sour cream, black pepper',
         'allergens' => 'gluten,dairy,egg', 'price' => 13500, 'spice' => 0, 'veg' => true, 'featured' => true, 'popularity' => 84,
         'portion' => [$o('8 pierogi', 0, true), $o('12 pierogi', 5000)],
-        'addons' => [$o('Crispy bacon bits', 2500), $o('Extra sour cream', 1000)]],
+        'addons' => [$o('Crispy bacon bits (pork)', 2500), $o('Extra sour cream', 1000)]],
 
     ['slug' => 'pierogi-z-miesem', 'kitchen' => 'polish', 'category' => 'mains', 'name' => 'Pierogi z Mięsem',
         'short' => 'Meat-filled dumplings with brown butter and herbs.',
         'description' => 'Dumplings packed with slow-braised beef and pork, pan-fried until golden and finished with brown butter, crispy onions and fresh dill.',
         'ingredients' => 'Wheat flour, egg, beef shin, pork shoulder, onion, marjoram, butter, dill',
-        'allergens' => 'gluten,dairy,egg', 'price' => 14500, 'spice' => 0, 'popularity' => 63,
+        'allergens' => 'gluten,dairy,egg', 'price' => 14500, 'pork' => true, 'spice' => 0, 'popularity' => 63,
         'portion' => [$o('8 pierogi', 0, true), $o('12 pierogi', 5500)]],
 
     ['slug' => 'zurek', 'kitchen' => 'polish', 'category' => 'soups', 'name' => 'Żurek',
         'short' => 'Sour rye soup with white kiełbasa and egg, in a bread bowl.',
         'description' => 'A tangy, smoky soup made from our own fermented rye starter, with white sausage, bacon, potato and a halved boiled egg, served in a crusty round loaf.',
-        'ingredients' => 'Fermented rye starter (zakwas), white kiełbasa, smoked bacon, potato, egg, garlic, marjoram, sourdough bread bowl',
-        'allergens' => 'gluten,egg,mustard', 'price' => 12500, 'spice' => 0, 'featured' => true, 'popularity' => 57],
+        'ingredients' => 'Fermented rye starter (zakwas), white pork kiełbasa, smoked bacon, potato, egg, garlic, marjoram, sourdough bread bowl',
+        'allergens' => 'gluten,egg,mustard', 'price' => 12500, 'pork' => true, 'spice' => 0, 'featured' => true, 'popularity' => 57],
 
     ['slug' => 'barszcz-uszka', 'kitchen' => 'polish', 'category' => 'soups', 'name' => 'Barszcz Czerwony with Uszka',
         'short' => 'Clear beetroot consommé with wild-mushroom dumplings.',
@@ -146,7 +147,7 @@ return [
         'short' => 'Hunter’s stew of sauerkraut, smoked meats and mushrooms.',
         'description' => 'Poland’s great slow-cooked stew: sauerkraut and fresh cabbage braised for hours with smoked sausage, pork, prunes and wild mushrooms. Served with rye bread.',
         'ingredients' => 'Sauerkraut, white cabbage, kiełbasa, pork shoulder, smoked bacon, dried mushrooms, prunes, tomato, juniper, bay, rye bread',
-        'allergens' => 'gluten,sulphites', 'price' => 16000, 'spice' => 0, 'popularity' => 39],
+        'allergens' => 'gluten,sulphites', 'price' => 16000, 'pork' => true, 'spice' => 0, 'popularity' => 39],
 
     ['slug' => 'golabki', 'kitchen' => 'polish', 'category' => 'mains', 'name' => 'Gołąbki',
         'short' => 'Cabbage rolls of beef and rice in tomato sauce.',
@@ -158,7 +159,7 @@ return [
         'short' => 'Golden breaded pork loin, dill potatoes, mizeria salad.',
         'description' => 'A pork loin cutlet beaten thin, breaded and pan-fried until shatteringly crisp. Served the classic Sunday way, with buttered dill potatoes and mizeria (cucumber in sour cream).',
         'ingredients' => 'Pork loin, egg, breadcrumbs, flour, lard, new potatoes, dill, butter, cucumber, sour cream',
-        'allergens' => 'gluten,egg,dairy', 'price' => 19000, 'spice' => 0, 'popularity' => 54],
+        'allergens' => 'gluten,egg,dairy', 'price' => 19000, 'pork' => true, 'spice' => 0, 'popularity' => 54],
 
     ['slug' => 'placki-ziemniaczane', 'kitchen' => 'polish', 'category' => 'starters', 'name' => 'Placki Ziemniaczane',
         'short' => 'Crispy potato pancakes with sour cream and apple.',
@@ -171,7 +172,7 @@ return [
         'short' => 'Grilled smoked sausages, mustard, horseradish, pickles.',
         'description' => 'A board of grilled smoked kiełbasa with sweet and hot mustards, fresh horseradish cream, ogórki kiszone (fermented cucumbers) and rye bread.',
         'ingredients' => 'Smoked pork kiełbasa, mustard, horseradish, cream, fermented cucumber, rye bread',
-        'allergens' => 'gluten,mustard,dairy,sulphites', 'price' => 17500, 'spice' => 1, 'popularity' => 44,
+        'allergens' => 'gluten,mustard,dairy,sulphites', 'price' => 17500, 'pork' => true, 'spice' => 1, 'popularity' => 44,
         'portion' => [$o('For one', 0, true), $o('Sharing (for 2–3)', 12000)]],
 
     ['slug' => 'paczki', 'kitchen' => 'polish', 'category' => 'desserts', 'name' => 'Pączki',
@@ -202,8 +203,8 @@ return [
     ['slug' => 'beef-wellington', 'kitchen' => 'continental', 'category' => 'mains', 'name' => 'Beef Wellington',
         'short' => 'Fillet in mushroom duxelles and puff pastry, red wine jus.',
         'description' => 'Centre-cut beef fillet seared, wrapped in mushroom duxelles and prosciutto, encased in golden puff pastry and carved at your table. With buttered greens, pommes purée and red wine jus.',
-        'ingredients' => 'Beef fillet, chestnut mushrooms, shallot, thyme, prosciutto, puff pastry, egg, potato, butter, red wine',
-        'allergens' => 'gluten,egg,dairy,sulphites,mustard', 'price' => 48000, 'spice' => 0, 'featured' => true, 'popularity' => 76],
+        'ingredients' => 'Beef fillet, chestnut mushrooms, shallot, thyme, prosciutto (cured pork), puff pastry, egg, potato, butter, red wine',
+        'allergens' => 'gluten,egg,dairy,sulphites,mustard', 'price' => 48000, 'pork' => true, 'spice' => 0, 'featured' => true, 'popularity' => 76],
 
     ['slug' => 'ribeye-peppercorn', 'kitchen' => 'continental', 'category' => 'grills', 'name' => 'Ribeye with Peppercorn Sauce',
         'short' => '300g aged ribeye, green peppercorn sauce, triple-cooked chips.',

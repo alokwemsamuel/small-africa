@@ -1,20 +1,45 @@
 @import 'tailwindcss';
+@import './theme.css';
 
-/* Brand tokens: mirror design/brand and the Figma "Theme" variables. */
+/* `dark:` / `light:` variants follow the data-theme attribute set before first paint. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+@custom-variant light (&:where([data-theme='light'], [data-theme='light'] *));
+
+/* Semantic tokens (switch with the theme). Defined in theme.css. */
+@theme inline {
+  --color-surface: var(--sa-surface);
+  --color-surface-raised: var(--sa-surface-raised);
+  --color-surface-inset: var(--sa-surface-inset);
+  --color-primary: var(--sa-text-primary);
+  --color-secondary: var(--sa-text-secondary);
+  --color-muted: var(--sa-text-muted);
+  --color-accent: var(--sa-accent);
+  --color-accent-hover: var(--sa-accent-hover);
+  --color-accent-fill: var(--sa-accent-fill);
+  --color-accent-fill-hover: var(--sa-accent-fill-hover);
+  --color-on-accent: var(--sa-on-accent);
+  --color-danger: var(--sa-danger);
+  --color-success: var(--sa-success);
+  --color-input: var(--sa-border-input);
+  --color-focus: var(--sa-focus);
+  --color-line: var(--sa-line);
+  --color-overlay: var(--sa-overlay);
+}
+
+/* Fixed brand palette: for kitchen badges and artwork that look the same in both themes. */
 @theme {
   --color-obsidian: #0e0c0a;
   --color-ebony: #1a1612;
   --color-gold: #c9a24b;
   --color-gold-light: #e6c97a;
-  --color-gold-dark: #7d5e1f; /* gold text on light backgrounds (5.3:1 on ivory) */
+  --color-gold-dark: #7d5e1f;
   --color-terracotta: #b4492f;
   --color-palm: #2e4a3b;
   --color-crimson: #a3243b;
   --color-ivory: #f6efe3;
   --color-sand: #e7d9c4;
   --color-smoke: #8a8178;
-  --color-smoke-dark: #665d55; /* secondary text on light backgrounds (5.6:1 on ivory) */
-  --color-danger: #e0806a; /* error text on dark (5.9:1 on obsidian) */
+  --color-smoke-dark: #665d55;
 
   --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   --font-sans: 'Manrope Variable', 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -27,15 +52,15 @@
 }
 
 @layer base {
-  :root {
-    color-scheme: dark;
-  }
   html {
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
   }
   body {
-    @apply bg-obsidian text-ivory font-sans antialiased;
+    @apply bg-surface text-primary font-sans antialiased;
+    transition:
+      background-color 0.3s var(--ease-luxe),
+      color 0.3s var(--ease-luxe);
   }
   h1,
   h2,
@@ -44,14 +69,11 @@
     @apply font-serif font-semibold text-balance;
   }
   ::selection {
-    @apply bg-gold text-obsidian;
+    @apply bg-accent-fill text-on-accent;
   }
   /* Visible, on-brand focus for keyboard users only. */
   :focus-visible {
-    @apply outline-gold-light outline-2 outline-offset-2;
-  }
-  [data-theme='light'] {
-    color-scheme: light;
+    @apply outline-focus outline-2 outline-offset-2;
   }
 }
 
@@ -60,7 +82,7 @@
     @apply tracking-overline font-sans text-xs font-semibold uppercase;
   }
   .gold-rule {
-    @apply bg-gold h-px w-16;
+    @apply bg-accent-fill h-px w-16;
   }
   .container-luxe {
     @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-10;
@@ -68,6 +90,15 @@
   .bg-pattern {
     background-image: url('/brand/pattern.svg');
     background-size: 96px 96px;
+  }
+  /* Logo swap: both variants are in the DOM; the hidden one is display:none, so screen
+     readers only announce the visible logo. Driven by variables so it follows the nearest
+     [data-theme] ancestor (e.g. the side-by-side panels in the style guide). */
+  .on-dark-only {
+    display: var(--sa-show-on-dark);
+  }
+  .on-light-only {
+    display: var(--sa-show-on-light);
   }
 }
 

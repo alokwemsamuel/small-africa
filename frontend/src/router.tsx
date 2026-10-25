@@ -10,6 +10,7 @@ import { VerifyEmailPage } from './features/auth/pages/VerifyEmailPage';
 import { RequireAuth } from './features/auth/RequireAuth';
 import { STAFF_ROLES } from './features/auth/types';
 import { ApiError } from './lib/api';
+import { AdminHomePage } from './pages/AdminHomePage';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage, PlaceholderPage } from './pages/PlaceholderPage';
 import { StyleGuidePage } from './pages/StyleGuidePage';
@@ -53,7 +54,7 @@ export const routes: RouteObject[] = [
         path: 'admin/*',
         element: (
           <RequireAuth roles={STAFF_ROLES}>
-            <PlaceholderPage title="Admin dashboard" phase="Phase 6" />
+            <AdminHomePage />
           </RequireAuth>
         ),
       },

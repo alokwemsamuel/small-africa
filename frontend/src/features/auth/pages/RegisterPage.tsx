@@ -64,7 +64,7 @@ export function RegisterPage() {
         <>
           Your Interest Account starts at Bronze: earn points on every order, get a birthday dessert, and top
           up for bonus dining credit. Already a member?{' '}
-          <Link to="/login" className="text-gold underline-offset-4 hover:underline">
+          <Link to="/login" className="text-accent underline-offset-4 hover:underline">
             Sign in
           </Link>
           .
@@ -133,15 +133,15 @@ export function RegisterPage() {
             label={
               <>
                 I agree to the{' '}
-                <Link to="/terms" className="text-gold underline">
+                <Link to="/terms" className="text-accent underline">
                   Terms
                 </Link>
                 ,{' '}
-                <Link to="/rewards-terms" className="text-gold underline">
+                <Link to="/rewards-terms" className="text-accent underline">
                   Rewards Terms
                 </Link>{' '}
                 and{' '}
-                <Link to="/privacy" className="text-gold underline">
+                <Link to="/privacy" className="text-accent underline">
                   Privacy Policy
                 </Link>
                 .

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useLogout, useMe } from '@/features/auth/hooks';
 import { isStaff } from '@/features/auth/types';
+import { ThemeMenu, ThemeSegmented } from '@/features/theme/ThemeSwitcher';
 import { cn } from '@/lib/cn';
 import { ButtonLink } from '../ui/Button';
 import { Logo } from '../ui/Logo';
@@ -22,7 +23,7 @@ export function SiteHeader() {
   }, [open]);
 
   return (
-    <header className="border-gold/15 bg-obsidian/85 sticky top-0 z-40 border-b backdrop-blur-md">
+    <header className="border-accent/15 bg-overlay sticky top-0 z-40 border-b backdrop-blur-md">
       <div className="container-luxe flex h-18 items-center justify-between gap-6 py-3">
         <Link to="/" className="shrink-0" aria-label="Small Africa home">
           <Logo className="h-11 w-auto sm:h-12" />
@@ -36,8 +37,8 @@ export function SiteHeader() {
                   to={item.to}
                   className={({ isActive }) =>
                     cn(
-                      'hover:text-gold-light text-sm tracking-wide transition-colors',
-                      isActive ? 'text-gold' : 'text-sand',
+                      'hover:text-accent-hover text-sm tracking-wide transition-colors',
+                      isActive ? 'text-accent' : 'text-secondary',
                     )
                   }
                 >
@@ -52,26 +53,27 @@ export function SiteHeader() {
           {user ? (
             <>
               {isStaff(user) && (
-                <Link to="/admin" className="text-sand hover:text-gold-light text-sm">
+                <Link to="/admin" className="text-secondary hover:text-accent-hover text-sm">
                   Admin
                 </Link>
               )}
-              <Link to="/account" className="text-sand hover:text-gold-light text-sm">
+              <Link to="/account" className="text-secondary hover:text-accent-hover text-sm">
                 {user.firstName}
               </Link>
               <button
                 type="button"
                 onClick={() => logout.mutate()}
-                className="text-smoke hover:text-ivory text-sm"
+                className="text-muted hover:text-primary text-sm"
               >
                 Sign out
               </button>
             </>
           ) : (
-            <Link to="/login" className="text-sand hover:text-gold-light text-sm">
+            <Link to="/login" className="text-secondary hover:text-accent-hover text-sm">
               Sign in
             </Link>
           )}
+          <ThemeMenu />
           <ButtonLink to="/reservations" size="sm">
             Reserve
           </ButtonLink>
@@ -79,7 +81,7 @@ export function SiteHeader() {
 
         <button
           type="button"
-          className="border-gold/40 text-gold grid size-11 place-items-center rounded-full border lg:hidden"
+          className="border-accent/40 text-accent grid size-11 place-items-center rounded-full border lg:hidden"
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label={open ? 'Close menu' : 'Open menu'}
@@ -102,7 +104,7 @@ export function SiteHeader() {
         <nav
           id="mobile-nav"
           aria-label="Main"
-          className="bg-obsidian fixed inset-x-0 top-[4.5rem] bottom-0 z-40 overflow-y-auto lg:hidden"
+          className="bg-surface fixed inset-x-0 top-[4.5rem] bottom-0 z-40 overflow-y-auto lg:hidden"
         >
           <ul className="container-luxe flex flex-col gap-1 py-8">
             {NAV.map((item) => (
@@ -110,37 +112,40 @@ export function SiteHeader() {
                 <NavLink
                   to={item.to}
                   className={({ isActive }) =>
-                    cn('block py-3 font-serif text-3xl', isActive ? 'text-gold' : 'text-ivory')
+                    cn('block py-3 font-serif text-3xl', isActive ? 'text-accent' : 'text-primary')
                   }
                 >
                   {item.label}
                 </NavLink>
               </li>
             ))}
-            <li className="border-gold/20 mt-6 border-t pt-6">
+            <li className="border-accent/20 mt-6 border-t pt-6">
               {user ? (
                 <div className="flex flex-col gap-4">
-                  <Link to="/account" className="text-sand text-lg">
+                  <Link to="/account" className="text-secondary text-lg">
                     My account
                   </Link>
                   {isStaff(user) && (
-                    <Link to="/admin" className="text-sand text-lg">
+                    <Link to="/admin" className="text-secondary text-lg">
                       Admin
                     </Link>
                   )}
                   <button
                     type="button"
                     onClick={() => logout.mutate()}
-                    className="text-smoke text-left text-lg"
+                    className="text-muted text-left text-lg"
                   >
                     Sign out
                   </button>
                 </div>
               ) : (
-                <Link to="/login" className="text-sand text-lg">
+                <Link to="/login" className="text-secondary text-lg">
                   Sign in / Join
                 </Link>
               )}
+            </li>
+            <li className="mt-8">
+              <ThemeSegmented />
             </li>
             <li className="mt-6">
               <ButtonLink to="/reservations" className="w-full">

@@ -13,6 +13,7 @@ export interface User {
   favouriteKitchenId: number | null;
   referralCode: string | null;
   marketingOptIn: boolean;
+  themePreference: 'dark' | 'light' | 'system' | null;
   twoFactorEnabled: boolean;
   createdAt: string;
 }

@@ -12,11 +12,11 @@ export function HomePage() {
       />
       <div className="container-luxe flex flex-col items-center py-24 text-center">
         <Logo variant="mark" className="w-32 sm:w-40" />
-        <p className="text-gold eyebrow mt-10">Lagos · Nigerian · Polish · Continental</p>
+        <p className="text-accent eyebrow mt-10">Lagos · Nigerian · Polish · Continental</p>
         <h1 className="mt-5 max-w-4xl text-5xl leading-[1.02] sm:text-7xl lg:text-8xl">
           Three kitchens. One table.
         </h1>
-        <p className="text-sand mt-7 max-w-xl text-lg leading-relaxed">
+        <p className="text-secondary mt-7 max-w-xl text-lg leading-relaxed">
           Smoky party jollof, hand-pinched pierogi and a Wellington carved at your table, under one gold-leaf
           roof in Victoria Island.
         </p>
