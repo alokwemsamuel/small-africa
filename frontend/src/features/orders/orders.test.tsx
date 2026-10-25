@@ -20,6 +20,9 @@ const order: Order = {
   serviceChargeKobo: 0,
   vatIncludedKobo: 251163,
   totalKobo: 3900000,
+  voucherDiscountKobo: 0,
+  walletAppliedKobo: 0,
+  pointsEarned: 0,
   items: [
     {
       dishId: 1,

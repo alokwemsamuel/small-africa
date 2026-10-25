@@ -6,9 +6,12 @@ namespace App\Services;
 
 use App\Audit\AuditLogger;
 use App\Http\HttpError;
+use App\Http\ValidationError;
+use App\Loyalty\Ledger;
+use App\Loyalty\LoyaltyService;
 use App\Mail\EmailTemplates;
 use App\Mail\Mailer;
-use App\Payments\PaymentGateway;
+use App\Payments\PaymentAttempts;
 use App\Security\Crypto;
 use App\Security\RateLimiter;
 use App\Support\Clock;
@@ -29,10 +32,15 @@ final class OrderService
         'pending_payment' => ['cancelled'],
     ];
 
+    /** Unpaid orders are cancelled (and any dining credit returned) after this long. */
+    public const UNPAID_EXPIRY_MINUTES = 120;
+
     public function __construct(
         private Database $db,
         private PricingService $pricing,
-        private PaymentGateway $gateway,
+        private PaymentAttempts $attempts,
+        private Ledger $ledger,
+        private LoyaltyService $loyalty,
         private RateLimiter $limiter,
         private Mailer $mailer,
         private EmailTemplates $emails,
@@ -45,8 +53,9 @@ final class OrderService
     }
 
     /**
-     * Creates a pending order and starts payment. Re-sending the same Idempotency-Key returns
-     * the same order instead of creating a duplicate.
+     * Creates an order and starts payment. Dining credit and reward vouchers are reserved
+     * immediately (and released if the order is cancelled or expires unpaid). Re-sending the
+     * same Idempotency-Key returns the same order instead of creating a duplicate.
      *
      * @param array<string, mixed> $req validated checkout request
      * @param array<string, mixed>|null $user
@@ -71,10 +80,11 @@ final class OrderService
         $userId = $user ? (int) $user['id'] : null;
         $quote = $this->pricing->quote($req, $userId);
         $reference = $this->newReference();
-        $trackingToken = $this->trackingToken($reference);
         $now = $this->clock->sql();
 
-        $orderId = $this->db->transaction(function () use ($req, $quote, $userId, $reference, $trackingToken, $idempotencyKey, $now): int {
+        $order = $this->db->transaction(function () use ($req, $quote, $userId, $reference, $idempotencyKey, $now): array {
+            $walletApplied = (int) $quote['walletAppliedKobo'];
+            $payable = (int) $quote['payableKobo'];
             $orderId = $this->db->insert('orders', [
                 'reference' => $reference,
                 'user_id' => $userId,
@@ -89,14 +99,18 @@ final class OrderService
                 'payment_status' => 'unpaid',
                 'subtotal_kobo' => $quote['subtotalKobo'],
                 'discount_kobo' => $quote['discountKobo'],
+                'voucher_discount_kobo' => $quote['voucherDiscountKobo'],
                 'delivery_fee_kobo' => $quote['deliveryFeeKobo'] + $quote['packagingFeeKobo'],
                 'service_charge_kobo' => $quote['serviceChargeKobo'],
                 'vat_included_kobo' => $quote['vatIncludedKobo'],
-                'total_kobo' => $quote['totalKobo'],
+                'wallet_applied_kobo' => $walletApplied,
+                'total_kobo' => $payable,
                 'coupon_id' => $quote['coupon']['id'] ?? null,
+                'voucher_id' => $quote['voucher']['id'] ?? null,
                 'notes' => $req['notes'] ?? null,
                 'idempotency_key' => $idempotencyKey,
                 'status_updated_at' => $now,
+                'created_at' => $now,
             ]);
             foreach ($quote['lines'] as $l) {
                 $this->db->insert('order_items', [
@@ -111,27 +125,39 @@ final class OrderService
                     'notes' => $l['note'],
                 ]);
             }
-            $this->db->insert('order_status_history', ['order_id' => $orderId, 'status' => 'pending_payment']);
-            $this->db->insert('payments', [
-                'user_id' => $userId,
-                'purpose' => 'order',
-                'payable_id' => $orderId,
-                'provider' => $this->gateway->name(),
-                'reference' => $reference,
-                'amount_kobo' => $quote['totalKobo'],
-                'status' => 'initialized',
-            ]);
-            return $orderId;
+            $this->db->insert('order_status_history', ['order_id' => $orderId, 'status' => 'pending_payment', 'created_at' => $now]);
+            if ($quote['voucher']) {
+                $claimed = $this->db->run(
+                    "UPDATE reward_vouchers SET status = 'used', used_order_id = ? WHERE id = ? AND user_id = ? AND status = 'issued'",
+                    [$orderId, $quote['voucher']['id'], $userId],
+                )->rowCount();
+                if ($claimed !== 1) {
+                    throw ValidationError::field('voucher_code', 'That voucher has just been used.');
+                }
+            }
+            if ($walletApplied > 0) {
+                $this->ledger->wallet((int) $userId, 'debit', 'payment', $walletApplied, "Order {$reference}", $reference, "order-wallet:{$reference}");
+            }
+            if ($payable === 0) {
+                // Paid entirely with dining credit: no card payment needed.
+                $this->db->insert('payments', [
+                    'user_id' => $userId, 'purpose' => 'order', 'payable_id' => $orderId, 'provider' => 'wallet',
+                    'reference' => "{$reference}-W", 'amount_kobo' => $walletApplied, 'status' => 'success', 'verified_at' => $now,
+                ]);
+                $this->applyPaid($this->db->one('SELECT * FROM orders WHERE id = ? FOR UPDATE', [$orderId]) ?? [], $now);
+            }
+            return $this->db->one('SELECT * FROM orders WHERE id = ?', [$orderId]) ?? [];
         });
 
-        $order = $this->db->one('SELECT * FROM orders WHERE id = ?', [$orderId]);
-        $result = $this->resume($order);
-        $this->audit->record($userId, 'order.created', 'order', $reference, ['total_kobo' => $quote['totalKobo']]);
-        return $result;
+        $this->audit->record($userId, 'order.created', 'order', $reference, ['total_kobo' => (int) $order['total_kobo'], 'wallet_kobo' => (int) $order['wallet_applied_kobo']]);
+        if ($order['payment_status'] === 'paid') {
+            $this->afterPaid($order);
+        }
+        return $this->resume($order);
     }
 
     /**
-     * Payment details for a pending order (new or replayed).
+     * Payment details for an order (new or replayed): a fresh or resumed payment attempt.
      *
      * @param array<string, mixed> $order
      * @return array<string, mixed>
@@ -141,120 +167,112 @@ final class OrderService
         $trackingToken = $this->trackingToken($order['reference']);
         $payment = null;
         if ($order['payment_status'] !== 'paid') {
-            try {
-                $init = $this->gateway->initialize(
-                    $order['reference'],
-                    (int) $order['total_kobo'],
-                    $order['customer_email'],
-                    ['order_reference' => $order['reference'], 'purpose' => 'order'],
-                    "{$this->frontendUrl}/orders/{$order['reference']}?t={$trackingToken}",
-                );
-            } catch (\Throwable $e) {
-                $this->logger->error('Payment initialisation failed', ['reference' => $order['reference'], 'error' => $e->getMessage()]);
-                throw new HttpError(502, 'We couldn’t start the payment. Please try again in a moment.', 'payment_unavailable');
+            if ($order['status'] === 'cancelled') {
+                throw HttpError::conflict('This order expired before it was paid. Please place it again.', 'order_expired');
             }
-            $payment = ['provider' => $this->gateway->name(), 'reference' => $order['reference']] + $init;
+            $payment = $this->attempts->start(
+                'order', (int) $order['id'], $order['user_id'] ? (int) $order['user_id'] : null, $order['reference'],
+                (int) $order['total_kobo'], $order['customer_email'], ['order_reference' => $order['reference']],
+                "{$this->frontendUrl}/orders/{$order['reference']}?t={$trackingToken}",
+            );
+            $this->db->run("UPDATE orders SET payment_status = 'unpaid' WHERE id = ? AND payment_status = 'failed'", [$order['id']]);
         }
         return ['order' => $this->toPublic($order), 'payment' => $payment, 'trackingToken' => $trackingToken];
     }
 
     /**
-     * Confirms a payment by asking the gateway (never trusting the browser).
+     * Confirms an order's latest payment attempt by asking the gateway (never the browser).
      *
      * @return array<string, mixed> public order
      */
-    public function verifyPayment(string $reference): array
+    public function verifyPayment(string $orderReference): array
     {
-        $payment = $this->db->one("SELECT * FROM payments WHERE reference = ? AND purpose = 'order'", [$reference]);
-        if (!$payment) {
+        $order = $this->db->one('SELECT * FROM orders WHERE reference = ?', [strtoupper($orderReference)]);
+        if (!$order) {
             throw HttpError::notFound('We couldn’t find that payment.');
         }
-        if ($payment['status'] !== 'success') {
-            $result = $this->gateway->verify($reference);
-            if ($result['status'] === 'success') {
-                $this->markPaid($reference, $result);
-            } elseif (in_array($result['status'], ['failed', 'abandoned'], true)) {
-                $this->db->transaction(function () use ($payment, $result): void {
-                    $this->db->run("UPDATE payments SET status = ?, provider_payload = ? WHERE id = ? AND status <> 'success'", [$result['status'], json_encode($result['raw']), $payment['id']]);
-                    $this->db->run("UPDATE orders SET payment_status = 'failed' WHERE id = ? AND payment_status = 'unpaid'", [$payment['payable_id']]);
-                });
+        if ($order['payment_status'] !== 'paid') {
+            $payment = $this->attempts->latest('order', (int) $order['id']);
+            if ($payment && $payment['status'] !== 'success' && $payment['provider'] !== 'wallet') {
+                $result = $this->attempts->check($payment);
+                if ($result['status'] === 'success') {
+                    $this->markPaid($payment['reference'], $result);
+                } elseif ($result['status'] === 'failed') {
+                    $this->db->run("UPDATE orders SET payment_status = 'failed' WHERE id = ? AND payment_status = 'unpaid'", [$order['id']]);
+                }
             }
         }
-        return $this->toPublic($this->db->one('SELECT * FROM orders WHERE id = ?', [$payment['payable_id']]));
+        return $this->toPublic($this->db->one('SELECT * FROM orders WHERE id = ?', [$order['id']]) ?? $order);
     }
 
     /**
-     * Idempotent: the row lock plus the status check mean a payment is applied exactly once,
-     * even when the browser callback and the webhook arrive together.
+     * Applies a verified payment attempt exactly once: the row locks plus status checks mean
+     * the browser callback and the webhook can arrive together safely.
      *
      * @param array{status: string, amountKobo: int, currency: string, paidAt: ?string, raw: array<string, mixed>} $result
      */
-    public function markPaid(string $reference, array $result): void
+    public function markPaid(string $paymentReference, array $result): void
     {
-        $orderId = $this->db->transaction(function () use ($reference, $result): ?int {
-            $payment = $this->db->one('SELECT * FROM payments WHERE reference = ? FOR UPDATE', [$reference]);
-            if (!$payment || $payment['status'] === 'success') {
-                return null;
-            }
-            if ($result['amountKobo'] !== (int) $payment['amount_kobo'] || $result['currency'] !== 'NGN') {
-                $this->db->run("UPDATE payments SET status = 'failed', provider_payload = ? WHERE id = ?", [json_encode($result['raw'] + ['mismatch' => true]), $payment['id']]);
-                $this->logger->warning('Payment amount/currency mismatch', ['reference' => $reference, 'expected' => $payment['amount_kobo'], 'got' => $result['amountKobo'], 'currency' => $result['currency']]);
-                $this->audit->record(null, 'payment.mismatch', 'payment', $reference, ['expected' => (int) $payment['amount_kobo'], 'got' => $result['amountKobo']]);
-                return null;
-            }
+        $order = $this->db->transaction(function () use ($paymentReference, $result): ?array {
             $now = $this->clock->sql();
-            $this->db->run("UPDATE payments SET status = 'success', verified_at = ?, provider_payload = ? WHERE id = ?", [$now, json_encode($result['raw']), $payment['id']]);
-            $order = $this->db->one('SELECT * FROM orders WHERE id = ? FOR UPDATE', [$payment['payable_id']]);
-            $this->db->run(
-                "UPDATE orders SET payment_status = 'paid', status = 'received', placed_at = ?, status_updated_at = ? WHERE id = ?",
-                [$now, $now, $order['id']],
-            );
-            $this->db->insert('order_status_history', ['order_id' => $order['id'], 'status' => 'received']);
-            if ($order['coupon_id']) {
-                $this->db->insert('coupon_redemptions', [
-                    'coupon_id' => $order['coupon_id'], 'user_id' => $order['user_id'], 'order_id' => $order['id'], 'discount_kobo' => $order['discount_kobo'],
-                ]);
-                $this->db->run('UPDATE coupons SET times_used = times_used + 1 WHERE id = ?', [$order['coupon_id']]);
+            if (!$this->attempts->markSuccess($paymentReference, $result, $now)) {
+                return null;
             }
-            $this->db->run(
-                'UPDATE dishes d JOIN order_items oi ON oi.dish_id = d.id SET d.popularity = d.popularity + oi.quantity WHERE oi.order_id = ?',
-                [$order['id']],
-            );
-            return (int) $order['id'];
+            $payment = $this->attempts->byReference($paymentReference);
+            $order = $this->db->one('SELECT * FROM orders WHERE id = ? FOR UPDATE', [$payment['payable_id']]);
+            if (!$order) {
+                return null;
+            }
+            if ($order['payment_status'] === 'paid' || $order['status'] === 'cancelled') {
+                // Money arrived for an order that is already paid or was cancelled: flag for refund.
+                $this->logger->warning('Payment needs refund', ['reference' => $paymentReference, 'order' => $order['reference'], 'status' => $order['status']]);
+                $this->audit->record(null, 'payment.needs_refund', 'payment', $paymentReference, ['order' => $order['reference'], 'amount_kobo' => $result['amountKobo']]);
+                return null;
+            }
+            $this->applyPaid($order, $now);
+            return $this->db->one('SELECT * FROM orders WHERE id = ?', [$order['id']]);
         });
-        if ($orderId !== null) {
-            $order = $this->db->one('SELECT * FROM orders WHERE id = ?', [$orderId]);
-            $this->audit->record($order['user_id'] ? (int) $order['user_id'] : null, 'order.paid', 'order', $order['reference'], ['total_kobo' => (int) $order['total_kobo']]);
-            $this->sendConfirmation($order);
+        if ($order !== null) {
+            $this->afterPaid($order);
         }
     }
 
-    /** Paystack webhook: authenticated by signature, de-duplicated, then re-verified via the API. */
-    public function handleWebhook(string $rawBody, string $signature): void
+    /**
+     * Cancels orders left unpaid for too long and returns any dining credit or voucher they held.
+     *
+     * @return int orders cancelled
+     */
+    public function expireUnpaid(): int
     {
-        $valid = $this->gateway->verifyWebhookSignature($rawBody, $signature);
-        $event = json_decode($rawBody, true);
-        if (!$valid || !is_array($event)) {
-            $this->logger->warning('Rejected webhook', ['valid_signature' => $valid]);
-            throw HttpError::unauthorized('Invalid signature.');
-        }
-        $reference = (string) ($event['data']['reference'] ?? '');
-        $key = substr(($event['event'] ?? 'unknown') . ':' . $reference . ':' . ($event['data']['id'] ?? ''), 0, 120);
-        try {
-            $this->db->insert('webhook_events', ['provider' => $this->gateway->name(), 'event_key' => $key, 'signature_valid' => 1, 'payload' => $rawBody]);
-        } catch (\PDOException $e) {
-            if ($e->getCode() === '23000') {
-                return; // already processed: retries are harmless
+        $cutoff = $this->clock->sql($this->clock->now()->modify('-' . self::UNPAID_EXPIRY_MINUTES . ' minutes'));
+        $count = 0;
+        foreach ($this->db->all("SELECT reference FROM orders WHERE status = 'pending_payment' AND created_at < ?", [$cutoff]) as $row) {
+            try {
+                // A late success still counts: check with the gateway before giving up on it.
+                if ($this->verifyPayment($row['reference'])['paymentStatus'] === 'paid') {
+                    continue;
+                }
+            } catch (\Throwable $e) {
+                $this->logger->warning('Could not verify stale order', ['reference' => $row['reference'], 'error' => $e->getMessage()]);
+                continue;
             }
-            throw $e;
+            $cancelled = $this->db->transaction(function () use ($row): bool {
+                $order = $this->db->one('SELECT * FROM orders WHERE reference = ? FOR UPDATE', [$row['reference']]);
+                if (!$order || $order['status'] !== 'pending_payment') {
+                    return false;
+                }
+                $now = $this->clock->sql();
+                $this->db->run(
+                    "UPDATE orders SET status = 'cancelled', cancelled_reason = 'Payment not completed', status_updated_at = ? WHERE id = ?",
+                    [$now, $order['id']],
+                );
+                $this->db->insert('order_status_history', ['order_id' => $order['id'], 'status' => 'cancelled', 'note' => 'Payment not completed', 'created_at' => $now]);
+                $this->releaseHolds($order);
+                return true;
+            });
+            $count += $cancelled ? 1 : 0;
         }
-        if (($event['event'] ?? '') === 'charge.success' && $reference !== '') {
-            $isOrder = $this->db->scalar("SELECT 1 FROM payments WHERE reference = ? AND purpose = 'order'", [$reference]);
-            if ($isOrder) {
-                $this->verifyPayment($reference);
-            }
-        }
-        $this->db->run('UPDATE webhook_events SET processed_at = ? WHERE provider = ? AND event_key = ?', [$this->clock->sql(), $this->gateway->name(), $key]);
+        return $count;
     }
 
     /**
@@ -284,7 +302,8 @@ final class OrderService
     }
 
     /**
-     * Changes an order's status along the allowed path (used by staff tools).
+     * Changes an order's status along the allowed path (used by staff tools). Completing an
+     * order earns Interest Account points; cancelling returns held dining credit and vouchers.
      */
     public function updateStatus(string $reference, string $to, ?int $actorId, ?string $note = null): void
     {
@@ -303,12 +322,24 @@ final class OrderService
             throw HttpError::conflict("An order that is {$order['status']} can’t move to {$to}.");
         }
         $this->db->transaction(function () use ($order, $to, $actorId, $note): void {
-            $this->db->run('UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?', [$to, $this->clock->sql(), $order['id']]);
-            $this->db->insert('order_status_history', ['order_id' => $order['id'], 'status' => $to, 'note' => $note, 'changed_by_user_id' => $actorId]);
+            $now = $this->clock->sql();
+            $this->db->run('UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?', [$to, $now, $order['id']]);
+            $this->db->insert('order_status_history', ['order_id' => $order['id'], 'status' => $to, 'note' => $note, 'changed_by_user_id' => $actorId, 'created_at' => $now]);
+            if ($to === 'cancelled') {
+                $this->releaseHolds($order);
+            }
         });
         $this->audit->record($actorId, 'order.status', 'order', $reference, ['from' => $order['status'], 'to' => $to]);
         if (in_array($to, ['ready', 'out_for_delivery'], true)) {
             $this->sendStatusEmail($order, $to);
+        }
+        if (in_array($to, ['delivered', 'completed'], true)) {
+            try {
+                $this->loyalty->onOrderCompleted((int) $order['id']);
+            } catch (\Throwable $e) {
+                // The order is complete either way; the daily job retries unprocessed orders.
+                $this->logger->error('Loyalty processing failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+            }
         }
     }
 
@@ -331,10 +362,13 @@ final class OrderService
             'customerName' => $o['customer_name'],
             'subtotalKobo' => (int) $o['subtotal_kobo'],
             'discountKobo' => (int) $o['discount_kobo'],
+            'voucherDiscountKobo' => (int) $o['voucher_discount_kobo'],
             'deliveryFeeKobo' => (int) $o['delivery_fee_kobo'],
             'serviceChargeKobo' => (int) $o['service_charge_kobo'],
             'vatIncludedKobo' => (int) $o['vat_included_kobo'],
+            'walletAppliedKobo' => (int) $o['wallet_applied_kobo'],
             'totalKobo' => (int) $o['total_kobo'],
+            'pointsEarned' => (int) $o['points_earned'],
         ];
         if ($withDetail) {
             $public['items'] = array_map(static function ($i) {
@@ -362,6 +396,60 @@ final class OrderService
             $public['reviewable'] = in_array($o['status'], ['delivered', 'completed'], true);
         }
         return $public;
+    }
+
+    /**
+     * Marks a locked order paid. Runs inside the caller's transaction.
+     *
+     * @param array<string, mixed> $order
+     */
+    private function applyPaid(array $order, string $now): void
+    {
+        $this->db->run(
+            "UPDATE orders SET payment_status = 'paid', status = 'received', placed_at = ?, status_updated_at = ? WHERE id = ?",
+            [$now, $now, $order['id']],
+        );
+        $this->db->insert('order_status_history', ['order_id' => $order['id'], 'status' => 'received', 'created_at' => $now]);
+        if ($order['coupon_id']) {
+            $this->db->insert('coupon_redemptions', [
+                'coupon_id' => $order['coupon_id'], 'user_id' => $order['user_id'], 'order_id' => $order['id'], 'discount_kobo' => $order['discount_kobo'],
+            ]);
+            $this->db->run('UPDATE coupons SET times_used = times_used + 1 WHERE id = ?', [$order['coupon_id']]);
+        }
+        $this->db->run(
+            'UPDATE dishes d JOIN order_items oi ON oi.dish_id = d.id SET d.popularity = d.popularity + oi.quantity WHERE oi.order_id = ?',
+            [$order['id']],
+        );
+    }
+
+    /** @param array<string, mixed> $order */
+    private function afterPaid(array $order): void
+    {
+        $this->audit->record($order['user_id'] ? (int) $order['user_id'] : null, 'order.paid', 'order', $order['reference'], [
+            'total_kobo' => (int) $order['total_kobo'], 'wallet_kobo' => (int) $order['wallet_applied_kobo'],
+        ]);
+        $this->sendConfirmation($order);
+    }
+
+    /**
+     * Returns dining credit and the voucher held by an order. Idempotent; runs in the caller's transaction.
+     *
+     * @param array<string, mixed> $order
+     */
+    private function releaseHolds(array $order): void
+    {
+        if ((int) $order['wallet_applied_kobo'] > 0 && $order['user_id']) {
+            $this->ledger->wallet(
+                (int) $order['user_id'], 'credit', 'refund', (int) $order['wallet_applied_kobo'],
+                "Returned from cancelled order {$order['reference']}", $order['reference'], "order-wallet-refund:{$order['reference']}",
+            );
+        }
+        if ($order['voucher_id']) {
+            $this->db->run(
+                "UPDATE reward_vouchers SET status = 'issued', used_order_id = NULL WHERE id = ? AND used_order_id = ?",
+                [$order['voucher_id'], $order['id']],
+            );
+        }
     }
 
     private function newReference(): string

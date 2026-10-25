@@ -40,6 +40,7 @@ final class AuthController
             'phone' => 'nullable|phone',
             'password' => 'required|string|max:' . PasswordPolicy::MAX_LENGTH,
             'referral_code' => 'nullable|string|max:20',
+            'device_id' => 'nullable|string|max:64|regex:/^[A-Za-z0-9-]{16,64}$/',
             'marketing_opt_in' => 'nullable|bool',
             'accept_terms' => 'required|bool',
         ], ['first_name' => 'First name', 'last_name' => 'Last name', 'accept_terms' => 'Accepting the terms']);

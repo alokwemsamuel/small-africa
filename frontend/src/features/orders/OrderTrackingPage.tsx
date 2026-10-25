@@ -201,6 +201,12 @@ export function OrderTrackingPage() {
                 <dd className="text-success">−{formatNaira(order.discountKobo)}</dd>
               </>
             )}
+            {order.voucherDiscountKobo > 0 && (
+              <>
+                <dt className="text-success">Reward voucher</dt>
+                <dd className="text-success">−{formatNaira(order.voucherDiscountKobo)}</dd>
+              </>
+            )}
             {order.deliveryFeeKobo > 0 && (
               <>
                 <dt className="text-secondary">
@@ -209,12 +215,25 @@ export function OrderTrackingPage() {
                 <dd>{formatNaira(order.deliveryFeeKobo)}</dd>
               </>
             )}
-            <dt className="mt-2 font-semibold">Total paid</dt>
+            {order.walletAppliedKobo > 0 && (
+              <>
+                <dt className="text-secondary">Paid with dining credit</dt>
+                <dd>{formatNaira(order.walletAppliedKobo)}</dd>
+              </>
+            )}
+            <dt className="mt-2 font-semibold">
+              {order.walletAppliedKobo > 0 ? 'Paid by card' : 'Total paid'}
+            </dt>
             <dd className="text-accent mt-2 font-semibold">{formatNaira(order.totalKobo)}</dd>
             <dt className="text-muted col-span-2 text-xs">
               Includes VAT of {formatNaira(order.vatIncludedKobo)}
             </dt>
           </dl>
+          {order.pointsEarned > 0 && (
+            <p className="text-accent text-sm font-semibold">
+              +{order.pointsEarned.toLocaleString('en-NG')} Interest Account points earned
+            </p>
+          )}
           <p className="text-muted text-xs">
             Questions? Call or WhatsApp us with your order number{' '}
             <strong className="text-primary">{order.reference}</strong>.

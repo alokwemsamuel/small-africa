@@ -45,7 +45,7 @@ final class AuthService
     }
 
     /**
-     * @param array{first_name: string, last_name: string, email: string, phone: ?string, password: string, referral_code?: ?string, marketing_opt_in?: bool} $data
+     * @param array{first_name: string, last_name: string, email: string, phone: ?string, password: string, referral_code?: ?string, device_id?: ?string, marketing_opt_in?: bool} $data
      * @return array<string, mixed> public user
      */
     public function register(array $data, string $ip): array
@@ -86,6 +86,9 @@ final class AuthService
                     'referrer_user_id' => $referrer['id'],
                     'referred_user_id' => $id,
                     'signup_ip' => $ip,
+                    // Anti-abuse: a keyed hash of the browser's random device id, never the id itself.
+                    'device_hash' => !empty($data['device_id']) ? hash('sha256', $this->crypto->mac('referral-device', (string) $data['device_id'])) : null,
+                    'referred_phone' => $data['phone'] ?? null,
                 ]);
             }
             return $id;

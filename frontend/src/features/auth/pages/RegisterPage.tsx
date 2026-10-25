@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { deviceId } from '@/lib/device';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -49,6 +50,7 @@ export function RegisterPage() {
         ...values,
         phone: values.phone || null,
         referral_code: values.referral_code || null,
+        device_id: values.referral_code ? deviceId() : null,
       });
       navigate('/account?welcome=1', { replace: true });
     } catch (e) {

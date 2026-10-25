@@ -194,7 +194,9 @@ final class ReferenceSeeder
                     ['key' => 'gold', 'name' => 'Gold', 'min_spend_naira' => 500000, 'multiplier' => 1.5, 'perks' => ['1.5× points', 'Free delivery', 'Complimentary welcome drink']],
                     ['key' => 'black_diamond', 'name' => 'Black Diamond', 'min_spend_naira' => 1500000, 'multiplier' => 2.0, 'perks' => ['2× points', 'Private-dining priority', 'Chef’s table invitations', 'Exclusive tasting events']],
                 ],
-                'stamp_rewards' => [['stamp' => 5, 'reward' => 'Free dessert'], ['stamp' => 10, 'reward' => 'Free main course']],
+                'stamp_rewards' => [['stamp' => 5, 'reward' => 'Free dessert', 'category' => 'desserts'], ['stamp' => 10, 'reward' => 'Free main course', 'category' => 'mains']],
+                'free_delivery_tiers' => ['gold', 'black_diamond'],
+                'anniversary_points' => 250,
                 'streak_visits_per_month' => 3,
                 'streak_bonus_points' => 200,
                 'birthday_points_multiplier' => 2,
@@ -264,6 +266,10 @@ final class ReferenceSeeder
             'code' => 'PIEROGI15', 'description' => '15% off Polish kitchen dishes.',
             'discount_type' => 'percent', 'discount_value' => 15, 'kitchen_id' => $this->kitchenIds['polish'], 'min_order_kobo' => 1000000,
         ]);
+        $this->db->insert('coupons', [
+            'code' => 'CONTINENTAL10', 'description' => '10% off Continental kitchen dishes (up to ₦5,000).',
+            'discount_type' => 'percent', 'discount_value' => 10, 'max_discount_kobo' => 500000, 'kitchen_id' => $this->kitchenIds['continental'],
+        ]);
     }
 
     private function eventPackages(): void
@@ -288,17 +294,17 @@ final class ReferenceSeeder
     {
         $dish = fn (string $slug): ?int => ($id = $this->db->scalar('SELECT id FROM dishes WHERE slug = ?', [$slug])) ? (int) $id : null;
         $rewards = [
-            ['credit-1000', '₦1,000 dining credit', 'Convert 100 points into ₦1,000 of dining credit.', 100, 'credit', 100000, null],
-            ['credit-5000', '₦5,000 dining credit', 'Convert 500 points into ₦5,000 of dining credit.', 500, 'credit', 500000, null],
-            ['free-chapman', 'Free Chapman', 'Our signature Lagos cooler, on us.', 350, 'item', null, $dish('chapman')],
-            ['free-paczki', 'Free Pączki', 'Three rose-jam Polish doughnuts.', 500, 'item', null, $dish('paczki')],
-            ['free-dessert', 'Free dessert of your choice', 'Any dessert from any of our three kitchens.', 700, 'item', null, null],
-            ['tasting-upgrade', 'Chef’s Tasting upgrade', 'Upgrade one guest to the seven-course Chef’s Tasting Menu.', 4000, 'upgrade', null, $dish('chefs-tasting-menu')],
+            ['credit-1000', '₦1,000 dining credit', 'Convert 100 points into ₦1,000 of dining credit.', 100, 'credit', 100000, null, null, 0],
+            ['credit-5000', '₦5,000 dining credit', 'Convert 500 points into ₦5,000 of dining credit.', 500, 'credit', 500000, null, null, 0],
+            ['free-chapman', 'Free Chapman', 'Our signature Lagos cooler, on us.', 350, 'item', null, $dish('chapman'), null, 0],
+            ['free-paczki', 'Free Pączki', 'Three rose-jam Polish doughnuts.', 500, 'item', null, $dish('paczki'), null, 0],
+            ['free-dessert', 'Free dessert of your choice', 'Any dessert from any of our three kitchens.', 700, 'item', null, null, 'desserts', 0],
+            ['tasting-upgrade', 'Chef’s Tasting upgrade', 'Upgrade one guest to the seven-course Chef’s Tasting Menu (in the restaurant).', 4000, 'upgrade', null, $dish('chefs-tasting-menu'), null, 1],
         ];
-        foreach ($rewards as $i => [$slug, $name, $desc, $cost, $type, $credit, $dishId]) {
+        foreach ($rewards as $i => [$slug, $name, $desc, $cost, $type, $credit, $dishId, $category, $dineIn]) {
             $this->db->insert('rewards_catalog', [
                 'slug' => $slug, 'name' => $name, 'description' => $desc, 'points_cost' => $cost, 'reward_type' => $type,
-                'credit_kobo' => $credit, 'dish_id' => $dishId, 'sort_order' => $i,
+                'credit_kobo' => $credit, 'dish_id' => $dishId, 'category_slug' => $category, 'dine_in_only' => $dineIn, 'sort_order' => $i,
             ]);
         }
     }

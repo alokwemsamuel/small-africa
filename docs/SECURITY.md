@@ -106,12 +106,18 @@ Exceeding a limit returns `429` with a `Retry-After` header and a friendly messa
 - Webhooks are accepted only with a valid `x-paystack-signature` (HMAC-SHA512) and are de-duplicated (`webhook_events`).
 - Order creation and top-ups use **idempotency keys**, so double-clicks or retries never create duplicate orders or credits.
 - Card details never touch our servers (Paystack Inline checkout).
+- **Payment attempts**: Paystack refuses a reused transaction reference, so a retry after a declined card gets a new reference (`SA-ABC123-2`); an abandoned popup resumes its saved access code. A payment arriving for an order that is already paid or cancelled is never applied twice: it is logged and audit-flagged for refund (`payment.needs_refund`).
+- Unpaid orders expire after 2 hours (daily job); any dining credit or voucher they held is returned.
 
 ## 8. Interest Account integrity
 
-- Every movement of dining credit or points is a row in an **append-only ledger** (`wallet_ledger`, `points_ledger`). **Database triggers reject any UPDATE or DELETE** on these tables and on `audit_logs` (tested).
-- Cached balances are written in the same transaction as the ledger row, and can be reconciled from the ledger at any time.
-- Wallet operations run in **database transactions with row locks**. The monthly interest run is keyed by month (`interest_runs.period` is unique), so it can never pay twice *(Phase 5)*.
+- Every movement of dining credit or points is a row in an **append-only ledger** (`wallet_ledger`, `points_ledger`) with type, reference, balance after and who made it. **Database triggers reject any UPDATE or DELETE** on these tables and on `audit_logs` (tested).
+- All moves go through one class (`App\Loyalty\Ledger`): it locks the member's account row (`SELECT … FOR UPDATE`), writes the ledger row and the cached balance in the **same transaction**, refuses to go below zero, and accepts an **idempotency key** (replays change nothing). `php bin/loyalty.php reconcile` rebuilds every balance from its ledger and reports any mismatch.
+- **Top-ups** are credited only after server-side verification with Paystack (browser callback or signed webhook, whichever arrives first, exactly once). Top-ups need a verified email and are rate-limited (10/hour).
+- **Monthly interest** is paid on the lowest balance held through the month. A run must first claim its month (`interest_runs.period` is unique; a completed month is refused), and each credit carries the key `interest:{month}:{member}`, so a crashed run can be re-run safely and a month can never be paid twice (tested).
+- **Checkout with dining credit**: the credit is debited when the order is created (under the account lock) and returned automatically if the order is cancelled or expires unpaid. Reward vouchers are claimed with a conditional update, so one voucher can't be used on two orders.
+- **Referrals** pay only after the friend's first completed order and email verification, and are rejected for self-referral, the referrer's phone number, a phone or device already rewarded (keyed hash of a random browser id, never the id itself) and above a monthly limit. Redemptions are rate-limited (10/hour).
+- Manual credit/debit adjustments require a reason and are audit-logged with the admin's id *(admin screen in Phase 6)*.
 - Wallet and interest are **dining credit only**: not cash, not withdrawable or transferable (stated in the Rewards Terms).
 
 ## 9. Audit trail
@@ -142,8 +148,8 @@ Exceeding a limit returns `429` with a `Retry-After` header and a friendly messa
 
 ## 13. Testing
 
-- **Backend (PHPUnit, 58 tests)**: TOTP against RFC 6238 vectors; password policy; validator mass-assignment protection; encryption tamper detection; registration, lockout, enumeration resistance, rate limits, reset flow signing out sessions, 2FA enrolment and login, append-only ledgers; HTTP security headers on success and error responses, CSRF, Origin checks, CORS, RBAC.
-- **Frontend (Vitest, 90 tests)**: password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard, WCAG AA contrast of every theme token pair, theme persistence and the no-flash bootstrap, menu filters (incl. No pork), cart storage holding no secrets.
+- **Backend (PHPUnit, 110 tests)**: Interest Account rules (interest, caps and rounding, top-up bonus, tiers, points multipliers, stamps, streaks, expiry, birthday week, referral anti-abuse); top-ups credited once, interest paid once, dining-credit holds returned on expiry, vouchers single-use, referral device checks; payment retries with fresh references; TOTP against RFC 6238 vectors; password policy; validator mass-assignment protection; encryption tamper detection; registration, lockout, enumeration resistance, rate limits, reset flow signing out sessions, 2FA enrolment and login, append-only ledgers; HTTP security headers on success and error responses, CSRF, Origin checks, CORS, RBAC.
+- **Frontend (Vitest, 113 tests)**: checkout sends identifiers only (never prices) with an idempotency key, dining-credit checkout, top-up and redemption flows; password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard, WCAG AA contrast of every theme token pair, theme persistence and the no-flash bootstrap, menu filters (incl. No pork), cart storage holding no secrets.
 - `composer audit` and `npm audit` are run before each commit; high and critical issues are fixed.
 
 ## 14. Backups *(see DEPLOYMENT.md)*

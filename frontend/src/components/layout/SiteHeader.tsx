@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn';
 import { ButtonLink } from '../ui/Button';
 import { Logo } from '../ui/Logo';
 import { NAV } from './nav';
+import { NotificationBell } from './NotificationBell';
 
 export function SiteHeader() {
   const { data: user } = useMe();
@@ -75,6 +76,7 @@ export function SiteHeader() {
               Sign in
             </Link>
           )}
+          {user && <NotificationBell />}
           <ThemeMenu />
           <CartLink count={count} />
           <ButtonLink to="/reservations" size="sm">
@@ -83,6 +85,7 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
+          {user && <NotificationBell />}
           <CartLink count={count} />
           <button
             type="button"

@@ -43,8 +43,8 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    composer install
    cp .env.example .env          # set DB_PASSWORD
    php bin/generate-key.php      # paste the APP_KEY line into .env
-   composer fresh                # migrate + seed (incl. demo reviews; never use --demo in production)
-   composer test                 # 58 tests
+   composer fresh                # migrate + seed (incl. demo members, orders and Interest Account history; never use --demo in production)
+   composer test                 # 110 tests
    ```
    Check it works: <http://localhost/SmallAfrica/backend/public/api/health>
 4. **Frontend**:
@@ -55,6 +55,11 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    npm test
    ```
    Optional asset rebuilds (design/tools): `npm run photos` (Unsplash photos → AVIF/WebP), `npm run hero` (hero poster + loop video; needs the dev server and ffmpeg), `npm run brand`, `npm run logo`.
+
+5. **Scheduled jobs** (Interest Account): run once a day, around 00:10 Lagos time. Every step is safe to repeat.
+   - Windows/XAMPP: Task Scheduler → daily → program `C:\xampp\php\php.exe`, arguments `C:\xampp\htdocs\SmallAfrica\backend\bin\loyalty.php daily`
+   - Linux: `10 0 * * * php /path/to/backend/bin/loyalty.php daily`
+   - Also: `php bin/loyalty.php interest 2026-09` (pay one month) and `php bin/loyalty.php reconcile` (check every balance against its ledger).
 
 In development, emails are written to `backend/storage/mail/` as `.html` files rather than sent.
 
@@ -75,8 +80,8 @@ These exist for demos and testing only. Remove or change them before going live.
 - [x] **Phase 1 — Brand & design**: logo (SA Monogram Crest) and exports, brand guide PDF, Instagram templates, A4 menu card, Figma tokens and components
 - [x] **Phase 2 — Foundation**: schema (40 tables) + seeds, secure auth API, frontend shell, auth pages, living style guide (`/style-guide`)
 - [x] **Phase 3 — Public site**: 3D hero (with poster and video fallbacks), menu with filters (incl. No pork), dish detail, basket, about, gallery, events, contact, FAQ, privacy (NDPA 2023), terms; Dark/Light/System appearance
-- [x] Phase 4 — Reservations & ordering (cart, Paystack, tracking, emails)
-- [ ] Phase 5 — Interest Account (wallet, interest, points, tiers, referrals)
+- [x] **Phase 4 — Reservations & ordering**: checkout (delivery/pickup, scheduling, coupons), Paystack + simulated payments, order tracking, reservations with live availability, account tabs
+- [x] **Phase 5 — Interest Account**: dining wallet with Paystack top-ups and bonus, monthly interest job, points, tiers, stamp card, streaks, birthday/anniversary/referral rewards, win-back and favourite-kitchen offers, notification centre, append-only ledgers
 - [ ] Phase 6 — Admin panel
 - [ ] Phase 7 — Demo mode, testing & hardening
 - [ ] Phase 8 — Deploy & deliver

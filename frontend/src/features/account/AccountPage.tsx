@@ -15,6 +15,7 @@ import { ApiError } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { cn } from '@/lib/cn';
 import { initials } from '@/lib/format';
+import { InterestAccountPanel } from '@/features/rewards/InterestAccountPanel';
 import { AddressesPanel, OrdersPanel, ReservationsPanel, ReviewsPanel } from './AccountPanels';
 
 export function AccountPage() {
@@ -54,6 +55,7 @@ export function AccountPage() {
 }
 
 const TABS = [
+  ['rewards', 'Interest Account'],
   ['orders', 'Orders'],
   ['reservations', 'Reservations'],
   ['addresses', 'Addresses'],
@@ -65,7 +67,7 @@ type Tab = (typeof TABS)[number][0];
 function AccountTabs() {
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
-  const tab: Tab = TABS.some(([t]) => t === requested) ? (requested as Tab) : 'orders';
+  const tab: Tab = TABS.some(([t]) => t === requested) ? (requested as Tab) : 'rewards';
   const select = (t: Tab) =>
     setParams(
       (p) => {
@@ -120,6 +122,7 @@ function AccountTabs() {
         tabIndex={0}
         className="mt-8 focus:outline-none"
       >
+        {tab === 'rewards' && <InterestAccountPanel />}
         {tab === 'orders' && <OrdersPanel />}
         {tab === 'reservations' && <ReservationsPanel />}
         {tab === 'addresses' && <AddressesPanel />}

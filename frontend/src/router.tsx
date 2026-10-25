@@ -6,7 +6,7 @@ import { RequireAuth } from './features/auth/RequireAuth';
 import { STAFF_ROLES } from './features/auth/types';
 import { ApiError } from './lib/api';
 import { HomePage } from './pages/HomePage';
-import { NotFoundPage, PlaceholderPage } from './pages/PlaceholderPage';
+import { NotFoundPage } from './pages/PlaceholderPage';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,13 +49,10 @@ const ManageReservationPage = page(
   () => import('./features/reservations/ManageReservationPage'),
   'ManageReservationPage',
 );
+const RewardsPage = page(() => import('./features/rewards/RewardsPage'), 'RewardsPage');
+const RewardsTermsPage = page(() => import('./pages/legal/RewardsTermsPage'), 'RewardsTermsPage');
 const AccountPage = page(() => import('./features/account/AccountPage'), 'AccountPage');
 const AdminHomePage = page(() => import('./pages/AdminHomePage'), 'AdminHomePage');
-
-const placeholder = (path: string, title: string, phase: string): RouteObject => ({
-  path,
-  element: <PlaceholderPage title={title} phase={phase} />,
-});
 
 const devRoutes: RouteObject[] = import.meta.env.DEV
   ? [{ path: '__hero-capture', Component: lazy(() => import('./features/home/hero/HeroCapture')) }]
@@ -102,8 +99,8 @@ export const routes: RouteObject[] = [
       },
       { path: 'reservations', element: <ReservationsPage /> },
       { path: 'reservations/:code', element: <ManageReservationPage /> },
-      placeholder('rewards', 'Interest Account', 'Phase 5'),
-      placeholder('rewards-terms', 'Rewards Terms', 'Phase 5'),
+      { path: 'rewards', element: <RewardsPage /> },
+      { path: 'rewards-terms', element: <RewardsTermsPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

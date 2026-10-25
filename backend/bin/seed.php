@@ -38,7 +38,7 @@ if (in_array('--demo', array_slice($argv, 1), true)) {
         exit(1);
     }
     (new DemoSeeder($db))->run();
-    echo "Seeded demo data (invented reviews). Do not use in production.\n";
+    echo "Seeded demo data (invented reviews, members, orders and Interest Account history). Do not use in production.\n";
 }
 
 printf(

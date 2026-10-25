@@ -7,7 +7,10 @@ namespace App\Http\Controllers;
 use App\Http\HttpError;
 use App\Http\Json;
 use App\Http\ValidationError;
+use App\Loyalty\WalletService;
+use App\Payments\PaymentAttempts;
 use App\Payments\PaymentGateway;
+use App\Payments\WebhookHandler;
 use App\Security\RateLimiter;
 use App\Services\OrderService;
 use App\Services\PricingService;
@@ -26,6 +29,9 @@ final class CheckoutController
         private RateLimiter $limiter,
         private Database $db,
         private Config $config,
+        private PaymentAttempts $attempts,
+        private WebhookHandler $webhooks,
+        private WalletService $wallet,
     ) {
     }
 
@@ -63,13 +69,14 @@ final class CheckoutController
     public function webhook(Request $request, Response $response): Response
     {
         $raw = (string) $request->getBody();
-        $this->orders->handleWebhook($raw, $request->getHeaderLine('x-paystack-signature'));
+        $this->webhooks->handle($raw, $request->getHeaderLine('x-paystack-signature'));
         return Json::send($response, ['ok' => true]);
     }
 
     /**
-     * Simulated checkout (local development, tests, client demo): marks the gateway outcome.
-     * Unavailable with the real Paystack driver and in production.
+     * Simulated checkout (local development, tests, client demo): records the outcome of the
+     * latest payment attempt for an order (SA-…) or wallet top-up (TU-…), then verifies it the
+     * normal way. Unavailable with the real Paystack driver and in production.
      */
     public function simulate(Request $request, Response $response): Response
     {
@@ -77,13 +84,24 @@ final class CheckoutController
             throw HttpError::notFound();
         }
         $data = Validator::validate(Json::body($request), [
-            'reference' => 'required|string|max:40|regex:/^SA-[A-Z0-9]{6}$/',
+            'reference' => 'required|string|max:40|regex:/^(SA|TU)-[A-Z0-9]{6}$/',
             'outcome' => 'required|string|in:success,failed,abandoned',
         ]);
-        $this->db->run(
-            "UPDATE payments SET provider_payload = ? WHERE reference = ? AND status = 'initialized'",
-            [json_encode(['simulated_outcome' => $data['outcome']]), $data['reference']],
-        );
+        $isTopup = str_starts_with($data['reference'], 'TU-');
+        $payableId = $isTopup
+            ? $this->db->scalar('SELECT id FROM wallet_topups WHERE reference = ?', [$data['reference']])
+            : $this->db->scalar('SELECT id FROM orders WHERE reference = ?', [$data['reference']]);
+        $latest = $payableId ? $this->attempts->latest($isTopup ? 'wallet_topup' : 'order', (int) $payableId) : null;
+        if ($latest) {
+            $this->db->run(
+                "UPDATE payments SET provider_payload = ? WHERE id = ? AND status = 'initialized'",
+                [json_encode(['simulated_outcome' => $data['outcome']]), $latest['id']],
+            );
+        }
+        if ($isTopup) {
+            $user = $request->getAttribute('user');
+            return Json::send($response, ['topup' => $this->wallet->verify($data['reference'], is_array($user) ? (int) $user['id'] : null)]);
+        }
         return Json::send($response, ['order' => $this->orders->verifyPayment($data['reference'])]);
     }
 
@@ -98,6 +116,8 @@ final class CheckoutController
             'zone' => 'nullable|string|max:40',
             'scheduled_for' => 'nullable|string|regex:/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/',
             'coupon_code' => 'nullable|string|max:30',
+            'voucher_code' => 'nullable|string|max:16',
+            'use_wallet' => 'nullable|bool',
             'confirm_age' => 'nullable|bool',
             'email' => $forQuote ? 'nullable|email' : 'required|email',
         ];
@@ -109,7 +129,7 @@ final class CheckoutController
                 'save_address' => 'nullable|bool',
             ];
         }
-        $data = Validator::validate($body, $rules, ['scheduled_for' => 'Scheduled time', 'coupon_code' => 'Coupon code']);
+        $data = Validator::validate($body, $rules, ['scheduled_for' => 'Scheduled time', 'coupon_code' => 'Coupon code', 'voucher_code' => 'Voucher code']);
         $items = $body['items'] ?? null;
         if (!is_array($items) || !array_is_list($items)) {
             throw ValidationError::field('items', 'Your order is empty.');

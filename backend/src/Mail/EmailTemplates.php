@@ -67,8 +67,14 @@ final class EmailTemplates
         if ((int) $order['discount_kobo'] > 0) {
             $rows[] = ['Discount', '−' . self::naira((int) $order['discount_kobo'])];
         }
+        if ((int) ($order['voucher_discount_kobo'] ?? 0) > 0) {
+            $rows[] = ['Reward voucher', '−' . self::naira((int) $order['voucher_discount_kobo'])];
+        }
         $rows[] = [$order['fulfilment'] === 'delivery' ? 'Delivery & packaging' : 'Packaging', self::naira((int) $order['delivery_fee_kobo'])];
-        $rows[] = ['Total paid', self::naira((int) $order['total_kobo'])];
+        if ((int) ($order['wallet_applied_kobo'] ?? 0) > 0) {
+            $rows[] = ['Paid with dining credit', '−' . self::naira((int) $order['wallet_applied_kobo'])];
+        }
+        $rows[] = [(int) ($order['wallet_applied_kobo'] ?? 0) > 0 ? 'Paid by card' : 'Total paid', self::naira((int) $order['total_kobo'])];
         $when = $order['scheduled_for']
             ? 'scheduled for ' . date('D j M, g:ia', strtotime((string) $order['scheduled_for']))
             : ($order['fulfilment'] === 'delivery' ? 'on its way as soon as it’s ready' : 'ready for pickup soon');

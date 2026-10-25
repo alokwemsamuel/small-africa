@@ -9,6 +9,15 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountDataController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\LoyaltyController;
+use App\Loyalty\InterestService;
+use App\Loyalty\Ledger;
+use App\Loyalty\LoyaltyJobs;
+use App\Loyalty\LoyaltyService;
+use App\Loyalty\Notifier;
+use App\Loyalty\WalletService;
+use App\Payments\PaymentAttempts;
+use App\Payments\WebhookHandler;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReservationController;
 use App\Payments\HttpClient;
@@ -107,11 +116,37 @@ final class App
             $c->get(Database::class), $c->get(Settings::class), $c->get(CouponService::class), $c->get(Clock::class),
         ));
         $frontend = rtrim($config->str('FRONTEND_URL'), '/');
-        $c->set(OrderService::class, fn (Container $c) => new OrderService(
-            $c->get(Database::class), $c->get(PricingService::class), $c->get(PaymentGateway::class), $c->get(RateLimiter::class),
-            $c->get(Mailer::class), $c->get(EmailTemplates::class), $c->get(AuditLogger::class), $c->get(Clock::class),
-            $c->get(Logger::class), $c->get(Crypto::class), $frontend,
+        $c->set(PaymentAttempts::class, fn (Container $c) => new PaymentAttempts($c->get(Database::class), $c->get(PaymentGateway::class), $c->get(Logger::class)));
+        $c->set(Ledger::class, fn (Container $c) => new Ledger($c->get(Database::class), $c->get(Clock::class)));
+        $c->set(Notifier::class, fn (Container $c) => new Notifier(
+            $c->get(Database::class), $c->get(Mailer::class), $c->get(EmailTemplates::class), $c->get(Logger::class), $c->get(Clock::class), $frontend,
         ));
+        $c->set(LoyaltyService::class, fn (Container $c) => new LoyaltyService(
+            $c->get(Database::class), $c->get(Settings::class), $c->get(Ledger::class), $c->get(Notifier::class), $c->get(AuditLogger::class),
+            $c->get(RateLimiter::class), $c->get(Clock::class), $c->get(Logger::class), $frontend,
+        ));
+        $c->set(WalletService::class, fn (Container $c) => new WalletService(
+            $c->get(Database::class), $c->get(Settings::class), $c->get(Ledger::class), $c->get(PaymentAttempts::class), $c->get(Notifier::class),
+            $c->get(RateLimiter::class), $c->get(AuditLogger::class), $c->get(Clock::class), $frontend,
+        ));
+        $c->set(InterestService::class, fn (Container $c) => new InterestService(
+            $c->get(Database::class), $c->get(Settings::class), $c->get(Ledger::class), $c->get(Notifier::class), $c->get(AuditLogger::class),
+            $c->get(Clock::class), $c->get(Logger::class),
+        ));
+        $c->set(OrderService::class, fn (Container $c) => new OrderService(
+            $c->get(Database::class), $c->get(PricingService::class), $c->get(PaymentAttempts::class), $c->get(Ledger::class),
+            $c->get(LoyaltyService::class), $c->get(RateLimiter::class), $c->get(Mailer::class), $c->get(EmailTemplates::class),
+            $c->get(AuditLogger::class), $c->get(Clock::class), $c->get(Logger::class), $c->get(Crypto::class), $frontend,
+        ));
+        $c->set(WebhookHandler::class, fn (Container $c) => new WebhookHandler(
+            $c->get(Database::class), $c->get(PaymentGateway::class), $c->get(PaymentAttempts::class), $c->get(OrderService::class),
+            $c->get(WalletService::class), $c->get(Clock::class), $c->get(Logger::class),
+        ));
+        $c->set(LoyaltyJobs::class, fn (Container $c) => new LoyaltyJobs(
+            $c->get(Database::class), $c->get(LoyaltyService::class), $c->get(InterestService::class), $c->get(OrderService::class),
+            $c->get(Ledger::class), $c->get(Notifier::class), $c->get(Clock::class), $c->get(Logger::class), $frontend,
+        ));
+        $c->set(LoyaltyController::class, fn (Container $c) => new LoyaltyController($c->get(LoyaltyService::class), $c->get(WalletService::class), $c->get(Database::class)));
         $c->set(ReservationService::class, fn (Container $c) => new ReservationService(
             $c->get(Database::class), $c->get(Settings::class), $c->get(RateLimiter::class), $c->get(Mailer::class),
             $c->get(EmailTemplates::class), $c->get(AuditLogger::class), $c->get(Crypto::class), $c->get(Clock::class),
@@ -119,7 +154,8 @@ final class App
         ));
         $c->set(CheckoutController::class, fn (Container $c) => new CheckoutController(
             $c->get(PricingService::class), $c->get(OrderService::class), $c->get(PaymentGateway::class),
-            $c->get(RateLimiter::class), $c->get(Database::class), $c->get(Config::class),
+            $c->get(RateLimiter::class), $c->get(Database::class), $c->get(Config::class), $c->get(PaymentAttempts::class),
+            $c->get(WebhookHandler::class), $c->get(WalletService::class),
         ));
         $c->set(OrderController::class, fn (Container $c) => new OrderController($c->get(OrderService::class), $c->get(Database::class), $c->get(Clock::class)));
         $c->set(ReservationController::class, fn (Container $c) => new ReservationController($c->get(ReservationService::class)));
@@ -178,6 +214,7 @@ final class App
             $api->post('/payments/verify', [CheckoutController::class, 'verifyPayment']);
             $api->post('/payments/paystack/webhook', [CheckoutController::class, 'webhook']);
             $api->post('/payments/simulate', [CheckoutController::class, 'simulate']);
+            $api->get('/rewards', [LoyaltyController::class, 'catalog']);
 
             $api->get('/reservations/availability', [ReservationController::class, 'availability']);
             $api->post('/reservations', [ReservationController::class, 'create']);
@@ -209,6 +246,13 @@ final class App
                 $account->delete('/addresses/{id:[0-9]+}', [AccountDataController::class, 'deleteAddress']);
                 $account->get('/reviews', [AccountDataController::class, 'reviews']);
                 $account->post('/reviews', [AccountDataController::class, 'createReview']);
+                $account->get('/loyalty', [LoyaltyController::class, 'summary']);
+                $account->get('/loyalty/history', [LoyaltyController::class, 'history']);
+                $account->post('/wallet/topups', [LoyaltyController::class, 'startTopup']);
+                $account->post('/wallet/topups/verify', [LoyaltyController::class, 'verifyTopup']);
+                $account->post('/rewards/{slug:[a-z0-9-]+}/redeem', [LoyaltyController::class, 'redeem']);
+                $account->get('/notifications', [LoyaltyController::class, 'notifications']);
+                $account->post('/notifications/read', [LoyaltyController::class, 'markRead']);
                 $account->post('/2fa/setup', [AccountController::class, 'twoFactorSetup'])->add(RequireRole::staff());
                 $account->post('/2fa/confirm', [AccountController::class, 'twoFactorConfirm'])->add(RequireRole::staff());
                 $account->post('/2fa/disable', [AccountController::class, 'twoFactorDisable'])->add(RequireRole::staff());

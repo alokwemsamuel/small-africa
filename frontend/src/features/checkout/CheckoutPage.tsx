@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
@@ -17,10 +17,10 @@ import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
 import { useSeo } from '@/lib/seo';
-import { checkoutApi, type CheckoutRequest, type Order, type PlacedOrder } from './api';
-import { payWithPaystack } from './paystack';
+import { useLoyalty } from '@/features/rewards/api';
+import { checkoutApi, type CheckoutRequest, type Order } from './api';
 import { formatTime, scheduleOptions } from './schedule';
-import { SimulatedPayment } from './SimulatedPayment';
+import { usePaymentPopup } from './usePaymentPopup';
 
 const phone = /^(\+?234|0)[789][01]\d{8}$|^\+[1-9]\d{7,14}$/;
 const contactSchema = z.object({
@@ -40,10 +40,13 @@ type Contact = z.infer<typeof contactSchema>;
 export function CheckoutPage() {
   useSeo({ title: 'Checkout' });
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { items, count } = useCart();
   const { data: user } = useMe();
   const { data: site } = useSite();
   const { data: addresses } = useAddresses(!!user);
+  const { data: loyalty } = useLoyalty(!!user);
+  const vouchers = loyalty?.vouchers.filter((v) => !v.dineInOnly) ?? [];
 
   const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('delivery');
   const [zone, setZone] = useState('');
@@ -58,10 +61,9 @@ export function CheckoutPage() {
   const [saveAddress, setSaveAddress] = useState(true);
   const [payError, setPayError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
-  const [simulated, setSimulated] = useState<{
-    placed: PlacedOrder;
-    resolve: (o: 'success' | 'failed' | 'abandoned') => void;
-  } | null>(null);
+  const [useWallet, setUseWallet] = useState(false);
+  const [voucher, setVoucher] = useState('');
+  const payment = usePaymentPopup();
   const idem = useRef<{ sig: string; key: string } | null>(null);
 
   const form = useForm<Contact>({
@@ -105,6 +107,8 @@ export function CheckoutPage() {
     zone: fulfilment === 'delivery' ? zone || null : null,
     scheduled_for: scheduledFor,
     coupon_code: coupon,
+    voucher_code: voucher || null,
+    use_wallet: !!user && useWallet,
     confirm_age: confirmAge,
     email: email || null,
   };
@@ -170,18 +174,20 @@ export function CheckoutPage() {
     try {
       const placed = await checkoutApi.place(items, req, idem.current.key);
       let order: Order = placed.order;
-      if (placed.payment?.provider === 'simulated') {
-        const outcome = await new Promise<'success' | 'failed' | 'abandoned'>((resolve) =>
-          setSimulated({ placed, resolve }),
-        );
-        setSimulated(null);
-        order = await checkoutApi.simulate(placed.order.reference, outcome);
-      } else if (placed.payment) {
-        await payWithPaystack(placed.payment.accessCode);
-        order = await checkoutApi.verify(placed.order.reference);
+      if (placed.payment) {
+        const result = await payment.open(placed.payment, {
+          amountKobo: placed.order.totalKobo,
+          email: c.email,
+          reference: placed.order.reference,
+        });
+        order =
+          result.kind === 'simulated'
+            ? await checkoutApi.simulate(placed.order.reference, result.outcome)
+            : await checkoutApi.verify(placed.order.reference);
       }
       if (order.paymentStatus === 'paid') {
         cart.clear();
+        void qc.invalidateQueries({ queryKey: ['account'] });
         navigate(`/orders/${order.reference}?t=${encodeURIComponent(placed.trackingToken)}&new=1`, {
           replace: true,
         });
@@ -498,6 +504,39 @@ export function CheckoutPage() {
               {q?.coupon && <p className="text-success mt-2 text-sm">{q.coupon.description}</p>}
             </div>
 
+            {user && vouchers.length > 0 && (
+              <label className="flex flex-col gap-2">
+                <span className="eyebrow text-muted">Reward voucher</span>
+                <select
+                  value={voucher}
+                  onChange={(ev) => setVoucher(ev.target.value)}
+                  className="border-input bg-surface-inset text-primary focus:border-accent min-h-11 rounded-sm border px-4 focus:outline-none"
+                >
+                  <option value="">Don’t use a voucher</option>
+                  {vouchers.map((v) => (
+                    <option key={v.code} value={v.code}>
+                      {v.title} ({v.code})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {user && loyalty && loyalty.wallet.balanceKobo > 0 && (
+              <label className="border-accent/40 bg-accent-fill/5 grid grid-cols-[auto_1fr] items-start gap-x-3 rounded-md border p-4 text-sm">
+                <input
+                  type="checkbox"
+                  checked={useWallet}
+                  onChange={(ev) => setUseWallet(ev.target.checked)}
+                  className="accent-accent-fill mt-0.5 size-5"
+                />
+                <span className="font-semibold">Use my dining credit</span>
+                <span className="text-secondary col-start-2">
+                  {formatNaira(loyalty.wallet.balanceKobo)} available in your Interest Account
+                </span>
+              </label>
+            )}
+
             {needsAge && (
               <label className="flex items-start gap-3 text-sm">
                 <input
@@ -521,10 +560,18 @@ export function CheckoutPage() {
                       <dd className="text-success">−{formatNaira(q.discountKobo)}</dd>
                     </>
                   )}
+                  {q.voucher && (
+                    <>
+                      <dt className="text-success">{q.voucher.title}</dt>
+                      <dd className="text-success">−{formatNaira(q.voucherDiscountKobo)}</dd>
+                    </>
+                  )}
                   {q.fulfilment === 'delivery' && (
                     <>
                       <dt className="text-secondary">Delivery · {q.zone?.name}</dt>
-                      <dd>{formatNaira(q.deliveryFeeKobo)}</dd>
+                      <dd className={q.freeDeliveryPerk ? 'text-success' : undefined}>
+                        {q.freeDeliveryPerk ? 'Free (member perk)' : formatNaira(q.deliveryFeeKobo)}
+                      </dd>
                     </>
                   )}
                   <dt className="text-secondary">Packaging</dt>
@@ -534,6 +581,14 @@ export function CheckoutPage() {
                   <dt className="text-muted col-span-2 text-xs">
                     Includes VAT of {formatNaira(q.vatIncludedKobo)}
                   </dt>
+                  {q.walletAppliedKobo > 0 && (
+                    <>
+                      <dt className="text-secondary mt-2">Dining credit</dt>
+                      <dd className="mt-2">−{formatNaira(q.walletAppliedKobo)}</dd>
+                      <dt className="font-semibold">To pay by card</dt>
+                      <dd className="text-accent font-semibold">{formatNaira(q.payableKobo)}</dd>
+                    </>
+                  )}
                 </>
               ) : (
                 <dd className="text-muted col-span-2">
@@ -552,7 +607,11 @@ export function CheckoutPage() {
             )}
             {payError && <Alert tone="error">{payError}</Alert>}
             <Button type="submit" size="lg" loading={paying} disabled={!q || !!quoteError || paying}>
-              {q ? `Pay ${formatNaira(q.totalKobo)}` : 'Pay'}
+              {!q
+                ? 'Pay'
+                : q.payableKobo === 0
+                  ? 'Place order with dining credit'
+                  : `Pay ${formatNaira(q.payableKobo)}`}
             </Button>
             <p className="text-muted text-center text-xs">
               Secure payment by Paystack. We never see your card details.
@@ -560,14 +619,7 @@ export function CheckoutPage() {
           </div>
         </aside>
       </form>
-      {simulated && (
-        <SimulatedPayment
-          amountKobo={simulated.placed.order.totalKobo}
-          email={form.getValues('email')}
-          reference={simulated.placed.order.reference}
-          onResult={simulated.resolve}
-        />
-      )}
+      {payment.popup}
     </>
   );
 }

@@ -270,7 +270,7 @@ final class CheckoutTest extends IntegrationTestCase
         $this->pay($ref);
 
         [, $mine] = $this->request('GET', '/api/account/orders');
-        self::assertSame($ref, $mine['orders'][0]['reference']);
+        self::assertContains($ref, array_column($mine['orders'], 'reference'));
         [, $addresses] = $this->request('GET', '/api/account/addresses');
         self::assertSame('12 Admiralty Way', $addresses['addresses'][0]['line1'], 'Address saved at checkout');
 

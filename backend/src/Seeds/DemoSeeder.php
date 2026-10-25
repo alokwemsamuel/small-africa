@@ -10,7 +10,7 @@ use App\Support\Database;
  * DEMO / PRESENTATION DATA ONLY: invented guests and reviews so the site and admin look
  * alive in development and during the client presentation. Never run in production:
  * real reviews must come from real guests. Run with: php bin/seed.php --demo
- * (Phase 7 extends this with past orders, reservations and Interest Account history.)
+ * DemoLoyaltySeeder adds past orders and Interest Account history.
  */
 final class DemoSeeder
 {
@@ -47,5 +47,6 @@ final class DemoSeeder
                 ]);
             }
         });
+        (new DemoLoyaltySeeder($this->db))->run();
     }
 }

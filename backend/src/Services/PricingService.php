@@ -27,7 +27,7 @@ final class PricingService
 
     /**
      * @param array{items: list<array<string, mixed>>, fulfilment: string, zone?: ?string, scheduled_for?: ?string,
-     *              coupon_code?: ?string, confirm_age?: bool, email?: ?string} $req
+     *              coupon_code?: ?string, voucher_code?: ?string, use_wallet?: bool, confirm_age?: bool, email?: ?string} $req
      * @return array<string, mixed>
      */
     public function quote(array $req, ?int $userId): array
@@ -61,32 +61,50 @@ final class PricingService
             }
             $deliveryFee = (int) $zone['fee_kobo'];
         }
+        $account = $userId ? $this->db->one('SELECT tier, wallet_balance_kobo FROM loyalty_accounts WHERE user_id = ?', [$userId]) : null;
+        $freeDelivery = false;
+        if ($deliveryFee > 0 && $account && in_array($account['tier'], (array) $this->settings->get('loyalty', 'free_delivery_tiers', ['gold', 'black_diamond']), true)) {
+            $deliveryFee = 0; // Gold and Black Diamond perk
+            $freeDelivery = true;
+        }
+
+        [$voucher, $voucherDiscount] = $this->voucher($req['voucher_code'] ?? null, $lines, $userId);
 
         $discount = 0;
         $coupon = null;
         if (!empty($req['coupon_code'])) {
             $result = $this->coupons->evaluate((string) $req['coupon_code'], $lines, $when['at'], $userId, (string) ($req['email'] ?? ''));
             $coupon = $result['coupon'];
-            $discount = $result['discountKobo'];
+            $discount = min($result['discountKobo'], $subtotal - $voucherDiscount);
         }
 
         $packaging = (int) ($pricing['packaging_fee_kobo'] ?? 0);
-        $serviceCharge = intdiv(($subtotal - $discount) * (int) ($pricing['service_charge_online_bp'] ?? 0), 10000);
+        $serviceCharge = intdiv(($subtotal - $discount - $voucherDiscount) * (int) ($pricing['service_charge_online_bp'] ?? 0), 10000);
         $vatBp = (int) ($pricing['vat_rate_bp'] ?? 750);
         // Menu prices include VAT; report the included portion for the receipt.
-        $vatIncluded = intdiv(($subtotal - $discount) * $vatBp, 10000 + $vatBp);
-        $total = $subtotal - $discount + $deliveryFee + $packaging + $serviceCharge;
+        $food = $subtotal - $discount - $voucherDiscount;
+        $vatIncluded = intdiv($food * $vatBp, 10000 + $vatBp);
+        $total = $food + $deliveryFee + $packaging + $serviceCharge;
+        // Dining credit (Interest Account wallet) is applied last, to the whole bill.
+        $walletBalance = (int) ($account['wallet_balance_kobo'] ?? 0);
+        $walletApplied = !empty($req['use_wallet']) && $userId ? min($walletBalance, $total) : 0;
 
         return [
             'lines' => $lines,
             'subtotalKobo' => $subtotal,
             'discountKobo' => $discount,
             'coupon' => $coupon ? ['id' => (int) $coupon['id'], 'code' => $coupon['code'], 'description' => $coupon['description']] : null,
+            'voucher' => $voucher,
+            'voucherDiscountKobo' => $voucherDiscount,
             'deliveryFeeKobo' => $deliveryFee,
+            'freeDeliveryPerk' => $freeDelivery,
             'packagingFeeKobo' => $packaging,
             'serviceChargeKobo' => $serviceCharge,
             'vatIncludedKobo' => $vatIncluded,
             'totalKobo' => $total,
+            'walletBalanceKobo' => $walletBalance,
+            'walletAppliedKobo' => $walletApplied,
+            'payableKobo' => $total - $walletApplied,
             'fulfilment' => $req['fulfilment'],
             'zone' => $zone ? ['id' => (int) $zone['id'], 'slug' => $zone['slug'], 'name' => $zone['name'], 'etaMinutes' => (int) $zone['eta_minutes']] : null,
             'scheduledFor' => $when['scheduled'] ? $when['at']->format('Y-m-d H:i') : null,
@@ -116,7 +134,7 @@ final class PricingService
                 throw ValidationError::field('items', 'One of the items in your order is invalid. Please refresh your basket.');
             }
             $dish = $this->db->one(
-                'SELECT d.*, k.slug AS kitchen_slug FROM dishes d LEFT JOIN kitchens k ON k.id = d.kitchen_id
+                'SELECT d.*, k.slug AS kitchen_slug, c.slug AS category_slug FROM dishes d LEFT JOIN kitchens k ON k.id = d.kitchen_id
                  JOIN categories c ON c.id = d.category_id WHERE d.id = ? AND d.deleted_at IS NULL',
                 [$dishId],
             );
@@ -126,7 +144,7 @@ final class PricingService
             if (!$dish['is_available'] || ($dish['sold_out_until'] !== null && $dish['sold_out_until'] >= $today)) {
                 throw ValidationError::field('items', "Sorry, {$dish['name']} is sold out today. Please remove it to continue.");
             }
-            if ($this->db->scalar('SELECT slug FROM categories WHERE id = ?', [$dish['category_id']]) === 'tasting') {
+            if ($dish['category_slug'] === 'tasting') {
                 throw ValidationError::field('items', 'The Chef’s Tasting Menu is served in the restaurant only. Please reserve a table.');
             }
 
@@ -172,12 +190,48 @@ final class PricingService
                 'note' => $note ?: null,
                 'containsPork' => (bool) $dish['contains_pork'],
                 'isAlcoholic' => (bool) $dish['is_alcoholic'],
+                'isFeatured' => (bool) $dish['is_featured'],
+                'category' => $dish['category_slug'],
             ];
         }
         if ($totalQty > $maxItems) {
             throw ValidationError::field('items', "Online orders are limited to {$maxItems} items. Please call us for larger orders.");
         }
         return $lines;
+    }
+
+    /**
+     * A reward voucher swaps one matching item for free: the dish it names, or the priciest
+     * item from its category (e.g. a stamp-card dessert).
+     *
+     * @param list<array<string, mixed>> $lines
+     * @return array{0: array<string, mixed>|null, 1: int}
+     */
+    private function voucher(?string $code, array $lines, ?int $userId): array
+    {
+        if ($code === null || trim($code) === '') {
+            return [null, 0];
+        }
+        if ($userId === null) {
+            throw ValidationError::field('voucher_code', 'Sign in to use a reward voucher.');
+        }
+        $v = $this->db->one('SELECT * FROM reward_vouchers WHERE code = ? AND user_id = ?', [strtoupper(trim($code)), $userId]);
+        if (!$v || $v['status'] !== 'issued' || $v['expires_at'] < $this->clock->sql()) {
+            throw ValidationError::field('voucher_code', 'That voucher isn’t valid, has expired or has already been used.');
+        }
+        if ($v['dine_in_only']) {
+            throw ValidationError::field('voucher_code', 'This reward is enjoyed in the restaurant: show the code to your server.');
+        }
+        $matching = array_filter($lines, static fn ($l) => ($v['dish_id'] !== null && $l['dishId'] === (int) $v['dish_id'])
+            || ($v['category_slug'] !== null && $l['category'] === $v['category_slug']));
+        if (!$matching) {
+            $what = $v['dish_id'] !== null
+                ? (string) $this->db->scalar('SELECT name FROM dishes WHERE id = ?', [$v['dish_id']])
+                : 'a dish from ' . ($this->db->scalar('SELECT name FROM categories WHERE slug = ?', [$v['category_slug']]) ?: 'the right section');
+            throw ValidationError::field('voucher_code', "Add {$what} to your order to use “{$v['title']}”.");
+        }
+        $discount = max(array_column($matching, 'unitPriceKobo'));
+        return [['id' => (int) $v['id'], 'code' => $v['code'], 'title' => $v['title'], 'discountKobo' => $discount], $discount];
     }
 
     /** @return array{at: \DateTimeImmutable, scheduled: bool} */

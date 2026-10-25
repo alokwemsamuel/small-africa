@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import type { CartLine } from '@/features/cart/cart';
+import type { PaymentStart } from './usePaymentPopup';
 
 export interface QuoteLine {
   dishId: number;
@@ -14,6 +15,8 @@ export interface QuoteLine {
   note: string | null;
   containsPork: boolean;
   isAlcoholic: boolean;
+  isFeatured?: boolean;
+  category?: string;
 }
 
 export interface Quote {
@@ -21,11 +24,17 @@ export interface Quote {
   subtotalKobo: number;
   discountKobo: number;
   coupon: { id: number; code: string; description: string } | null;
+  voucher: { id: number; code: string; title: string; discountKobo: number } | null;
+  voucherDiscountKobo: number;
   deliveryFeeKobo: number;
+  freeDeliveryPerk: boolean;
   packagingFeeKobo: number;
   serviceChargeKobo: number;
   vatIncludedKobo: number;
   totalKobo: number;
+  walletBalanceKobo: number;
+  walletAppliedKobo: number;
+  payableKobo: number;
   fulfilment: 'delivery' | 'pickup';
   zone: { slug: string; name: string; etaMinutes: number } | null;
   scheduledFor: string | null;
@@ -54,10 +63,15 @@ export interface Order {
   customerName: string;
   subtotalKobo: number;
   discountKobo: number;
+  voucherDiscountKobo: number;
   deliveryFeeKobo: number;
   serviceChargeKobo: number;
   vatIncludedKobo: number;
+  /** Paid with dining credit from the Interest Account wallet. */
+  walletAppliedKobo: number;
+  /** Paid by card (after dining credit). */
   totalKobo: number;
+  pointsEarned: number;
   items?: {
     dishId: number | null;
     slug: string | null;
@@ -80,6 +94,8 @@ export interface CheckoutRequest {
   zone?: string | null;
   scheduled_for?: string | null;
   coupon_code?: string | null;
+  voucher_code?: string | null;
+  use_wallet?: boolean;
   confirm_age?: boolean;
   email?: string | null;
   name?: string;
@@ -97,12 +113,7 @@ export interface CheckoutRequest {
 
 export interface PlacedOrder {
   order: Order;
-  payment: {
-    provider: 'paystack' | 'simulated';
-    reference: string;
-    accessCode: string;
-    authorizationUrl: string | null;
-  } | null;
+  payment: PaymentStart | null;
   trackingToken: string;
   publicKey: string | null;
 }
