@@ -14,6 +14,7 @@ coverage/
 .vite/
 *.log
 .phpunit.result.cache
+.phpunit.cache/
 
 # Uploads (runtime, outside git)
 backend/storage/uploads/*
@@ -25,3 +26,9 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Runtime storage (keep the folders, never the contents)
+backend/storage/logs/*
+backend/storage/mail/*
+backend/storage/sessions/*
+!backend/storage/*/.gitkeep

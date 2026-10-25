@@ -1,0 +1,33 @@
+{
+  "name": "small-africa/api",
+  "description": "Small Africa restaurant REST API",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.1",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "ext-openssl": "*",
+    "ext-pdo": "*",
+    "phpmailer/phpmailer": "^6.9",
+    "slim/psr7": "^1.7",
+    "slim/slim": "^4.14",
+    "vlucas/phpdotenv": "^5.6"
+  },
+  "autoload": { "psr-4": { "App\\": "src/" } },
+  "autoload-dev": { "psr-4": { "Tests\\": "tests/" } },
+  "config": {
+    "platform": { "php": "8.1.25" },
+    "sort-packages": true,
+    "optimize-autoloader": true
+  },
+  "scripts": {
+    "migrate": "php bin/migrate.php",
+    "seed": "php bin/seed.php",
+    "fresh": "php bin/migrate.php --fresh && php bin/seed.php",
+    "test": "phpunit"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5"
+  }
+}

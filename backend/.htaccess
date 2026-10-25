@@ -1,0 +1,3 @@
+# Only backend/public is meant to be web-accessible. On XAMPP the whole folder sits under
+# htdocs, so deny everything here; public/.htaccess re-allows the front controller.
+Require all denied

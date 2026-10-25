@@ -1,0 +1,5 @@
+# Local XAMPP safety net: never serve dotfiles (.env, .git) or dependency folders.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+RedirectMatch 404 /(\.git|node_modules|vendor)(/|$)
