@@ -6,6 +6,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Toaster } from '@/components/ui/Toaster';
 import { env } from '@/lib/env';
 import { CookieNotice } from './CookieNotice';
+import { DemoRibbon } from './DemoRibbon';
 import { SiteFooter } from './SiteFooter';
 import { SiteHeader } from './SiteHeader';
 import { WhatsAppButton } from './WhatsAppButton';
@@ -19,14 +20,11 @@ export function AppLayout() {
       >
         Skip to content
       </a>
-      {env.demoMode && (
-        <div className="bg-accent-fill/95 tracking-overline text-on-accent py-1.5 text-center text-xs font-semibold uppercase">
-          Demo version: no real payments or bookings
-        </div>
-      )}
+      {env.demoMode && <DemoRibbon />}
       <SmoothScroll />
       <SiteHeader />
-      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+      {/* At least a screen tall, so the footer starts below the fold and can't jump when data loads. */}
+      <main id="main" tabIndex={-1} className="min-h-dvh flex-1 focus:outline-none">
         <Suspense
           fallback={
             <div className="text-accent grid min-h-[60vh] place-items-center">

@@ -7,7 +7,7 @@ import { toast } from '@/components/ui/toast';
 import { dishPhoto } from '@/content/photoKeys';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
-import { env } from '@/lib/env';
+import { mediaUrl } from '@/lib/env';
 import { formatNaira } from '@/lib/format';
 import { adminApi, can, useAdminMe, type AdminDish, type AdminDishOption, type AdminMenu } from '../api';
 import {
@@ -197,7 +197,7 @@ export function MenuAdminPage() {
 function DishThumb({ dish }: { dish: AdminDish }) {
   return dish.imageUrl ? (
     <img
-      src={`${env.apiBase}${dish.imageUrl}`}
+      src={mediaUrl(dish.imageUrl)}
       alt=""
       className="size-14 shrink-0 rounded-sm object-cover"
       loading="lazy"

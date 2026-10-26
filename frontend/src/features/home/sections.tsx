@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { gsap } from '@/components/motion/gsap';
+import { loadGsap } from '@/components/motion/loadGsap';
 import { Reveal } from '@/components/motion/Reveal';
 import { prefersReducedMotion } from '@/components/motion/useReducedMotion';
 import { Alert } from '@/components/ui/Alert';
@@ -104,26 +104,36 @@ export function ThreeKitchens() {
   const track = useRef<HTMLDivElement>(null);
   const kitchens = data?.kitchens ?? [];
 
-  useLayoutEffect(() => {
-    if (!kitchens.length || prefersReducedMotion()) return;
-    const mm = gsap.matchMedia();
-    mm.add('(min-width: 1024px)', () => {
-      const el = track.current!;
-      const distance = () => el.scrollWidth - window.innerWidth;
-      gsap.to(el, {
-        x: () => -distance(),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: section.current,
-          start: 'top top',
-          end: () => `+=${distance()}`,
-          pin: true,
-          scrub: 0.6,
-          invalidateOnRefresh: true,
-        },
+  useEffect(() => {
+    // The pinned horizontal scroll is for wide screens only; smaller ones never load GSAP.
+    if (!kitchens.length || prefersReducedMotion() || !window.matchMedia?.('(min-width: 1024px)').matches)
+      return;
+    let cancelled = false;
+    let mm: gsap.MatchMedia | null = null;
+    void loadGsap().then(({ gsap }) => {
+      if (cancelled) return;
+      mm = gsap.matchMedia();
+      mm.add('(min-width: 1024px)', () => {
+        const el = track.current!;
+        const distance = () => el.scrollWidth - window.innerWidth;
+        gsap.to(el, {
+          x: () => -distance(),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: section.current,
+            start: 'top top',
+            end: () => `+=${distance()}`,
+            pin: true,
+            scrub: 0.6,
+            invalidateOnRefresh: true,
+          },
+        });
       });
     });
-    return () => mm.revert();
+    return () => {
+      cancelled = true;
+      mm?.revert();
+    };
   }, [kitchens.length]);
 
   return (
@@ -165,7 +175,12 @@ function KitchenPanel({ kitchen, numeral }: { kitchen: KitchenInfo; numeral: str
       />
       <div className="flex flex-1 flex-col gap-4 px-4 py-10 sm:px-10">
         <div className="flex items-baseline gap-4">
-          <span className="font-serif text-5xl" style={{ color: kitchen.accentColor }} aria-hidden="true">
+          {/* The kitchen's colour, blended toward the text colour so it keeps 3:1+ contrast in both themes. */}
+          <span
+            className="font-serif text-5xl"
+            style={{ color: `color-mix(in oklab, ${kitchen.accentColor} 60%, var(--sa-text-primary))` }}
+            aria-hidden="true"
+          >
             {numeral}
           </span>
           <h3 className="text-3xl sm:text-4xl">{kitchen.name}</h3>
@@ -187,22 +202,32 @@ function KitchenPanel({ kitchen, numeral }: { kitchen: KitchenInfo; numeral: str
 
 function Counter({ to, label }: { to: number; label: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  useLayoutEffect(() => {
+  useEffect(() => {
     const el = ref.current;
-    if (!el || prefersReducedMotion()) return;
-    const obj = { v: 0 };
-    const ctx = gsap.context(() => {
-      gsap.to(obj, {
-        v: to,
-        duration: 1.8,
-        ease: 'power2.out',
-        scrollTrigger: { trigger: el, start: 'top 90%', once: true },
-        onUpdate: () => {
-          el.textContent = String(Math.round(obj.v));
-        },
-      });
-    });
-    return () => ctx.revert();
+    if (!el || prefersReducedMotion() || typeof IntersectionObserver === 'undefined') return;
+    // Counts up (ease-out over 1.8s) once the number scrolls into view. A few lines of rAF,
+    // so phones don't download an animation library for it.
+    let frame = 0;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        const start = performance.now();
+        const step = (t: number) => {
+          const p = Math.min(1, (t - start) / 1800);
+          el.textContent = String(Math.round(to * (1 - (1 - p) ** 2)));
+          if (p < 1) frame = requestAnimationFrame(step);
+        };
+        frame = requestAnimationFrame(step);
+      },
+      { rootMargin: '0px 0px -10% 0px' },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(frame);
+      el.textContent = String(to);
+    };
   }, [to]);
   return (
     <div className="flex flex-col items-center gap-2 text-center">

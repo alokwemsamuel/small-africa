@@ -36,7 +36,7 @@ export function CookieNotice() {
         We use one essential cookie to keep you signed in and secure, and store your basket and appearance
         settings on this device. No advertising or tracking cookies.{' '}
         <Link to="/privacy#cookies" className="text-accent underline">
-          Learn more
+          How we use cookies
         </Link>
       </p>
       <button

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { DemoRibbon } from '@/components/layout/DemoRibbon';
 import { Alert } from '@/components/ui/Alert';
 import { Logo } from '@/components/ui/Logo';
 import { Spinner } from '@/components/ui/Spinner';
@@ -8,6 +9,7 @@ import { useLogout, useMe } from '@/features/auth/hooks';
 import { ThemeMenu } from '@/features/theme/ThemeSwitcher';
 import { useSeo } from '@/lib/seo';
 import { cn } from '@/lib/cn';
+import { env } from '@/lib/env';
 import { can, useAdminMe, type AdminMe, type Permission } from './api';
 import { ADMIN_NAV } from './nav';
 
@@ -184,6 +186,7 @@ function AdminShell({ me, children }: { me: AdminMe | undefined; children: React
       </aside>
 
       <div className="min-w-0">
+        {env.demoMode && <DemoRibbon />}
         <header className="border-line bg-surface-raised sticky top-0 z-30 flex items-center justify-between gap-3 border-b px-4 py-3 lg:hidden">
           <Link to="/admin" className="flex items-center gap-2" aria-label="Small Africa admin home">
             <Logo variant="mark" className="w-9" />

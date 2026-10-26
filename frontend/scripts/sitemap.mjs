@@ -43,7 +43,12 @@ const today = new Date().toISOString().slice(0, 10);
 writeFileSync(
   resolve(root, 'public/sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    pages.map(([p, prio, freq]) => `  <url><loc>${site}${p}</loc><lastmod>${today}</lastmod><changefreq>${freq}</changefreq><priority>${prio}</priority></url>`).join('\n') +
+    pages
+      .map(
+        ([p, prio, freq]) =>
+          `  <url><loc>${site}${p}</loc><lastmod>${today}</lastmod><changefreq>${freq}</changefreq><priority>${prio}</priority></url>`,
+      )
+      .join('\n') +
     '\n</urlset>\n',
 );
 writeFileSync(

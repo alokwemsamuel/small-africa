@@ -1,14 +1,13 @@
 import { useLayoutEffect, useRef, type ElementType, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
-import { gsap } from './gsap';
 import { prefersReducedMotion } from './useReducedMotion';
 
 type Effect = 'rise' | 'fade' | 'clip';
 
 /**
- * Scroll-triggered reveal (GSAP ScrollTrigger). Animates only transform/opacity/clip-path,
- * so there's no layout shift. With reduced motion the content simply appears.
- * `stagger` animates direct children one after another.
+ * Scroll-triggered reveal: CSS animations started by an IntersectionObserver, so no animation
+ * library loads for it. Animates only transform/opacity/clip-path (no layout shift). With
+ * reduced motion the content simply appears. `stagger` animates direct children in turn.
  */
 export function Reveal({
   children,
@@ -27,27 +26,33 @@ export function Reveal({
 }) {
   const ref = useRef<HTMLElement>(null);
 
+  // Layout effect: content is hidden before the first paint, so it never flashes.
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || prefersReducedMotion()) return;
-    const targets = stagger ? Array.from(el.children) : [el];
-    const from: gsap.TweenVars =
-      effect === 'clip'
-        ? { clipPath: 'inset(0 0 100% 0)', y: 24 }
-        : effect === 'fade'
-          ? { opacity: 0 }
-          : { opacity: 0, y: 40 };
-    const ctx = gsap.context(() => {
-      gsap.from(targets, {
-        ...from,
-        delay,
-        stagger: stagger ?? 0,
-        duration: effect === 'clip' ? 1.2 : 1,
-        clearProps: 'all',
-        scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+    if (!el || prefersReducedMotion() || typeof IntersectionObserver === 'undefined') return;
+    const targets = (stagger ? Array.from(el.children) : [el]) as HTMLElement[];
+    targets.forEach((t, i) => {
+      t.dataset.reveal = 'pending';
+      t.dataset.revealEffect = effect;
+      t.style.setProperty('--reveal-delay', `${delay + i * (stagger ?? 0)}s`);
+    });
+    // Starts when the top of the block passes 85% of the viewport height.
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        targets.forEach((t) => (t.dataset.reveal = 'in'));
+        io.disconnect();
+      },
+      { rootMargin: '0px 0px -15% 0px' },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      targets.forEach((t) => {
+        delete t.dataset.reveal;
+        delete t.dataset.revealEffect;
       });
-    }, el);
-    return () => ctx.revert();
+    };
   }, [effect, stagger, delay]);
 
   return (

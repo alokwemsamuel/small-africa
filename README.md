@@ -81,7 +81,7 @@ These exist for demos and testing only. Remove or change them before going live.
 - [x] **Phase 4 — Reservations & ordering**: checkout (delivery/pickup, scheduling, coupons), Paystack + simulated payments, order tracking, reservations with live availability, account tabs
 - [x] **Phase 5 — Interest Account**: dining wallet with Paystack top-ups and bonus, monthly interest job, points, tiers, stamp card, streaks, birthday/anniversary/referral rewards, win-back and favourite-kitchen offers, notification centre, append-only ledgers
 - [x] **Phase 6 — Admin panel**: role-based panel (Super Admin, Manager, front desk, kitchen) with dashboard and charts, orders and kitchen tickets, reservations and capacity, menu manager with secure photo uploads, customers and dine-in bills, Interest Account & Rewards manager, reviews, coupons, enquiries, staff, settings and audit log
-- [ ] Phase 7 — Demo mode, testing & hardening
+- [x] **Phase 7 — Demo mode, testing & hardening**: the whole site and admin running in the browser for GitHub Pages (busy, always-current demo data; simulated Paystack; reset), deep-link support on Pages, faster first load (animation libraries off the critical path), cross-device and WebKit checks, Lighthouse, security checklist, and an offline walkthrough video in `presentation/`
 - [ ] Phase 8 — Deploy & deliver
 
-See [docs/SECURITY.md](docs/SECURITY.md) for the security model and [CREDITS.md](CREDITS.md) for asset licences.
+See [docs/DEMO.md](docs/DEMO.md) for the demo build, [docs/SECURITY.md](docs/SECURITY.md) and [docs/SECURITY-CHECKLIST.md](docs/SECURITY-CHECKLIST.md) for the security model and [CREDITS.md](CREDITS.md) for asset licences.

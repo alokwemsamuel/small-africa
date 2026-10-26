@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
 import { useReducedMotion } from '@/components/motion/useReducedMotion';
@@ -133,12 +132,7 @@ export function Hero() {
       />
 
       <div className="container-luxe relative pt-40 pb-20 sm:pb-24 lg:py-0">
-        <motion.div
-          initial={reduced ? false : 'out'}
-          animate="in"
-          variants={{ out: {}, in: { transition: { staggerChildren: 0.14, delayChildren: 0.15 } } }}
-          className="max-w-2xl"
-        >
+        <div className="max-w-2xl">
           {[
             <p key="e" className="eyebrow text-gold-light">
               Lagos · Nigerian · Polish · Continental
@@ -164,19 +158,23 @@ export function Hero() {
                 Explore the menu
               </ButtonLink>
             </div>,
-          ].map((child) => (
-            <motion.div
+          ].map((child, i) => (
+            // Text is in the DOM from the start (SEO, screen readers); only its appearance animates.
+            <div
               key={child.key}
-              variants={{
-                out: { opacity: 0, y: 24 },
-                in: { opacity: 1, y: 0, transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } },
-              }}
-              // Text is in the DOM from the start (SEO, screen readers); only its appearance animates.
+              className={reduced ? undefined : 'rise-in'}
+              style={
+                {
+                  '--rise-distance': '24px',
+                  '--rise-duration': '0.9s',
+                  '--rise-delay': `${0.15 + i * 0.14}s`,
+                } as React.CSSProperties
+              }
             >
               {child}
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
 
       {variant && (

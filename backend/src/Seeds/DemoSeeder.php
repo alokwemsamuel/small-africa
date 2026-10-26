@@ -48,5 +48,6 @@ final class DemoSeeder
             }
         });
         (new DemoLoyaltySeeder($this->db))->run();
+        (new DemoOperationsSeeder($this->db))->run();
     }
 }

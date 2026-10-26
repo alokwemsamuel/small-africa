@@ -12,6 +12,29 @@
     <meta name="color-scheme" content="dark light" />
     <!-- Applies the saved appearance before first paint. External file, so no unsafe-inline in CSP. -->
     <script src="%BASE_URL%theme-init.js"></script>
+    <!-- First-screen fonts (Latin), so headings don't reflow when they arrive. Vite rewrites these
+         paths to the same hashed files the stylesheet uses. -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="/node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="/node_modules/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff2"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="/node_modules/@fontsource/italiana/files/italiana-latin-400-normal.woff2"
+    />
     <link rel="icon" href="%BASE_URL%favicon.ico" sizes="48x48" />
     <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
@@ -24,7 +47,45 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <!-- Structured data (a non-executable data block, so it is allowed under the CSP). Contact details are placeholders until launch. -->
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Restaurant","name":"Small Africa","description":"Fine-dining restaurant and lounge serving Nigerian, Polish and Continental cuisine. Three kitchens. One table.","servesCuisine":["Nigerian","Polish","Continental","African","European"],"priceRange":"₦₦₦₦","currenciesAccepted":"NGN","paymentAccepted":"Cash, Credit Card, Bank Transfer","acceptsReservations":"True","telephone":"+234 700 000 0000","address":{"@type":"PostalAddress","addressLocality":"Victoria Island","addressRegion":"Lagos","addressCountry":"NG"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday"],"opens":"12:00","closes":"23:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":["Friday","Saturday"],"opens":"12:00","closes":"23:59"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Sunday","opens":"13:00","closes":"22:00"}],"url":"%VITE_SITE_URL%/","menu":"%VITE_SITE_URL%/menu","image":"%VITE_SITE_URL%/og-image.png","logo":"%VITE_SITE_URL%/favicon-512.png"}</script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "name": "Small Africa",
+        "description": "Fine-dining restaurant and lounge serving Nigerian, Polish and Continental cuisine. Three kitchens. One table.",
+        "servesCuisine": ["Nigerian", "Polish", "Continental", "African", "European"],
+        "priceRange": "₦₦₦₦",
+        "currenciesAccepted": "NGN",
+        "paymentAccepted": "Cash, Credit Card, Bank Transfer",
+        "acceptsReservations": "True",
+        "telephone": "+234 700 000 0000",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Victoria Island",
+          "addressRegion": "Lagos",
+          "addressCountry": "NG"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+            "opens": "12:00",
+            "closes": "23:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Friday", "Saturday"],
+            "opens": "12:00",
+            "closes": "23:59"
+          },
+          { "@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "13:00", "closes": "22:00" }
+        ],
+        "url": "%VITE_SITE_URL%/",
+        "menu": "%VITE_SITE_URL%/menu",
+        "image": "%VITE_SITE_URL%/og-image.png",
+        "logo": "%VITE_SITE_URL%/favicon-512.png"
+      }
+    </script>
   </head>
   <body>
     <noscript

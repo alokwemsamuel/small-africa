@@ -103,6 +103,61 @@
   }
 }
 
+/* Soft fade-and-rise for page changes and the hero intro (CSS, so no animation library is
+   needed before first paint). Reduced motion makes it instant via the rule below. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise-distance, 12px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise-in {
+  animation: rise-in var(--rise-duration, 0.45s) cubic-bezier(0.22, 1, 0.36, 1) var(--rise-delay, 0s) both;
+}
+
+/* Scroll reveals (components/motion/Reveal.tsx). */
+[data-reveal='pending'] {
+  opacity: 0;
+}
+[data-reveal='pending'][data-reveal-effect='clip'] {
+  opacity: 1;
+  clip-path: inset(0 0 100% 0);
+}
+[data-reveal='in'] {
+  animation: reveal-rise 1s cubic-bezier(0.215, 0.61, 0.355, 1) var(--reveal-delay, 0s) both;
+}
+[data-reveal='in'][data-reveal-effect='fade'] {
+  animation-name: reveal-fade;
+}
+[data-reveal='in'][data-reveal-effect='clip'] {
+  animation-name: reveal-clip;
+  animation-duration: 1.2s;
+}
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+}
+@keyframes reveal-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes reveal-clip {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(24px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
 /* Gallery strip: the list is duplicated, so -50% loops seamlessly. */
 @keyframes marquee {
   from {

@@ -44,6 +44,19 @@ final class DemoLoyaltySeeder
         ['Jakub', 'Zieliński', 'bronze', 60000, [], 'polish'],
         ['Bisola', 'Coker', 'bronze', 25000, [], 'continental'],
         ['Ifeanyi', 'Obi', 'bronze', 0, [], 'nigerian'],
+        ['Agnieszka', 'Mazur', 'silver', 230000, [55 => 25000], 'polish'],
+        ['Kunle', 'Afolabi', 'gold', 690000, [90 => 50000], 'nigerian'],
+        ['Ewa', 'Krawczyk', 'bronze', 95000, [], 'polish'],
+        ['Temitope', 'Alabi', 'silver', 180000, [35 => 10000], 'continental'],
+        ['Tomasz', 'Wróbel', 'bronze', 70000, [], 'polish'],
+        ['Adaobi', 'Nnaji', 'bronze', 110000, [15 => 25000], 'nigerian'],
+        ['Seun', 'Oladipo', 'silver', 300000, [], 'nigerian'],
+        ['Magdalena', 'Dąbrowska', 'gold', 520000, [65 => 100000], 'polish'],
+        ['Chukwuma', 'Eze', 'bronze', 30000, [], 'nigerian'],
+        ['Natalia', 'Jankowska', 'bronze', 55000, [], 'continental'],
+        ['Yetunde', 'Fashola', 'silver', 260000, [40 => 25000], 'continental'],
+        ['Paweł', 'Szymański', 'bronze', 15000, [], 'polish'],
+        ['Hauwa', 'Garba', 'bronze', 0, [], 'nigerian'],
     ];
 
     private LoyaltyRules $rules;
@@ -112,7 +125,7 @@ final class DemoLoyaltySeeder
             'email_verified_at' => $this->sql($joined),
             'referral_code' => strtoupper(substr(preg_replace('/[^A-Za-z]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $first) ?: 'MEMBER') ?? 'MEMBER', 0, 6)) . (100 + $i),
             'favourite_kitchen_id' => $this->kitchenIds[$m[5]] ?? null,
-            'birthday' => sprintf('19%02d-%02d-%02d', 75 + $i, 1 + ($i * 5) % 12, 1 + ($i * 7) % 28),
+            'birthday' => sprintf('%04d-%02d-%02d', 1968 + ($i * 3) % 34, 1 + ($i * 5) % 12, 1 + ($i * 7) % 28),
             'marketing_opt_in' => $i % 3 === 0 ? 0 : 1,
             'created_at' => $this->sql($joined),
         ]);

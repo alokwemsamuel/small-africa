@@ -7,7 +7,7 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { DietaryTags } from '@/components/ui/DietaryTags';
 import { Photo } from '@/components/ui/Photo';
 import { dishPhoto } from '@/content/photoKeys';
-import { env } from '@/lib/env';
+import { mediaUrl } from '@/lib/env';
 import { Spinner } from '@/components/ui/Spinner';
 import { toast } from '@/components/ui/toast';
 import { cart } from '@/features/cart/cart';
@@ -127,7 +127,7 @@ function DishView({ dish }: { dish: DishDetail }) {
         <Reveal effect="clip" className="lg:sticky lg:top-24 lg:self-start">
           <Photo
             name={dishPhoto(dish.slug)}
-            src={dish.imageUrl ? `${env.apiBase}${dish.imageUrl}` : null}
+            src={dish.imageUrl ? mediaUrl(dish.imageUrl) : null}
             alt={dish.imageAlt}
             sizes="(min-width: 1024px) 55vw, 100vw"
             priority

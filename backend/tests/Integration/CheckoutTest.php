@@ -143,18 +143,20 @@ final class CheckoutTest extends IntegrationTestCase
 
     public function testFullOrderLifecycleWithSimulatedPayment(): void
     {
+        $used = fn (): int => (int) $this->db->scalar('SELECT times_used FROM coupons WHERE code = ?', ['WELCOME10']);
+        $before = $used(); // demo data may already have redemptions
         [$res, $created] = $this->placeOrder($this->checkout(['coupon_code' => 'WELCOME10']), 'idem-key-lifecycle-0001');
         self::assertSame(201, $res->getStatusCode());
         $ref = $created['order']['reference'];
         self::assertMatchesRegularExpression('/^SA-[A-Z0-9]{6}$/', $ref);
         self::assertSame('pending_payment', $created['order']['status']);
         self::assertSame('simulated', $created['payment']['provider']);
-        self::assertSame(0, (int) $this->db->scalar('SELECT times_used FROM coupons WHERE code = ?', ['WELCOME10']), 'Coupon not used until paid');
+        self::assertSame($before, $used(), 'Coupon not used until paid');
 
         $paid = $this->pay($ref);
         self::assertSame('received', $paid['order']['status']);
         self::assertSame('paid', $paid['order']['paymentStatus']);
-        self::assertSame(1, (int) $this->db->scalar('SELECT times_used FROM coupons WHERE code = ?', ['WELCOME10']));
+        self::assertSame($before + 1, $used());
 
         $mail = end($this->mailer->sent);
         self::assertStringContainsString("Order {$ref} confirmed", $mail['subject']);
@@ -168,7 +170,7 @@ final class CheckoutTest extends IntegrationTestCase
 
         // Verifying again (e.g. webhook + browser) changes nothing.
         $this->request('POST', '/api/payments/verify', ['reference' => $ref], $this->spaHeaders());
-        self::assertSame(1, (int) $this->db->scalar('SELECT times_used FROM coupons WHERE code = ?', ['WELCOME10']));
+        self::assertSame($before + 1, $used());
         self::assertSame(1, (int) $this->db->scalar("SELECT COUNT(*) FROM order_status_history h JOIN orders o ON o.id = h.order_id WHERE o.reference = ? AND h.status = 'received'", [$ref]));
 
         // Second order with the same first-order coupon is refused.
