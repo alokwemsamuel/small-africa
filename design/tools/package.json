@@ -10,7 +10,7 @@
     "brand": "node render-brand.mjs",
     "all": "npm run logo && npm run brand",
     "photos": "node build-photos.mjs",
-    "hero": "node render-hero.mjs"
+    "hero-video": "node build-hero-video.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

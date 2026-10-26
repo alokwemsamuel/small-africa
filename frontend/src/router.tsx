@@ -54,10 +54,6 @@ const RewardsTermsPage = page(() => import('./pages/legal/RewardsTermsPage'), 'R
 const AccountPage = page(() => import('./features/account/AccountPage'), 'AccountPage');
 const AdminApp = page(() => import('./features/admin/AdminApp'), 'AdminApp');
 
-const devRoutes: RouteObject[] = import.meta.env.DEV
-  ? [{ path: '__hero-capture', Component: lazy(() => import('./features/home/hero/HeroCapture')) }]
-  : [];
-
 export const routes: RouteObject[] = [
   {
     element: <AppLayout />,
@@ -107,5 +103,4 @@ export const routes: RouteObject[] = [
       </RequireAuth>
     ),
   },
-  ...devRoutes,
 ];

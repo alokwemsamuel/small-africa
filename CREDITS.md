@@ -79,10 +79,17 @@ All photographs are from Unsplash under the [Unsplash License](https://unsplash.
 
 Dishes without a matching photo use the original plated-dish illustration (`design/brand/src/plate.svg`) in kitchen colours.
 
-## 3D hero, poster and video
+## Hero video and posters
 
-The 3D hero scene (plate, cloche, jollof, steam and spice particles) is modelled in code for this project (`frontend/src/features/home/hero/HeroScene.tsx`). The poster images and the looping MP4/WebM fallback videos are rendered from that scene by `design/tools/render-hero.mjs`. No third-party 3D models, HDRIs or footage are used.
+The home-page hero video is edited from two stock clips under the [Pexels licence](https://www.pexels.com/license/) (free for commercial use, no attribution required; credited here anyway):
+
+| Clip | Source | Licence | Used as |
+|---|---|---|---|
+| Server lifting a cloche from a smoking dish (3769032) | https://www.pexels.com/video/3769032/ | Pexels licence | Opening 3.8 seconds, colour-graded to match |
+| Consommé poured from a cast-iron teapot (3769033) | https://www.pexels.com/video/3769033/ | Pexels licence | Main shot; poster frame |
+
+`design/tools/build-hero-video.mjs` (ffmpeg + sharp) grades, crossfades and loops the clips, crops the 720×1280 phone version and exports the posters to `frontend/public/hero/`. The original downloads are not committed. The floating gold particles are drawn in code (`GoldParticles.tsx`). The video shows a plated dish and a server's gloved hands only: no identifiable people, logos or branded products.
 
 ## Code libraries
 
-All open-source under MIT, Apache-2.0, BSD or ISC licences. Full lists are in `frontend/package.json` and `backend/composer.json`. Main libraries: React, React Router, TanStack Query, React Hook Form, Zod, Tailwind CSS, Vite, Framer Motion, Lenis, three.js, React Three Fiber, Drei (MIT); GSAP with ScrollTrigger (GreenSock standard "no charge" licence, free for commercial use since GSAP 3.13); Slim, Slim-Psr7, phpdotenv (MIT/BSD); PHPMailer (LGPL-2.1, used unmodified as a library). Design tooling: resvg-js (MPL-2.0), sharp (Apache-2.0), puppeteer-core (Apache-2.0); ffmpeg is used locally as a build tool only and is not distributed.
+All open-source under MIT, Apache-2.0, BSD or ISC licences. Full lists are in `frontend/package.json` and `backend/composer.json`. Main libraries: React, React Router, TanStack Query, React Hook Form, Zod, Tailwind CSS, Vite, Framer Motion, Lenis (MIT); GSAP with ScrollTrigger (GreenSock standard "no charge" licence, free for commercial use since GSAP 3.13); Slim, Slim-Psr7, phpdotenv (MIT/BSD); PHPMailer (LGPL-2.1, used unmodified as a library). Design tooling: resvg-js (MPL-2.0), sharp (Apache-2.0), puppeteer-core (Apache-2.0); ffmpeg is used locally as a build tool only and is not distributed.

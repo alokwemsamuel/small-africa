@@ -29,8 +29,6 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2022',
       sourcemap: false,
-      // The 3D hero chunk (three.js) is ~250 KB gzipped but lazy-loaded only on capable devices.
-      chunkSizeWarningLimit: 950,
       rollupOptions: {
         output: {
           manualChunks: {

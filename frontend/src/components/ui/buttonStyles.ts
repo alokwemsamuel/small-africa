@@ -1,6 +1,6 @@
 import { cn } from '@/lib/cn';
 
-export type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'onDark';
 export type Size = 'sm' | 'md' | 'lg';
 
 const base =
@@ -11,6 +11,8 @@ const variants: Record<Variant, string> = {
     'border border-accent text-accent hover:border-accent-hover hover:text-accent-hover hover:bg-accent-fill/10',
   ghost: 'text-primary hover:text-accent-hover underline-offset-8 hover:underline',
   danger: 'border border-danger text-danger hover:bg-danger/10',
+  // Over photography or video (the hero): the same in both themes.
+  onDark: 'border border-gold-light text-gold-light hover:bg-gold-light/15 hover:text-ivory',
 };
 const sizes: Record<Size, string> = {
   sm: 'px-4 py-2 text-xs min-h-9',
