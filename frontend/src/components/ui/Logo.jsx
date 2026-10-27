@@ -15,6 +15,7 @@ const FILES = {
 /**
  * Gold logo on dark, obsidian logo on light. Both are rendered and CSS hides the wrong one
  * (see .on-dark-only / .on-light-only), so the swap is instant and correct before React loads.
+ * Lazy loading means the browser only downloads the one that is showing.
  */
 export function Logo({ variant = 'horizontal', className }) {
   const f = FILES[variant];
@@ -27,6 +28,7 @@ export function Logo({ variant = 'horizontal', className }) {
         alt={alt}
         width={f.w}
         height={f.h}
+        loading="lazy"
         className={cn('on-dark-only', size, className)}
       />
       <img
@@ -34,6 +36,7 @@ export function Logo({ variant = 'horizontal', className }) {
         alt={alt}
         width={f.w}
         height={f.h}
+        loading="lazy"
         className={cn('on-light-only', size, className)}
       />
     </>

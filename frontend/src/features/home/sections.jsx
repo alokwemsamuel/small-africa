@@ -165,11 +165,7 @@ function KitchenPanel({ kitchen, numeral }) {
       <div className="flex flex-1 flex-col gap-4 px-4 py-10 sm:px-10">
         <div className="flex items-baseline gap-4">
           {/* The kitchen's colour, blended toward the text colour so it keeps 3:1+ contrast in both themes. */}
-          <span
-            className="font-serif text-5xl"
-            style={{ color: `color-mix(in oklab, ${kitchen.accentColor} 60%, var(--sa-text-primary))` }}
-            aria-hidden="true"
-          >
+          <span className={`font-serif text-5xl kitchen-numeral-${kitchen.slug}`} aria-hidden="true">
             {numeral}
           </span>
           <h3 className="text-3xl sm:text-4xl">{kitchen.name}</h3>
@@ -352,10 +348,7 @@ export function InterestTeaser() {
 /** Illustrative membership card (Phase 5 renders the real one with live balances). */
 function MembershipCardPreview() {
   return (
-    <div
-      className="relative mx-auto aspect-[1.586] w-full max-w-lg overflow-hidden rounded-2xl p-7 text-[#F6EFE3] shadow-2xl shadow-black/40 sm:p-9"
-      style={{ background: 'linear-gradient(135deg, #1A1612 0%, #0E0C0A 55%, #2a2010 100%)' }}
-    >
+    <div className="membership-card-bg relative mx-auto aspect-[1.586] w-full max-w-lg overflow-hidden rounded-2xl p-7 text-[#F6EFE3] shadow-2xl shadow-black/40 sm:p-9">
       <div className="bg-pattern absolute inset-0 opacity-[0.12]" aria-hidden="true" />
       <div
         className="absolute -top-24 -right-16 size-64 rounded-full bg-[radial-gradient(circle,rgba(201,162,75,0.45),transparent_65%)]"

@@ -221,9 +221,10 @@ export function MenuPage() {
         {/* Keeps the heading order (h1 → h2 → dish h3s) for screen-reader navigation. */}
         <h2 className="sr-only">Dishes</h2>
         <ul className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {results.map((d, i) => (
-            <li key={d.id} className="flex">
-              <DishCard dish={d} priority={i < 3} className="w-full" />
+          {results.map((d) => (
+            // Off-screen cards skip layout until they are scrolled near (54 dishes on one page).
+            <li key={d.id} className="flex [contain-intrinsic-size:auto_520px] [content-visibility:auto]">
+              <DishCard dish={d} className="w-full" />
             </li>
           ))}
         </ul>

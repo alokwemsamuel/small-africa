@@ -27,6 +27,9 @@ export function Hero() {
   const [paused, setPaused] = useState(false); // the visitor pressed pause
 
   // Decide after mount (no video in the server-rendered/first paint) and follow rotation.
+  // The video (and the particles, which follow it) start once the page has loaded and the
+  // browser is idle: the poster is the same frame, and decoding video while the page is still
+  // starting up makes phones slow to respond.
   useEffect(() => {
     if (reduced || saveData()) {
       setVariant(null);
@@ -34,9 +37,25 @@ export function Hero() {
     }
     const mq = window.matchMedia(PORTRAIT);
     const pick = () => setVariant(mq.matches ? '720x1280' : '1920');
-    pick();
-    mq.addEventListener?.('change', pick);
-    return () => mq.removeEventListener?.('change', pick);
+    let idle = 0;
+    const whenIdle = () => {
+      idle =
+        'requestIdleCallback' in window
+          ? requestIdleCallback(start, { timeout: 2000 })
+          : setTimeout(start, 500);
+    };
+    function start() {
+      pick();
+      mq.addEventListener?.('change', pick);
+    }
+    if (document.readyState === 'complete') whenIdle();
+    else window.addEventListener('load', whenIdle, { once: true });
+    return () => {
+      window.removeEventListener('load', whenIdle);
+      if ('cancelIdleCallback' in window) cancelIdleCallback(idle);
+      clearTimeout(idle);
+      mq.removeEventListener?.('change', pick);
+    };
   }, [reduced]);
 
   useEffect(() => {
@@ -160,15 +179,7 @@ export function Hero() {
             </div>,
           ].map((child, i) => (
             // Text is in the DOM from the start (SEO, screen readers); only its appearance animates.
-            <div
-              key={child.key}
-              className={reduced ? undefined : 'rise-in'}
-              style={{
-                '--rise-distance': '24px',
-                '--rise-duration': '0.9s',
-                '--rise-delay': `${0.15 + i * 0.14}s`,
-              }}
-            >
+            <div key={child.key} className={reduced ? undefined : `rise-in hero-rise hero-rise-${i}`}>
               {child}
             </div>
           ))}

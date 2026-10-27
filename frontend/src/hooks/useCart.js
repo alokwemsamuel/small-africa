@@ -89,8 +89,12 @@ export const cart = {
   snapshot: () => lines,
 };
 
+const EMPTY = [];
+const serverSnapshot = () => EMPTY;
+
 export function useCart() {
-  const items = useSyncExternalStore(cart.subscribe, cart.snapshot, cart.snapshot);
+  // Pre-built pages show an empty basket; the saved one appears once React has attached.
+  const items = useSyncExternalStore(cart.subscribe, cart.snapshot, serverSnapshot);
   const count = items.reduce((n, l) => n + l.quantity, 0);
   const subtotalKobo = items.reduce((n, l) => n + l.unitPriceKobo * l.quantity, 0);
   return { items, count, subtotalKobo };

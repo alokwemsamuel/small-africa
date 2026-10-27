@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PHOTOS, PHOTO_WIDTHS } from '@/lib/photos';
 import { cn } from '@/lib/cn';
 
+/** Placeholder backgrounds in kitchen colours (classes in styles/index.css). */
 const KITCHEN_ART = {
-  nigerian: { from: '#B4492F', to: '#3a1a10' },
-  polish: { from: '#A3243B', to: '#2a0c12' },
-  continental: { from: '#2E4A3B', to: '#0f1a14' },
-  bar: { from: '#C9A24B', to: '#2a2010' },
+  nigerian: 'art-nigerian',
+  polish: 'art-polish',
+  continental: 'art-continental',
+  bar: 'art-bar',
 };
 
 /** Callers may position the photo themselves (e.g. absolute backgrounds); otherwise it is relative. */
@@ -30,6 +31,12 @@ const position = (className) =>
 export function Photo({ name, alt, sizes, className, priority, fallbackKitchen, fallbackLabel, src }) {
   const photo = PHOTOS[name];
   const [loaded, setLoaded] = useState(false);
+  const img = useRef(null);
+  // On a pre-built page the photo can finish loading before React attaches, so its load event
+  // is missed: check once attached, or it would stay hidden behind the blurred placeholder.
+  useEffect(() => {
+    if (img.current?.complete && img.current.naturalWidth > 0) setLoaded(true);
+  }, []);
 
   if (src) {
     return (
@@ -52,8 +59,7 @@ export function Photo({ name, alt, sizes, className, priority, fallbackKitchen, 
       <div
         role="img"
         aria-label={alt ?? fallbackLabel ?? 'Dish illustration'}
-        className={cn(position(className), 'grid place-items-center overflow-hidden', className)}
-        style={{ background: `radial-gradient(circle at 50% 40%, ${art.from}, ${art.to} 75%)` }}
+        className={cn(position(className), 'grid place-items-center overflow-hidden', art, className)}
       >
         <img
           src={`${import.meta.env.BASE_URL}brand/plate.svg`}
@@ -95,6 +101,7 @@ export function Photo({ name, alt, sizes, className, priority, fallbackKitchen, 
           decoding="async"
           // React 18 doesn't know fetchPriority yet; lower-case passes it through to the DOM.
           {...{ fetchpriority: priority ? 'high' : 'auto' }}
+          ref={img}
           onLoad={() => setLoaded(true)}
           className={cn(
             'relative size-full object-cover transition-[opacity,scale] duration-700',

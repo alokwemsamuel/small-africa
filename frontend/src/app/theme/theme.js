@@ -27,7 +27,11 @@ export function storePreference(pref) {
 }
 
 export function systemPrefersLight() {
-  return typeof window.matchMedia === 'function' && window.matchMedia(LIGHT_QUERY).matches;
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia(LIGHT_QUERY).matches
+  );
 }
 
 export function resolveTheme(pref, prefersLight) {

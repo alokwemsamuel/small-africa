@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useHydrated } from '@/lib/hydration';
 
 const KEY = 'sa-cookie-notice';
 
@@ -17,7 +18,10 @@ function dismissed() {
  */
 export function CookieNotice() {
   const [hidden, setHidden] = useState(dismissed);
-  if (hidden) return null;
+  // Pre-built pages include the notice; public/theme-init.js hides it before the first paint
+  // for visitors who already closed it, and it is removed once React has attached.
+  const hydrated = useHydrated();
+  if (hidden && hydrated) return null;
   const close = () => {
     try {
       window.localStorage.setItem(KEY, '1');
@@ -30,7 +34,7 @@ export function CookieNotice() {
     <div
       role="region"
       aria-label="Cookie notice"
-      className="border-line bg-surface-raised fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-md border p-5 shadow-2xl shadow-black/30 sm:bottom-6 sm:left-6 sm:mx-0"
+      className="cookie-notice border-line bg-surface-raised fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-md border p-5 shadow-2xl shadow-black/30 sm:bottom-6 sm:left-6 sm:mx-0"
     >
       <p className="text-secondary text-sm leading-relaxed">
         We use one essential cookie to keep you signed in and secure, and store your basket and appearance

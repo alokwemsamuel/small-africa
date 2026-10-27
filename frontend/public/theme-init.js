@@ -1,14 +1,19 @@
 /*
- * Applies the saved appearance before the first paint (no flash of the wrong theme), and on
- * the home page starts loading the hero poster early.
+ * Applies the saved appearance before the first paint (no flash of the wrong theme), hides the
+ * cookie notice in pre-built pages for visitors who already closed it, and on the home page
+ * starts loading the hero poster early.
  * Loaded as a blocking external script from <head>, so the CSP needs no 'unsafe-inline'.
- * Must stay in sync with src/app/theme/theme.js (storage key and colours).
+ * Must stay in sync with src/app/theme/theme.js (storage key and colours) and
+ * src/components/layout/CookieNotice.jsx (storage key).
  */
 (function () {
   var pref = 'dark';
   try {
     var saved = window.localStorage.getItem('sa-theme');
     if (saved === 'dark' || saved === 'light' || saved === 'system') pref = saved;
+    if (window.localStorage.getItem('sa-cookie-notice') === '1') {
+      document.documentElement.setAttribute('data-cookie-notice', 'closed');
+    }
   } catch (_e) {
     /* storage blocked (private mode): keep the default */
   }
@@ -25,8 +30,7 @@
   // skip the hint and the <picture> picks WebP as usual.
   var src = document.currentScript && document.currentScript.src;
   var base = src ? src.replace(/theme-init\.js.*$/, '') : '';
-  var deepLink = location.search.charAt(1) === '/'; // GitHub Pages redirect, see vite.config.js
-  if (base && location.origin + location.pathname === base && !deepLink) {
+  if (base && location.origin + location.pathname === base) {
     var portrait = '(orientation: portrait) and (max-width: 1024px)';
     [
       ['poster-720x1280.avif', portrait],

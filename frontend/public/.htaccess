@@ -2,6 +2,8 @@
 # The PHP API lives under /api on the same domain (see docs/DEPLOYMENT.md).
 
 Options -Indexes -MultiViews
+# /menu is a page (menu.html) and also a folder of dish pages: don't redirect it to /menu/.
+DirectorySlash Off
 
 <IfModule mod_headers.c>
   # Strict CSP: no inline scripts (the theme bootstrap is /theme-init.js). Paystack is the only
@@ -27,11 +29,15 @@ Options -Indexes -MultiViews
   RewriteEngine On
   # Never rewrite API calls or real files.
   RewriteRule ^api/ - [L]
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
-  # Single-page app: every other path renders index.html.
-  RewriteRule ^ index.html [L]
+  # The home page.
+  RewriteRule ^$ index.html [L]
+  # Pre-built public pages: /menu → menu.html, /menu/smoky-party-jollof → menu/smoky-party-jollof.html.
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+)$ $1.html [L]
+  # Everything else (account, admin, checkout…) is drawn in the browser by the app shell.
+  RewriteRule ^ app.html [L]
 </IfModule>
 
 <IfModule mod_deflate.c>

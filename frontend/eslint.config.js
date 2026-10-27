@@ -47,7 +47,7 @@ export default [
   },
   {
     // Node-side files: build config and scripts.
-    files: ['vite.config.js', 'eslint.config.js', 'scripts/**'],
+    files: ['vite.config.js', 'eslint.config.js', 'scripts/**', 'src/entry-server.jsx'],
     languageOptions: { globals: globals.node },
   },
 ];

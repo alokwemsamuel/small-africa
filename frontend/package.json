@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "node scripts/sitemap.mjs production",
-    "build": "vite build",
-    "build:demo": "node scripts/sitemap.mjs demo && vite build --mode demo",
+    "build": "vite build && vite build --ssr src/entry-server.jsx --outDir dist-ssr && node scripts/prerender.mjs production",
+    "build:demo": "node scripts/sitemap.mjs demo && vite build --mode demo && vite build --mode demo --ssr src/entry-server.jsx --outDir dist-ssr && node scripts/prerender.mjs demo",
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",

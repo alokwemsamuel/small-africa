@@ -3,9 +3,8 @@ import { Hero } from '@/features/home/hero/Hero';
 import { useSeo } from '@/lib/seo';
 
 // Below-the-fold sections load as their own chunk, so the hero renders first on slow phones.
-const HomeSections = lazy(() =>
-  import('@/features/home/HomeSections').then((m) => ({ default: m.HomeSections })),
-);
+const loadSections = () => import('@/features/home/HomeSections');
+const HomeSections = lazy(() => loadSections().then((m) => ({ default: m.HomeSections })));
 
 export function HomePage() {
   useSeo({});
@@ -19,3 +18,6 @@ export function HomePage() {
     </>
   );
 }
+
+// Lets main.jsx load the sections before React attaches to the pre-built home page.
+HomePage.preload = loadSections;

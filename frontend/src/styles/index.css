@@ -119,6 +119,56 @@
   animation: rise-in var(--rise-duration, 0.45s) cubic-bezier(0.22, 1, 0.36, 1) var(--rise-delay, 0s) both;
 }
 
+/* Fixed decorative styles as classes, not inline styles: the production CSP doesn't allow
+   style attributes in HTML, and the public pages are pre-built as HTML. */
+.art-nigerian {
+  background: radial-gradient(circle at 50% 40%, #b4492f, #3a1a10 75%);
+}
+.art-polish {
+  background: radial-gradient(circle at 50% 40%, #a3243b, #2a0c12 75%);
+}
+.art-continental {
+  background: radial-gradient(circle at 50% 40%, #2e4a3b, #0f1a14 75%);
+}
+.art-bar {
+  background: radial-gradient(circle at 50% 40%, #c9a24b, #2a2010 75%);
+}
+/* Kitchen colours blended toward the text colour: 3:1+ contrast in both themes. */
+.kitchen-numeral-nigerian {
+  color: color-mix(in oklab, #b4492f 60%, var(--sa-text-primary));
+}
+.kitchen-numeral-polish {
+  color: color-mix(in oklab, #a3243b 60%, var(--sa-text-primary));
+}
+.kitchen-numeral-continental {
+  color: color-mix(in oklab, #2e4a3b 60%, var(--sa-text-primary));
+}
+.membership-card-bg {
+  background: linear-gradient(135deg, #1a1612 0%, #0e0c0a 55%, #2a2010 100%);
+}
+/* Hero intro: the four lines rise in one after another. */
+.hero-rise {
+  --rise-distance: 24px;
+  --rise-duration: 0.9s;
+}
+.hero-rise-0 {
+  --rise-delay: 0.15s;
+}
+.hero-rise-1 {
+  --rise-delay: 0.29s;
+}
+.hero-rise-2 {
+  --rise-delay: 0.43s;
+}
+.hero-rise-3 {
+  --rise-delay: 0.57s;
+}
+
+/* Already closed (set by public/theme-init.js before the first paint). */
+[data-cookie-notice='closed'] .cookie-notice {
+  display: none;
+}
+
 /* Scroll reveals (components/motion/Reveal.jsx). */
 [data-reveal='pending'] {
   opacity: 0;

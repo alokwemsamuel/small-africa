@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMe, useUpdateProfile } from '@/hooks/useAuth';
+import { useHydrated } from '@/lib/hydration';
 import { ThemeContext } from './context';
 import {
   applyTheme,
@@ -52,9 +53,16 @@ export function ThemeProvider({ children }) {
     [user, mutate],
   );
 
+  // Pre-built pages are rendered with the default (Dark); the saved choice is shown once React
+  // has attached, so the switcher matches the HTML. (theme-init.js already set the colours.)
+  const hydrated = useHydrated();
   const value = useMemo(
-    () => ({ preference, resolved, setPreference }),
-    [preference, resolved, setPreference],
+    () => ({
+      preference: hydrated ? preference : 'dark',
+      resolved: hydrated ? resolved : 'dark',
+      setPreference,
+    }),
+    [hydrated, preference, resolved, setPreference],
   );
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

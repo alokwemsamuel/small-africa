@@ -13,6 +13,7 @@ import { api } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { formatNaira } from '@/lib/format';
 import { useSeo } from '@/lib/seo';
+import { useHydrated } from '@/lib/hydration';
 
 const PACKAGE_PHOTOS = {
   'private-dining': 'ambience/private-dining',
@@ -120,6 +121,7 @@ function EnquiryForm({ packages }) {
   const [done, setDone] = useState(null);
   const [formError, setFormError] = useState(null);
   const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const hydrated = useHydrated(); // the pre-built page doesn't know tomorrow's date
   const { register, handleSubmit, setError, formState } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -218,7 +220,7 @@ function EnquiryForm({ packages }) {
         <TextField
           label="Date"
           type="date"
-          min={tomorrow}
+          min={hydrated ? tomorrow : undefined}
           error={e.event_date?.message}
           {...register('event_date')}
         />

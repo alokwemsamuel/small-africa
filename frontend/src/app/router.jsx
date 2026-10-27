@@ -7,19 +7,30 @@ import { ApiError } from '@/lib/api';
 import { HomePage } from '@/features/home/pages/HomePage';
 import { NotFoundPage } from '@/components/layout/NotFoundPage';
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      // Don't retry client errors (401/403/404/422): only transient failures.
-      retry: (count, error) =>
-        !(error instanceof ApiError && error.status >= 400 && error.status < 500) && count < 2,
+/** A query cache with the app's defaults (one per pre-built page on the server). */
+export function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        // Don't retry client errors (401/403/404/422): only transient failures.
+        retry: (count, error) =>
+          !(error instanceof ApiError && error.status >= 400 && error.status < 500) && count < 2,
+      },
     },
-  },
-});
+  });
+}
+
+/** The browser's query cache. */
+export const queryClient = createQueryClient();
 
 /** Every page except Home is code-split so the first visit stays fast. */
-const page = (load, name) => lazy(() => load().then((m) => ({ default: m[name] })));
+const page = (load, name) => {
+  const Page = lazy(() => load().then((m) => ({ default: m[name] })));
+  // Lets main.jsx load a pre-built page's code before React attaches to its HTML.
+  Page.preload = load;
+  return Page;
+};
 
 const MenuPage = page(() => import('@/features/menu/pages/MenuPage'), 'MenuPage');
 const DishDetailPage = page(() => import('@/features/menu/pages/DishDetailPage'), 'DishDetailPage');

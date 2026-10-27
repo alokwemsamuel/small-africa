@@ -11,6 +11,7 @@ vendor/
 
 # Builds & caches
 dist/
+dist-ssr/
 build/
 coverage/
 .vite/

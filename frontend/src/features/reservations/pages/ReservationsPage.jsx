@@ -17,6 +17,7 @@ import { applyServerErrors } from '@/lib/forms';
 import { useSeo } from '@/lib/seo';
 import { reservationsApi } from '@/features/reservations/api';
 import { ReservationConfirmation } from '@/features/reservations/components/ReservationConfirmation';
+import { useHydrated } from '@/lib/hydration';
 
 const MAX_ONLINE_PARTY = 12;
 const MAX_DAYS_AHEAD = 60;
@@ -54,6 +55,7 @@ export function ReservationsPage() {
   });
   const { data: user } = useMe();
   const today = lagosNow();
+  const hydrated = useHydrated();
   const [date, setDate] = useState(ymd(today));
   const [party, setParty] = useState(2);
   const [slot, setSlot] = useState(null);
@@ -141,9 +143,10 @@ export function ReservationsPage() {
             <TextField
               label="Date"
               type="date"
-              min={ymd(today)}
-              max={maxDate}
-              value={date}
+              // Today's date is only known in the browser: the pre-built page leaves these empty.
+              min={hydrated ? ymd(today) : undefined}
+              max={hydrated ? maxDate : undefined}
+              value={hydrated ? date : ''}
               onChange={(ev) => setDate(ev.target.value)}
               required
             />
