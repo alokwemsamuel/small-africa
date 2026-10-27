@@ -105,7 +105,9 @@ export function Photo({ name, alt, sizes, className, priority, fallbackKitchen, 
           onLoad={() => setLoaded(true)}
           className={cn(
             'relative size-full object-cover transition-[opacity,scale] duration-700',
-            loaded ? 'opacity-100' : 'opacity-0',
+            // Top-of-page photos show as soon as the browser has them: waiting for React to
+            // report the load would hold back the page's largest paint on slow phones.
+            loaded || priority ? 'opacity-100' : 'opacity-0',
           )}
         />
       </picture>
