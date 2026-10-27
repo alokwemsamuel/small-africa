@@ -12,7 +12,7 @@ export function DemoRibbon() {
     // Build-time constant: other builds drop the import below, so they ship no demo code or data.
     if (import.meta.env.VITE_DEMO_MODE !== 'true') return;
     setBusy(true);
-    const { resetDemo } = await import('@/demo');
+    const { resetDemo } = await import('@/lib/demo');
     await resetDemo();
     window.location.assign(import.meta.env.BASE_URL);
   };

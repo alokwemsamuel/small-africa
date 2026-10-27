@@ -9,3 +9,12 @@ export function formatNaira(kobo) {
 export function initials(first, last) {
   return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
 }
+
+/** A 'YYYY-MM-DD' date in full, e.g. "Saturday, 31 October 2026" (noon avoids time-zone edge cases). */
+export const longDate = (date) =>
+  new Date(`${date}T12:00:00`).toLocaleDateString('en-NG', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { useLogout, useMe } from '@/features/auth/hooks';
-import { useCart } from '@/features/cart/cart';
-import { isStaff } from '@/features/auth/types';
-import { ThemeMenu, ThemeSegmented } from '@/features/theme/ThemeSwitcher';
+import { useLogout, useMe } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
+import { isStaff } from '@/lib/roles';
+import { ThemeMenu, ThemeSegmented } from './ThemeSwitcher';
 import { cn } from '@/lib/cn';
 import { ButtonLink } from '../ui/Button';
 import { Logo } from '../ui/Logo';

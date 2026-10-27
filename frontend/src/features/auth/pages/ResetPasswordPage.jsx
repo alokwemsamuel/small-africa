@@ -2,14 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
-import { AuthLayout } from '@/components/layout/AuthLayout';
+import { AuthLayout } from '@/app/layouts/AuthLayout';
 import { Alert } from '@/components/ui/Alert';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { TextField } from '@/components/ui/TextField';
 import { applyServerErrors } from '@/lib/forms';
-import { useResetPassword } from '../hooks';
-import { resetSchema } from '../schemas';
+import { useResetPassword } from '@/hooks/useAuth';
+import { resetSchema } from '@/lib/authSchemas';
 
 export function ResetPasswordPage() {
   const [params] = useSearchParams();

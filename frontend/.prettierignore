@@ -2,4 +2,4 @@ dist
 coverage
 node_modules
 public
-src/demo/snapshot.json
+src/lib/demo/snapshot.json

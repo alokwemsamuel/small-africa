@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/toast';
-import { ThemeSegmented } from '@/features/theme/ThemeSwitcher';
+import { ThemeSegmented } from '@/components/layout/ThemeSwitcher';
 import { ApiError } from '@/lib/api';
 import { formatNaira } from '@/lib/format';
 import { adminApi } from '../api';

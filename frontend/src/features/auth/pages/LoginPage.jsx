@@ -2,15 +2,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { AuthLayout } from '@/components/layout/AuthLayout';
+import { AuthLayout } from '@/app/layouts/AuthLayout';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { env } from '@/lib/env';
 import { applyServerErrors } from '@/lib/forms';
-import { useLogin, useTwoFactorLogin } from '../hooks';
-import { loginSchema, twoFactorSchema } from '../schemas';
-import { isStaff } from '../types';
+import { useLogin, useTwoFactorLogin } from '@/hooks/useAuth';
+import { loginSchema, twoFactorSchema } from '@/lib/authSchemas';
+import { isStaff } from '@/lib/roles';
 
 const DEMO_ACCOUNTS = [
   { role: 'Super Admin', email: 'admin@smallafrica.demo', password: 'SmallAfrica@Admin2026' },

@@ -2,7 +2,7 @@
  * Applies the saved appearance before the first paint (no flash of the wrong theme), and on
  * the home page starts loading the hero poster early.
  * Loaded as a blocking external script from <head>, so the CSP needs no 'unsafe-inline'.
- * Must stay in sync with src/features/theme/theme.js (storage key and colours).
+ * Must stay in sync with src/app/theme/theme.js (storage key and colours).
  */
 (function () {
   var pref = 'dark';

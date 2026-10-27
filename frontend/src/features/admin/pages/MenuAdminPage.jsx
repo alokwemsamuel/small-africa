@@ -4,7 +4,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Photo } from '@/components/ui/Photo';
 import { toast } from '@/components/ui/toast';
-import { dishPhoto } from '@/content/photoKeys';
+import { dishPhoto } from '@/lib/photoKeys';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { mediaUrl } from '@/lib/env';

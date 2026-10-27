@@ -42,11 +42,3 @@ export function icsFor(r, durationMinutes = 120) {
     'END:VCALENDAR',
   ].join('\r\n');
 }
-
-export const longDate = (date) =>
-  new Date(`${date}T12:00:00`).toLocaleDateString('en-NG', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });

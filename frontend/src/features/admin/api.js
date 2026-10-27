@@ -117,7 +117,7 @@ export const adminApi = {
   audit: (q, signal) => api(`/admin/audit${qs(q)}`, { signal }),
 };
 
-export const adminKeys = {
+const adminKeys = {
   me: ['admin', 'me'],
 };
 

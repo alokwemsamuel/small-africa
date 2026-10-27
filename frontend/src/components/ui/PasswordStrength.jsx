@@ -1,4 +1,4 @@
-import { passwordScore } from '@/features/auth/schemas';
+import { passwordScore } from '@/lib/authSchemas';
 import { cn } from '@/lib/cn';
 
 const labels = ['Too short', 'Weak', 'Fair', 'Strong', 'Excellent'];

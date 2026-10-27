@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PHOTOS, PHOTO_WIDTHS } from '@/content/photos';
+import { PHOTOS, PHOTO_WIDTHS } from '@/lib/photos';
 import { cn } from '@/lib/cn';
 
 const KITCHEN_ART = {

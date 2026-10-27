@@ -15,7 +15,7 @@ use App\Support\Database;
  * reservations around today, reviews, event enquiries and contact messages.
  *
  * Orders here are guest checkouts (no account), so the members' Interest Account ledgers
- * seeded by DemoLoyaltySeeder stay exactly reconciled. The browser demo (frontend/src/demo)
+ * seeded by DemoLoyaltySeeder stay exactly reconciled. The browser demo (frontend/src/lib/demo)
  * generates the same kind of data at run time with the same rules.
  */
 final class DemoOperationsSeeder

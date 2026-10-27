@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { mockApi, renderRoutes } from '@/test/utils';
-import { OrderTrackingPage } from './OrderTrackingPage';
+import { OrderTrackingPage } from '@/features/orders/pages/OrderTrackingPage';
 import { steps } from './steps';
 
 const order = {

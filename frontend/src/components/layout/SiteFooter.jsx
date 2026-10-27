@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useSite } from '@/features/menu/hooks';
+import { useSite } from '@/hooks/useMenu';
 import { whatsappLink } from '@/lib/whatsapp';
 import { Logo } from '../ui/Logo';
 import { NAV } from './nav';

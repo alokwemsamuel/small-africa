@@ -1,10 +1,10 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { mockApi, renderRoutes } from '@/test/utils';
-import { lagosNow } from '@/features/checkout/schedule';
+import { lagosNow } from '@/lib/lagosTime';
 import { icsFor } from './api';
-import { ManageReservationPage } from './ManageReservationPage';
-import { ReservationsPage } from './ReservationsPage';
+import { ManageReservationPage } from '@/features/reservations/pages/ManageReservationPage';
+import { ReservationsPage } from '@/features/reservations/pages/ReservationsPage';
 
 const availability = {
   date: '2026-10-30',

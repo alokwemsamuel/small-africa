@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/toast';
-import { useMe } from '@/features/auth/hooks';
+import { useMe } from '@/hooks/useAuth';
 import { ApiError } from '@/lib/api';
 import { adminApi } from '../api';
 import { AdminHeader, InputField, Loading, Modal, Panel, SelectField, StatusPill } from '../ui';

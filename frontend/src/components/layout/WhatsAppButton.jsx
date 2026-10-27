@@ -1,4 +1,4 @@
-import { useSite } from '@/features/menu/hooks';
+import { useSite } from '@/hooks/useMenu';
 import { whatsappLink } from '@/lib/whatsapp';
 
 /** Floating chat button. A generic chat icon is used: no third-party brand logos. */

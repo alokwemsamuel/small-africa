@@ -2,13 +2,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { AuthLayout } from '@/components/layout/AuthLayout';
+import { AuthLayout } from '@/app/layouts/AuthLayout';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { applyServerErrors } from '@/lib/forms';
-import { useForgotPassword } from '../hooks';
-import { forgotSchema } from '../schemas';
+import { useForgotPassword } from '@/hooks/useAuth';
+import { forgotSchema } from '@/lib/authSchemas';
 
 export function ForgotPasswordPage() {
   const forgot = useForgotPassword();

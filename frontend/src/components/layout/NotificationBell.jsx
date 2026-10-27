@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useMarkNotificationsRead, useNotifications } from '@/features/rewards/api';
+import { useMarkNotificationsRead, useNotifications } from '@/hooks/useInterestAccount';
 import { cn } from '@/lib/cn';
 
 const when = (iso) =>

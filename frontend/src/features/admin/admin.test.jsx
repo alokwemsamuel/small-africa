@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ThemeProvider } from '@/features/theme/ThemeProvider';
+import { ThemeProvider } from '@/app/theme/ThemeProvider';
 import { mockApi, renderRoutes } from '@/test/utils';
 import { AdminApp } from './AdminApp';
 import { niceTicks } from './scale';

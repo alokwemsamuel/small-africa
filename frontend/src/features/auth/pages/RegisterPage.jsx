@@ -3,15 +3,15 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { deviceId } from '@/lib/device';
-import { AuthLayout } from '@/components/layout/AuthLayout';
+import { AuthLayout } from '@/app/layouts/AuthLayout';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { TextField } from '@/components/ui/TextField';
 import { applyServerErrors } from '@/lib/forms';
-import { useRegister } from '../hooks';
-import { registerSchema } from '../schemas';
+import { useRegister } from '@/hooks/useAuth';
+import { registerSchema } from '@/lib/authSchemas';
 
 const FIELDS = ['first_name', 'last_name', 'email', 'phone', 'password', 'referral_code', 'accept_terms'];
 

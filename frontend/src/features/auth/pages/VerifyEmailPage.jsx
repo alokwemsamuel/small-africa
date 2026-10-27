@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AuthLayout } from '@/components/layout/AuthLayout';
+import { AuthLayout } from '@/app/layouts/AuthLayout';
 import { Alert } from '@/components/ui/Alert';
 import { ButtonLink } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { ApiError } from '@/lib/api';
-import { useMe, useVerifyEmail } from '../hooks';
+import { useMe, useVerifyEmail } from '@/hooks/useAuth';
 
 export function VerifyEmailPage() {
   const [params] = useSearchParams();

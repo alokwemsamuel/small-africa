@@ -54,8 +54,8 @@ export default defineConfig(({ mode }) => {
           ? []
           : [
               {
-                find: /^@\/demo$/,
-                replacement: fileURLToPath(new URL('./src/demo/disabled.js', import.meta.url)),
+                find: /^@\/lib\/demo$/,
+                replacement: fileURLToPath(new URL('./src/lib/demo/disabled.js', import.meta.url)),
               },
             ]),
         { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },

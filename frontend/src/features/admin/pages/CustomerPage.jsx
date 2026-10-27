@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/toast';
-import { MembershipCard } from '@/features/rewards/MembershipCard';
+import { MembershipCard } from '@/components/rewards/MembershipCard';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';

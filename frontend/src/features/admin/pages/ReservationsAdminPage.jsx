@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/toast';
-import { lagosNow } from '@/features/checkout/schedule';
+import { lagosNow } from '@/lib/lagosTime';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { adminApi, can, useAdminMe } from '../api';

@@ -7,13 +7,12 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { TextField } from '@/components/ui/TextField';
 import { toast } from '@/components/ui/toast';
-import { cart } from '@/features/cart/cart';
-import { formatTime } from '@/features/checkout/schedule';
-import { useSite } from '@/features/menu/hooks';
-import { longDate } from '@/features/reservations/api';
+import { cart } from '@/hooks/useCart';
+import { formatTime } from '@/lib/lagosTime';
+import { useSite } from '@/hooks/useMenu';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/cn';
-import { formatNaira } from '@/lib/format';
+import { formatNaira, longDate } from '@/lib/format';
 import { applyServerErrors } from '@/lib/forms';
 import {
   useAddresses,
@@ -23,7 +22,7 @@ import {
   useMyReservations,
   useMyReviews,
   useSaveAddress,
-} from './hooks';
+} from '@/hooks/useAccount';
 
 const ORDER_STATUS = {
   pending_payment: 'Awaiting payment',

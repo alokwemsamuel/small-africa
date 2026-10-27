@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
-import { useMe } from './hooks';
+import { useMe } from '@/hooks/useAuth';
 
 /**
  * Client-side guard for nicer UX only. Every protected API endpoint enforces the same
