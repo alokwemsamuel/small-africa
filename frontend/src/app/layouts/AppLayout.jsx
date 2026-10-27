@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { SmoothScroll } from '@/components/motion/SmoothScroll';
@@ -12,6 +12,12 @@ import { SiteHeader } from '@/components/layout/SiteHeader';
 import { WhatsAppButton } from '@/components/layout/WhatsAppButton';
 
 export function AppLayout() {
+  // A pre-built page is usable (and its scroll position is the visitor's) only once the app has
+  // attached. Tests, and anything else that has to wait for that, look for this attribute.
+  useEffect(() => {
+    document.documentElement.dataset.appReady = 'true';
+  }, []);
+
   return (
     // overflow-x: clip is a last-resort guard against a sideways-scrolling page. Unlike hidden, it
     // doesn't make this a scroll container, so the sticky header and smooth scrolling still work.

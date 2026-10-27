@@ -145,12 +145,12 @@ export function ThemeMenu({ className }) {
 }
 
 /** Inline three-way control (mobile menu, account page, admin settings, style guide). */
-export function ThemeSegmented({ className, legend = 'Appearance' }) {
+export function ThemeSegmented({ className, legend = 'Appearance', hideLegend = false, labels = {} }) {
   const { preference, setPreference } = useTheme();
   const name = useId();
   return (
     <fieldset className={className}>
-      <legend className="eyebrow text-muted mb-3">{legend}</legend>
+      <legend className={cn('eyebrow text-muted', hideLegend ? 'sr-only' : 'mb-3')}>{legend}</legend>
       <div className="border-line bg-surface-inset inline-flex max-w-full rounded-full border p-1">
         {OPTIONS.map((o) => (
           <label
@@ -171,7 +171,7 @@ export function ThemeSegmented({ className, legend = 'Appearance' }) {
             />
             {/* Icons are left out on the narrowest phones so all three options fit. */}
             <ThemeIcon value={o.value} className="size-4 max-[379px]:hidden" />
-            {o.label}
+            {labels[o.value] ?? o.label}
           </label>
         ))}
       </div>

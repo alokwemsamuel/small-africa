@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useLogout, useMe } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 import { isStaff } from '@/lib/roles';
-import { ThemeMenu, ThemeSegmented } from './ThemeSwitcher';
+import { ThemeMenu } from './ThemeSwitcher';
 import { cn } from '@/lib/cn';
 import { ButtonLink } from '../ui/Button';
 import { Logo } from '../ui/Logo';
+import { MobileMenu } from './MobileMenu';
 import { NAV } from './nav';
 import { NotificationBell } from './NotificationBell';
 
@@ -15,15 +16,10 @@ export function SiteHeader() {
   const logout = useLogout();
   const { count } = useCart();
   const [open, setOpen] = useState(false);
+  const menuButton = useRef(null);
   const location = useLocation();
 
   useEffect(() => setOpen(false), [location.pathname]);
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
 
   return (
     <header className="border-accent/15 bg-overlay sticky top-0 z-40 border-b backdrop-blur-md">
@@ -88,6 +84,7 @@ export function SiteHeader() {
           {user && <NotificationBell />}
           <CartLink count={count} />
           <button
+            ref={menuButton}
             type="button"
             className="border-accent/40 text-accent grid size-11 place-items-center rounded-full border"
             aria-expanded={open}
@@ -109,61 +106,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {open && (
-        <nav
-          id="mobile-nav"
-          aria-label="Main"
-          className="bg-surface fixed inset-x-0 top-[4.5rem] bottom-0 z-40 overflow-y-auto lg:hidden"
-        >
-          <ul className="container-luxe flex flex-col gap-1 py-8">
-            {NAV.map((item) => (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  className={({ isActive }) =>
-                    cn('block py-3 font-serif text-3xl', isActive ? 'text-accent' : 'text-primary')
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              </li>
-            ))}
-            <li className="border-accent/20 mt-6 border-t pt-6">
-              {user ? (
-                <div className="flex flex-col gap-4">
-                  <Link to="/account" className="text-secondary text-lg">
-                    My account
-                  </Link>
-                  {isStaff(user) && (
-                    <Link to="/admin" className="text-secondary text-lg">
-                      Admin
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => logout.mutate()}
-                    className="text-muted text-left text-lg"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              ) : (
-                <Link to="/login" className="text-secondary text-lg">
-                  Sign in / Join
-                </Link>
-              )}
-            </li>
-            <li className="mt-8">
-              <ThemeSegmented />
-            </li>
-            <li className="mt-6">
-              <ButtonLink to="/reservations" className="w-full">
-                Reserve a table
-              </ButtonLink>
-            </li>
-          </ul>
-        </nav>
-      )}
+      <MobileMenu open={open} onClose={() => setOpen(false)} returnFocusRef={menuButton} />
     </header>
   );
 }

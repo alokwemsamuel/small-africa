@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useSite } from '@/hooks/useMenu';
 import { whatsappLink } from '@/lib/whatsapp';
 import { Logo } from '../ui/Logo';
+import { DAY_GROUPS, hoursText } from './hours';
 import { NAV } from './nav';
 
 const LEGAL = [
@@ -11,21 +12,9 @@ const LEGAL = [
   { to: '/rewards-terms', label: 'Rewards Terms' },
 ];
 
-const DAY_GROUPS = [
-  { label: 'Mon – Thu', day: 1 },
-  { label: 'Fri – Sat', day: 5 },
-  { label: 'Sunday', day: 0 },
-];
-
 export function SiteFooter() {
   const { data } = useSite();
   const r = data?.restaurant;
-  const hours = (day) => {
-    const h = data?.openingHours.find((o) => o.dayOfWeek === day);
-    if (!h) return '';
-    if (h.isClosed) return 'Closed';
-    return `${h.opensAt} – ${h.closesAt === '23:59' ? 'late' : h.closesAt}`;
-  };
   return (
     <footer className="border-accent/15 bg-surface-raised relative mt-auto border-t">
       <div className="bg-pattern pointer-events-none absolute inset-0 opacity-[0.04]" aria-hidden="true" />
@@ -72,7 +61,7 @@ export function SiteFooter() {
             {DAY_GROUPS.map((g) => (
               <div key={g.label} className="contents">
                 <dt>{g.label}</dt>
-                <dd>{hours(g.day) || '…'}</dd>
+                <dd>{hoursText(data, g.day) || '…'}</dd>
               </div>
             ))}
           </dl>

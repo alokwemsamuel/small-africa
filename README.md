@@ -15,6 +15,7 @@
 <p>
   <img src="docs/screenshots/mobile-home.jpg" alt="Home page on a phone" width="240" />
   <img src="docs/screenshots/mobile-dish.jpg" alt="A dish page on a phone" width="240" />
+  <img src="docs/screenshots/mobile-menu-360.jpg" alt="The full-screen phone menu" width="240" />
 </p>
 
 ## Features
@@ -36,7 +37,7 @@
 **Under the hood**
 - Strict security headers and CSP, CSRF protection, rate limiting, 2FA, append-only ledgers (see [SECURITY.md](docs/SECURITY.md))
 - Nigeria Data Protection Act 2023: privacy policy, cookie notice, marketing consent
-- 310 automated tests (186 frontend, 124 backend), plus a Playwright check that no page scrolls sideways on phones from 320px to 430px (it runs before every deploy)
+- 321 automated tests (197 frontend, 124 backend), plus 70 Playwright browser tests that run before every deploy: no page scrolls sideways on phones from 320px to 430px, and the phone menu works (full screen, focus, Back button, scroll lock, both themes)
 
 ## Tech stack
 
@@ -66,7 +67,7 @@ frontend/          the website and admin panel (React + Vite)
     app/           App.jsx, router.jsx, layouts/ (site and sign-in layouts), theme/ (dark/light/system)
     components/    shared React components
       ui/          buttons, fields, badges, photos, toasts… (no business logic)
-      layout/      header, footer, navigation, theme switcher, cookie notice, demo ribbon, 404 page
+      layout/      header, footer, navigation, full-screen mobile menu, theme switcher, cookie notice, demo ribbon, 404 page
       motion/      page transitions, scroll reveals, smooth scrolling
       menu/        DishCard and its add-to-order action (used by the menu and home page)
       rewards/     MembershipCard (used by the account and the admin)

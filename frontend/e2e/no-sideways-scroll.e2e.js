@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { menuDialog, openMobileMenu } from './helpers';
 
 /**
  * No page may be wider than the phone. Phones from 320px to 430px wide, dark and light, every
@@ -112,7 +113,7 @@ async function checkPages(page, width, paths) {
 }
 
 /** Opens something (menu, panel) and checks the page is still no wider and the panel is on screen. */
-async function checkOpened(page, width, label, open, panel) {
+async function checkOpened(page, width, label, open, panel, minHeight = 0) {
   const problems = [];
   await open();
   await page.waitForTimeout(500);
@@ -125,6 +126,11 @@ async function checkOpened(page, width, label, open, panel) {
   const box = await panel().boundingBox();
   if (!box || box.x < -1 || box.x + box.width > width + 1) {
     problems.push(`${label} open: panel is not fully on screen (${JSON.stringify(box)})`);
+  } else if (box.height < minHeight) {
+    // A panel squashed to nothing (it once was, inside the blurred header) still has its edges on screen.
+    problems.push(
+      `${label} open: panel is only ${Math.round(box.height)}px tall, expected at least ${minHeight}px`,
+    );
   }
   return problems;
 }
@@ -169,8 +175,9 @@ for (const theme of THEMES) {
               page,
               width,
               `/${path} mobile menu`,
-              () => page.getByRole('button', { name: 'Open menu' }).click(),
-              () => page.locator('#mobile-nav'),
+              () => openMobileMenu(page),
+              () => menuDialog(page),
+              500,
             )),
           );
         }
