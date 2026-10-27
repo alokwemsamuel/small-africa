@@ -127,5 +127,14 @@ export function setTransport(t) {
  * @returns {Promise<any>}
  */
 export function api(path, options = {}) {
-  return transport(path, options);
+  const result = transport(path, options);
+  // Development only (never in production builds or tests): check important responses against
+  // the shapes in apiSchemas.js and log a clear error if one doesn't match.
+  if (import.meta.env.DEV && import.meta.env.MODE !== 'test') {
+    void result.then(
+      (data) => import('./apiSchemas').then((m) => m.checkResponse(options.method ?? 'GET', path, data)),
+      () => {},
+    );
+  }
+  return result;
 }
