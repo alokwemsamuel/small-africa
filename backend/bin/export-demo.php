@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Exports the seeded demo database as the starting data for the browser-only demo build
- * (frontend/src/demo/snapshot.json), used on GitHub Pages where there is no PHP or MySQL.
+ * (frontend/src/lib/demo/snapshot.json), used on GitHub Pages where there is no PHP or MySQL.
  *
  *   composer fresh && php bin/export-demo.php
  *
@@ -92,7 +92,7 @@ foreach ($out['tables']['dishes'] as &$d) {
 }
 unset($d);
 
-$file = dirname(__DIR__, 2) . '/frontend/src/demo/snapshot.json';
+$file = dirname(__DIR__, 2) . '/frontend/src/lib/demo/snapshot.json';
 if (!is_dir(dirname($file))) {
     mkdir(dirname($file), 0775, true);
 }

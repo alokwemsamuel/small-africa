@@ -11,7 +11,7 @@ This document explains how the Small Africa platform protects guests, their paym
 | Measure | Detail | Code |
 |---|---|---|
 | Strong password hashing | Argon2id (`password_hash`, memory-hard), rehashed automatically if parameters change | `backend/src/Security/PasswordPolicy.php` |
-| Password rules | ≥ 10 characters, at least 3 of lower/upper/digit/symbol, blocks common passwords and the user's own name/email. The same rules run in the browser for instant feedback, but the server decides | `PasswordPolicy.php`, `frontend/src/features/auth/schemas.ts` |
+| Password rules | ≥ 10 characters, at least 3 of lower/upper/digit/symbol, blocks common passwords and the user's own name/email. The same rules run in the browser for instant feedback, but the server decides | `PasswordPolicy.php`, `frontend/src/lib/authSchemas.js` |
 | Account lockout | 5 wrong passwords lock the account for 15 minutes (logged in the audit trail) | `AuthService::recordFailedLogin` |
 | No account enumeration | Unknown emails get the same error *and the same response time* as wrong passwords (a real dummy hash is checked). "Forgot password" always replies the same way | `AuthService::login`, `requestPasswordReset` |
 | Email verification | Single-use link, valid 24 h | `AuthService::verifyEmail` |
@@ -28,7 +28,7 @@ This document explains how the Small Africa platform protects guests, their paym
 - **Session versioning**: a password reset or change bumps `users.session_version`, instantly invalidating sessions on other devices.
 - **CSRF protection** on every state-changing request: a per-session synchronizer token sent in the `X-CSRF-Token` header (constant-time compare), **plus** an `Origin`/`Referer` allow-list check. The token is rotated at sign-in/out. Payment webhooks are exempt and verified by signature instead *(Phase 4)*.
 
-Code: `Security/NativeSession.php`, `Security/Csrf.php`, `Http/Middleware/VerifyCsrf.php`, `frontend/src/lib/api.ts`.
+Code: `Security/NativeSession.php`, `Security/Csrf.php`, `Http/Middleware/VerifyCsrf.php`, `frontend/src/lib/api.js`.
 
 ## 3. Authorisation (RBAC)
 
@@ -172,7 +172,7 @@ Exceeding a limit returns `429` with a `Retry-After` header and a friendly messa
 ## 13. Testing
 
 - **Backend (PHPUnit, 124 tests)**: admin RBAC for every role (customer, kitchen, front desk, manager, Super Admin), order moves by position, menu edits audited, image upload validation and re-encoding, rules validation, adjustments, dine-in bills, capacity, staff safeguards; Interest Account rules (interest, caps and rounding, top-up bonus, tiers, points multipliers, stamps, streaks, expiry, birthday week, referral anti-abuse); top-ups credited once, interest paid once, dining-credit holds returned on expiry, vouchers single-use, referral device checks; payment retries with fresh references; TOTP against RFC 6238 vectors; password policy; validator mass-assignment protection; encryption tamper detection; registration, lockout, enumeration resistance, rate limits, reset flow signing out sessions, 2FA enrolment and login, append-only ledgers; HTTP security headers on success and error responses, CSRF, Origin checks, CORS, RBAC.
-- **Frontend (Vitest, 136 tests)**: the browser demo API (same roles, permissions, validation messages, payment retries, interest paid once, reset) and its generated data; admin navigation per role, dashboard figures and chart table views, kitchen order flow; checkout sends identifiers only (never prices) with an idempotency key, dining-credit checkout, top-up and redemption flows; password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard, WCAG AA contrast of every theme token pair, theme persistence and the no-flash bootstrap, menu filters (incl. No pork), cart storage holding no secrets.
+- **Frontend (Vitest, 185 tests)**: Interest Account rules and checkout totals worked out by hand, the API client (CSRF retry, errors), API response shapes (Zod, also checked in development), the browser demo API (same roles, permissions, validation messages, payment retries, interest paid once, reset) and its generated data; admin navigation per role, dashboard figures and chart table views, kitchen order flow; checkout sends identifiers only (never prices) with an idempotency key, dining-credit checkout, top-up and redemption flows; password rules match the backend, CSRF header sent, stale-token retry, open-redirect-safe return URLs, role guard, WCAG AA contrast of every theme token pair, theme persistence and the no-flash bootstrap, menu filters (incl. No pork), cart storage holding no secrets.
 - `composer audit` and `npm audit` are run before each commit; high and critical issues are fixed.
 
 ## 13b. Demo build (GitHub Pages)

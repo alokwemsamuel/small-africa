@@ -44,7 +44,7 @@ is in [SECURITY.md](SECURITY.md); the launch steps for the client are in
 ## Secrets, dependencies and data
 
 - ✅ No secrets in the repository: `.env` files are git-ignored and `.env.example` files are committed. *`git check-ignore`.*
-- ✅ No secrets in the browser builds: the production and demo bundles contain no Paystack secret key, and the demo snapshot contains no password hashes, 2FA secrets, sessions, tokens or audit data. *Searched the built files and `frontend/src/demo/snapshot.json`.*
+- ✅ No secrets in the browser builds: the production and demo bundles contain no Paystack secret key, and the demo snapshot contains no password hashes, 2FA secrets, sessions, tokens or audit data. *Searched the built files and `frontend/src/lib/demo/snapshot.json`.*
 - ✅ The demo code and data are left out of the production build entirely. *Searched `dist/` after `npm run build`.*
 - ✅ Dependencies: `npm audit --omit=dev` and `composer audit` report no known vulnerabilities (26 October 2026).
 - ✅ Personal data handling follows the Nigeria Data Protection Act 2023 (§12); privacy notice at `/privacy`.

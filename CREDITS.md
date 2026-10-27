@@ -88,7 +88,7 @@ The home-page hero video is edited from two stock clips under the [Pexels licenc
 | Server lifting a cloche from a smoking dish (3769032) | https://www.pexels.com/video/3769032/ | Pexels licence | Opening 3.8 seconds, colour-graded to match |
 | Consommé poured from a cast-iron teapot (3769033) | https://www.pexels.com/video/3769033/ | Pexels licence | Main shot; poster frame |
 
-`design/tools/build-hero-video.mjs` (ffmpeg + sharp) grades, crossfades and loops the clips, crops the 720×1280 phone version and exports the posters to `frontend/public/hero/`. The original downloads are not committed. The floating gold particles are drawn in code (`GoldParticles.tsx`). The video shows a plated dish and a server's gloved hands only: no identifiable people, logos or branded products.
+`design/tools/build-hero-video.mjs` (ffmpeg + sharp) grades, crossfades and loops the clips, crops the 720×1280 phone version and exports the posters to `frontend/public/hero/`. The original downloads are not committed. The floating gold particles are drawn in code (`GoldParticles.jsx`). The video shows a plated dish and a server's gloved hands only: no identifiable people, logos or branded products.
 
 ## Code libraries
 
