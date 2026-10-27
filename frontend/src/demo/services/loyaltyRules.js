@@ -1,22 +1,16 @@
-import type { Row } from '../db';
 import { addDays, addMonths, parse } from '../time';
-
-export interface Tier {
-  key: string;
-  name: string;
-  min_spend_naira: number;
-  multiplier: number;
-  perks: string[];
-}
 
 /**
  * Port of App\Loyalty\LoyaltyRules: pure Interest Account arithmetic. Integers only and every
  * division rounds down, so the restaurant never over-credits. Multipliers never stack.
  */
 export class LoyaltyRules {
-  constructor(readonly s: Row) {}
+  s;
+  constructor(s) {
+    this.s = s;
+  }
 
-  interest(lowestBalanceKobo: number): number {
+  interest(lowestBalanceKobo) {
     const min = Number(this.s.interest_min_balance_naira ?? 20000) * 100;
     if (lowestBalanceKobo < min || lowestBalanceKobo <= 0) return 0;
     const cap = Number(this.s.interest_cap_naira ?? 5000) * 100;
@@ -24,8 +18,8 @@ export class LoyaltyRules {
     return Math.min(cap, kobo - (kobo % 100));
   }
 
-  topupBonus(amountKobo: number): number {
-    const bands = [...((this.s.topup_bonus_tiers ?? []) as Row[])].sort((a, b) => b.min_naira - a.min_naira);
+  topupBonus(amountKobo) {
+    const bands = [...(this.s.topup_bonus_tiers ?? [])].sort((a, b) => b.min_naira - a.min_naira);
     const band = bands.find((b) => amountKobo >= Number(b.min_naira) * 100);
     return band ? Math.floor((amountKobo * Number(band.bonus_bp)) / 10000) : 0;
   }
@@ -37,17 +31,17 @@ export class LoyaltyRules {
     };
   }
 
-  tiers(): Tier[] {
-    return [...((this.s.tiers ?? []) as Tier[])].sort((a, b) => a.min_spend_naira - b.min_spend_naira);
+  tiers() {
+    return [...(this.s.tiers ?? [])].sort((a, b) => a.min_spend_naira - b.min_spend_naira);
   }
 
-  tierFor(spendKobo: number): string {
+  tierFor(spendKobo) {
     let key = 'bronze';
     for (const t of this.tiers()) if (spendKobo >= t.min_spend_naira * 100) key = t.key;
     return key;
   }
 
-  nextTier(spendKobo: number) {
+  nextTier(spendKobo) {
     const tiers = this.tiers();
     const index = Math.max(
       0,
@@ -55,7 +49,7 @@ export class LoyaltyRules {
     );
     const next = tiers[index + 1];
     if (!next) return null;
-    const from = tiers[index]!.min_spend_naira * 100;
+    const from = tiers[index].min_spend_naira * 100;
     const to = next.min_spend_naira * 100;
     const progress = to > from ? Math.min(1, Math.max(0, (spendKobo - from) / (to - from))) : 1;
     return {
@@ -66,11 +60,11 @@ export class LoyaltyRules {
     };
   }
 
-  tierMultiplier(tier: string): number {
+  tierMultiplier(tier) {
     return Number(this.tiers().find((t) => t.key === tier)?.multiplier ?? 1);
   }
 
-  tierRank(tier: string): number {
+  tierRank(tier) {
     return Math.max(
       0,
       this.tiers().findIndex((t) => t.key === tier),
@@ -78,12 +72,7 @@ export class LoyaltyRules {
   }
 
   /** N points per ₦1,000 of food spend; each line at the single highest multiplier that applies. */
-  pointsFor(
-    lines: { amountKobo: number; featured: boolean }[],
-    weekday: number,
-    tier: string,
-    birthdayWeek: boolean,
-  ) {
+  pointsFor(lines, weekday, tier, birthdayWeek) {
     const per1000 = Number(this.s.earn_points_per_1000_naira ?? 5);
     const order = this.orderMultiplier(weekday, tier, birthdayWeek);
     const featured = Number(this.s.featured_dish_points_multiplier ?? 2);
@@ -95,8 +84,8 @@ export class LoyaltyRules {
     return Math.floor((weighted * per1000) / (100000 * 100));
   }
 
-  orderMultiplier(weekday: number, tier: string, birthdayWeek: boolean): number {
-    const doubleDays = ((this.s.double_points_weekdays ?? []) as number[]).map(Number);
+  orderMultiplier(weekday, tier, birthdayWeek) {
+    const doubleDays = (this.s.double_points_weekdays ?? []).map(Number);
     return Math.max(
       this.tierMultiplier(tier),
       doubleDays.includes(weekday) ? 2 : 1,
@@ -104,31 +93,26 @@ export class LoyaltyRules {
     );
   }
 
-  pointsToCreditKobo(points: number): number {
+  pointsToCreditKobo(points) {
     return Math.floor((points * 100000) / Math.max(1, Number(this.s.redeem_points_per_1000_naira ?? 100)));
   }
 
-  addStamp(current: number): { stamps: number; reward: Row | null } {
+  addStamp(current) {
     const next = current + 1;
-    let reward: Row | null = null;
-    for (const r of (this.s.stamp_rewards ?? []) as Row[]) if (Number(r.stamp) === next) reward = r;
+    let reward = null;
+    for (const r of this.s.stamp_rewards ?? []) if (Number(r.stamp) === next) reward = r;
     return { stamps: next >= 10 ? 0 : next, reward };
   }
 
-  streakReached(visitsThisMonth: number): boolean {
+  streakReached(visitsThisMonth) {
     return visitsThisMonth === Number(this.s.streak_visits_per_month ?? 3);
   }
 
-  referralCreditKobo(): number {
+  referralCreditKobo() {
     return Number(this.s.referral_credit_naira ?? 2000) * 100;
   }
 
-  referralRejection(f: {
-    self_referral: boolean;
-    same_phone_as_referrer: boolean;
-    phone_used_by_other_referral: boolean;
-    referrer_rewards_this_month: number;
-  }): string | null {
+  referralRejection(f) {
     if (f.self_referral) return 'Self-referral';
     if (f.same_phone_as_referrer) return 'Same phone number as the referrer';
     if (f.phone_used_by_other_referral) return 'Phone number already used for a referral';
@@ -139,12 +123,12 @@ export class LoyaltyRules {
   }
 
   /** Whether `date` falls in the 7 days starting on the guest's birthday. */
-  static inBirthdayWeek(birthday: string | null, date: Date): boolean {
+  static inBirthdayWeek(birthday, date) {
     const m = birthday ? /^\d{4}-(\d{2})-(\d{2})$/.exec(birthday) : null;
     if (!m) return false;
     for (const year of [date.getUTCFullYear() - 1, date.getUTCFullYear()]) {
       const leap = new Date(Date.UTC(year, 1, 29)).getUTCMonth() === 1;
-      const day = m[1] === '02' && m[2] === '29' && !leap ? '28' : m[2]!;
+      const day = m[1] === '02' && m[2] === '29' && !leap ? '28' : m[2];
       const start = parse(`${year}-${m[1]}-${day}`);
       if (date >= start && date < addDays(start, 7)) return true;
     }
@@ -152,7 +136,7 @@ export class LoyaltyRules {
   }
 
   /** When points expire after the last activity. */
-  expiresAt(lastActivity: Date): Date {
+  expiresAt(lastActivity) {
     return addMonths(lastActivity, Number(this.s.points_expiry_months ?? 12));
   }
 }

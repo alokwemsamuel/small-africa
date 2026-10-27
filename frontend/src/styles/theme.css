@@ -1,7 +1,7 @@
 /*
  * Semantic colour tokens for the Dark (default) and Light appearances.
  * Components use these (bg-surface, text-muted, …), never raw palette colours, so both
- * themes stay correct. src/styles/theme.test.ts checks every text/background pair against
+ * themes stay correct. src/styles/theme.test.js checks every text/background pair against
  * WCAG AA: 4.5:1 for text, 3:1 for input borders and the focus ring.
  */
 

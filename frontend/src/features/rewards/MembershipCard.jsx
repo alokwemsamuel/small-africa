@@ -1,13 +1,12 @@
 import { formatNaira } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import type { LoyaltySummary, TierKey } from './api';
 
 /**
  * The gold Interest Account membership card. Like a real metal card it looks the same in the
  * Dark and Light themes: obsidian with a foil edge in the tier's metal. All text pairs are
  * AA or better on the card colour (#15110D).
  */
-const METAL: Record<TierKey, { foil: string; text: string; label: string }> = {
+const METAL = {
   bronze: { foil: 'from-[#8A5A36] via-[#D29A6A] to-[#8A5A36]', text: 'text-[#E3B48C]', label: 'Bronze' },
   silver: { foil: 'from-[#8E949B] via-[#E4E7EB] to-[#8E949B]', text: 'text-[#D9DDE2]', label: 'Silver' },
   gold: { foil: 'from-[#9C7A2C] via-[#F1D27A] to-[#9C7A2C]', text: 'text-[#E6C97A]', label: 'Gold' },
@@ -18,7 +17,7 @@ const METAL: Record<TierKey, { foil: string; text: string; label: string }> = {
   },
 };
 
-export function MembershipCard({ account, className }: { account: LoyaltySummary; className?: string }) {
+export function MembershipCard({ account, className }) {
   const metal = METAL[account.tier.key];
   const next = account.stampCard.next
     ? `${account.stampCard.next.remaining} more ${account.stampCard.next.remaining === 1 ? 'visit' : 'visits'} to a ${account.stampCard.next.reward.toLowerCase()}`

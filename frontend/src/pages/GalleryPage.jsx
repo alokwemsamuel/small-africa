@@ -33,9 +33,9 @@ export function GalleryPage() {
     description:
       'Inside Small Africa: our dining room, lounge, private dining and dishes from three kitchens.',
   });
-  const [open, setOpen] = useState<number | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
-  const closeBtn = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(null);
+  const dialog = useRef(null);
+  const closeBtn = useRef(null);
 
   useEffect(() => {
     const d = dialog.current;
@@ -47,9 +47,8 @@ export function GalleryPage() {
     if (open === null && d.open) d.close();
   }, [open]);
 
-  const move = (dir: number) =>
-    setOpen((i) => (i === null ? i : (i + dir + FEATURED.length) % FEATURED.length));
-  const current = open !== null ? PHOTOS[FEATURED[open]!] : null;
+  const move = (dir) => setOpen((i) => (i === null ? i : (i + dir + FEATURED.length) % FEATURED.length));
+  const current = open !== null ? PHOTOS[FEATURED[open]] : null;
 
   return (
     <>
@@ -121,7 +120,7 @@ export function GalleryPage() {
         {open !== null && current && (
           <figure className="flex flex-col">
             <Photo
-              name={FEATURED[open]!}
+              name={FEATURED[open]}
               sizes="94vw"
               className={current.wide ? 'aspect-[16/10]' : 'aspect-[4/3]'}
             />

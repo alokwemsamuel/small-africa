@@ -1,20 +1,19 @@
-import type { CategorySlug, Dish, Kitchen } from './types';
+/**
+ * Menu filters as kept in the URL.
+ * @typedef {object} MenuFilters
+ * @property {string} kitchen kitchen slug or 'all'
+ * @property {string} category category slug or 'all'
+ * @property {string} q search text
+ * @property {boolean} vegetarian
+ * @property {boolean} glutenFree
+ * @property {boolean} noNuts
+ * @property {boolean} noPork
+ * @property {number | null} maxSpice 0–3, null = any
+ * @property {string} sort
+ */
 
-export type SortKey = 'recommended' | 'popular' | 'price-asc' | 'price-desc';
-
-export interface MenuFilters {
-  kitchen: Kitchen | 'all';
-  category: CategorySlug | 'all';
-  q: string;
-  vegetarian: boolean;
-  glutenFree: boolean;
-  noNuts: boolean;
-  noPork: boolean;
-  maxSpice: number | null; // 0–3, null = any
-  sort: SortKey;
-}
-
-export const DEFAULT_FILTERS: MenuFilters = {
+/** @type {MenuFilters} */
+export const DEFAULT_FILTERS = {
   kitchen: 'all',
   category: 'all',
   q: '',
@@ -31,7 +30,7 @@ const CATEGORIES = ['starters', 'soups', 'mains', 'grills', 'sides', 'desserts',
 const SORTS = ['recommended', 'popular', 'price-asc', 'price-desc'];
 
 /** Strips accents so "zurek" finds "Żurek" and "golabki" finds "Gołąbki". */
-export function normalise(s: string): string {
+export function normalise(s) {
   return s
     .toLowerCase()
     .normalize('NFD')
@@ -39,7 +38,7 @@ export function normalise(s: string): string {
     .replace(/\u0142/g, 'l');
 }
 
-export function filterDishes(dishes: Dish[], f: MenuFilters): Dish[] {
+export function filterDishes(dishes, f) {
   const terms = normalise(f.q).split(/\s+/).filter(Boolean);
   const out = dishes.filter((d) => {
     if (f.kitchen !== 'all' && d.kitchen !== f.kitchen) return false;
@@ -56,35 +55,34 @@ export function filterDishes(dishes: Dish[], f: MenuFilters): Dish[] {
     return true;
   });
   const by = {
-    recommended: (a: Dish, b: Dish) =>
-      Number(b.isFeatured) - Number(a.isFeatured) || b.popularity - a.popularity,
-    popular: (a: Dish, b: Dish) => b.popularity - a.popularity,
-    'price-asc': (a: Dish, b: Dish) => a.priceKobo - b.priceKobo,
-    'price-desc': (a: Dish, b: Dish) => b.priceKobo - a.priceKobo,
+    recommended: (a, b) => Number(b.isFeatured) - Number(a.isFeatured) || b.popularity - a.popularity,
+    popular: (a, b) => b.popularity - a.popularity,
+    'price-asc': (a, b) => a.priceKobo - b.priceKobo,
+    'price-desc': (a, b) => b.priceKobo - a.priceKobo,
   }[f.sort];
   // Available dishes first so sold-out items never lead the list.
   return [...out].sort((a, b) => Number(b.isAvailable) - Number(a.isAvailable) || by(a, b));
 }
 
-export function filtersFromParams(p: URLSearchParams): MenuFilters {
+export function filtersFromParams(p) {
   const kitchen = p.get('kitchen') ?? '';
   const category = p.get('category') ?? '';
   const spice = p.get('spice');
   const sort = p.get('sort') ?? '';
   return {
-    kitchen: KITCHENS.includes(kitchen) ? (kitchen as Kitchen) : 'all',
-    category: CATEGORIES.includes(category) ? (category as CategorySlug) : 'all',
+    kitchen: KITCHENS.includes(kitchen) ? kitchen : 'all',
+    category: CATEGORIES.includes(category) ? category : 'all',
     q: (p.get('q') ?? '').slice(0, 60),
     vegetarian: p.get('veg') === '1',
     glutenFree: p.get('gf') === '1',
     noNuts: p.get('nonuts') === '1',
     noPork: p.get('nopork') === '1',
     maxSpice: spice !== null && /^[0-3]$/.test(spice) ? Number(spice) : null,
-    sort: SORTS.includes(sort) ? (sort as SortKey) : 'recommended',
+    sort: SORTS.includes(sort) ? sort : 'recommended',
   };
 }
 
-export function paramsFromFilters(f: MenuFilters): URLSearchParams {
+export function paramsFromFilters(f) {
   const p = new URLSearchParams();
   if (f.kitchen !== 'all') p.set('kitchen', f.kitchen);
   if (f.category !== 'all') p.set('category', f.category);
@@ -98,6 +96,6 @@ export function paramsFromFilters(f: MenuFilters): URLSearchParams {
   return p;
 }
 
-export function activeFilterCount(f: MenuFilters): number {
+export function activeFilterCount(f) {
   return [f.vegetarian, f.glutenFree, f.noNuts, f.noPork, f.maxSpice !== null].filter(Boolean).length;
 }

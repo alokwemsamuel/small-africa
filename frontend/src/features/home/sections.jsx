@@ -8,22 +8,11 @@ import { ButtonLink } from '@/components/ui/Button';
 import { Photo } from '@/components/ui/Photo';
 import { DishCard } from '@/features/menu/DishCard';
 import { useMenu, useSite } from '@/features/menu/hooks';
-import type { KitchenInfo } from '@/features/menu/types';
 import { api, ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
 
-function SectionHeading({
-  eyebrow,
-  title,
-  intro,
-  center,
-}: {
-  eyebrow: string;
-  title: string;
-  intro?: string;
-  center?: boolean;
-}) {
+function SectionHeading({ eyebrow, title, intro, center }) {
   return (
     <Reveal className={cn('max-w-3xl', center && 'mx-auto text-center')}>
       <p className="eyebrow text-accent">{eyebrow}</p>
@@ -38,9 +27,9 @@ function SectionHeading({
 
 export function SignatureDishes() {
   const { data } = useMenu();
-  const track = useRef<HTMLUListElement>(null);
+  const track = useRef(null);
   const featured = data?.dishes.filter((d) => d.isFeatured && d.category !== 'drinks') ?? [];
-  const scroll = (dir: 1 | -1) => {
+  const scroll = (dir) => {
     const el = track.current;
     if (!el) return;
     el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
@@ -52,7 +41,7 @@ export function SignatureDishes() {
           <SectionHeading eyebrow="Signature dishes" title="The plates guests come back for" />
         </div>
         <div className="flex gap-3">
-          {([-1, 1] as const).map((dir) => (
+          {[-1, 1].map((dir) => (
             <button
               key={dir}
               type="button"
@@ -91,7 +80,7 @@ export function SignatureDishes() {
 
 /* ───────────────────────── Three kitchens (pinned horizontal scroll) ───────────────────────── */
 
-const KITCHEN_PHOTOS: Record<string, string> = {
+const KITCHEN_PHOTOS = {
   nigerian: 'dishes/smoky-party-jollof',
   polish: 'dishes/pierogi-ruskie',
   continental: 'dishes/beef-wellington',
@@ -100,8 +89,8 @@ const KITCHEN_NUMERALS = ['I', 'II', 'III'];
 
 export function ThreeKitchens() {
   const { data } = useMenu();
-  const section = useRef<HTMLElement>(null);
-  const track = useRef<HTMLDivElement>(null);
+  const section = useRef(null);
+  const track = useRef(null);
   const kitchens = data?.kitchens ?? [];
 
   useEffect(() => {
@@ -109,12 +98,12 @@ export function ThreeKitchens() {
     if (!kitchens.length || prefersReducedMotion() || !window.matchMedia?.('(min-width: 1024px)').matches)
       return;
     let cancelled = false;
-    let mm: gsap.MatchMedia | null = null;
+    let mm = null;
     void loadGsap().then(({ gsap }) => {
       if (cancelled) return;
       mm = gsap.matchMedia();
       mm.add('(min-width: 1024px)', () => {
-        const el = track.current!;
+        const el = track.current;
         const distance = () => el.scrollWidth - window.innerWidth;
         gsap.to(el, {
           x: () => -distance(),
@@ -164,7 +153,7 @@ export function ThreeKitchens() {
   );
 }
 
-function KitchenPanel({ kitchen, numeral }: { kitchen: KitchenInfo; numeral: string }) {
+function KitchenPanel({ kitchen, numeral }) {
   return (
     <article className="border-line relative flex shrink-0 flex-col border-t lg:h-full lg:w-[min(560px,42vw)] lg:border-t-0 lg:border-l">
       <Photo
@@ -200,8 +189,8 @@ function KitchenPanel({ kitchen, numeral }: { kitchen: KitchenInfo; numeral: str
 
 /* ───────────────────────── Counters ───────────────────────── */
 
-function Counter({ to, label }: { to: number; label: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
+function Counter({ to, label }) {
+  const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (!el || prefersReducedMotion() || typeof IntersectionObserver === 'undefined') return;
@@ -213,7 +202,7 @@ function Counter({ to, label }: { to: number; label: string }) {
         if (!entries.some((e) => e.isIntersecting)) return;
         io.disconnect();
         const start = performance.now();
-        const step = (t: number) => {
+        const step = (t) => {
           const p = Math.min(1, (t - start) / 1800);
           el.textContent = String(Math.round(to * (1 - (1 - p) ** 2)));
           if (p < 1) frame = requestAnimationFrame(step);
@@ -480,14 +469,14 @@ export function GalleryStrip() {
 
 export function Newsletter() {
   const [email, setEmail] = useState('');
-  const [state, setState] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const [state, setState] = useState(null);
   const [busy, setBusy] = useState(false);
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setState(null);
     try {
-      const r = await api<{ message: string }>('/newsletter', {
+      const r = await api('/newsletter', {
         method: 'POST',
         body: { email, source: 'home' },
       });

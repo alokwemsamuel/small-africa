@@ -7,8 +7,7 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { TextField } from '@/components/ui/TextField';
 import { toast } from '@/components/ui/toast';
-import { cart, type CartLine } from '@/features/cart/cart';
-import type { Order, OrderStatus } from '@/features/checkout/api';
+import { cart } from '@/features/cart/cart';
 import { formatTime } from '@/features/checkout/schedule';
 import { useSite } from '@/features/menu/hooks';
 import { longDate } from '@/features/reservations/api';
@@ -24,10 +23,9 @@ import {
   useMyReservations,
   useMyReviews,
   useSaveAddress,
-  type Address,
 } from './hooks';
 
-const ORDER_STATUS: Record<OrderStatus, string> = {
+const ORDER_STATUS = {
   pending_payment: 'Awaiting payment',
   received: 'Received',
   preparing: 'Preparing',
@@ -38,14 +36,14 @@ const ORDER_STATUS: Record<OrderStatus, string> = {
   cancelled: 'Cancelled',
 };
 
-const shortDate = (iso: string) =>
+const shortDate = (iso) =>
   new Date(iso.replace(' ', 'T') + '+01:00').toLocaleDateString('en-NG', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
 
-function Empty({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+function Empty({ children, action }) {
   return (
     <div className="border-line flex flex-col items-start gap-5 rounded-md border border-dashed p-8">
       <p className="text-secondary">{children}</p>
@@ -54,7 +52,7 @@ function Empty({ children, action }: { children: React.ReactNode; action?: React
   );
 }
 
-function Loading({ error }: { error: unknown }) {
+function Loading({ error }) {
   return error ? (
     <Alert tone="error">{error instanceof Error ? error.message : 'Could not load.'}</Alert>
   ) : (
@@ -83,7 +81,7 @@ export function OrdersPanel() {
   );
 }
 
-function OrderRow({ order: o }: { order: Order }) {
+function OrderRow({ order: o }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -91,12 +89,9 @@ function OrderRow({ order: o }: { order: Order }) {
   const reorder = async () => {
     setBusy(true);
     try {
-      const r = await api<{ lines: Omit<CartLine, 'key'>[]; unavailable: string[] }>(
-        `/account/orders/${o.reference}/reorder`,
-        {
-          method: 'POST',
-        },
-      );
+      const r = await api(`/account/orders/${o.reference}/reorder`, {
+        method: 'POST',
+      });
       r.lines.forEach(({ quantity, ...line }) => cart.add(line, quantity));
       if (r.unavailable.length) toast(`Not available today: ${r.unavailable.join(', ')}`);
       navigate('/cart');
@@ -146,12 +141,12 @@ function OrderRow({ order: o }: { order: Order }) {
   );
 }
 
-function ReviewForm({ order, onDone }: { order: Order; onDone: () => void }) {
+function ReviewForm({ order, onDone }) {
   const dishes = (order.items ?? []).filter((i) => i.dishId !== null);
   const create = useCreateReview();
   const [rating, setRating] = useState(5);
   const form = useForm({ defaultValues: { dish_id: String(dishes[0]?.dishId ?? ''), title: '', body: '' } });
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   const submit = form.handleSubmit(async (v) => {
     setError(null);
@@ -283,20 +278,10 @@ export function ReservationsPanel() {
 
 /* ------------------------------------------------------------- Addresses */
 
-type AddressForm = {
-  label: string;
-  line1: string;
-  line2: string;
-  landmark: string;
-  zone: string;
-  phone: string;
-  is_default: boolean;
-};
-
 export function AddressesPanel() {
   const { data, error } = useAddresses();
   const remove = useDeleteAddress();
-  const [editing, setEditing] = useState<Address | 'new' | null>(null);
+  const [editing, setEditing] = useState(null);
   if (!data) return <Loading error={error} />;
 
   return (
@@ -347,11 +332,11 @@ export function AddressesPanel() {
   );
 }
 
-function AddressEditor({ address, onDone }: { address: Address | null; onDone: () => void }) {
+function AddressEditor({ address, onDone }) {
   const save = useSaveAddress();
   const { data: site } = useSite();
-  const [error, setError] = useState<string | null>(null);
-  const form = useForm<AddressForm>({
+  const [error, setError] = useState(null);
+  const form = useForm({
     defaultValues: {
       label: address?.label ?? 'Home',
       line1: address?.line1 ?? '',

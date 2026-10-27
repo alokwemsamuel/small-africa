@@ -10,11 +10,10 @@ import { ThemeMenu } from '@/features/theme/ThemeSwitcher';
 import { useSeo } from '@/lib/seo';
 import { cn } from '@/lib/cn';
 import { env } from '@/lib/env';
-import { can, useAdminMe, type AdminMe, type Permission } from './api';
+import { can, useAdminMe } from './api';
 import { ADMIN_NAV } from './nav';
 
-const page = <K extends string>(load: () => Promise<Record<K, React.ComponentType>>, name: K) =>
-  lazy(() => load().then((m) => ({ default: m[name] })));
+const page = (load, name) => lazy(() => load().then((m) => ({ default: m[name] })));
 
 const DashboardPage = page(() => import('./pages/DashboardPage'), 'DashboardPage');
 const OrdersPage = page(() => import('./pages/OrdersPage'), 'OrdersPage');
@@ -31,8 +30,8 @@ const StaffPage = page(() => import('./pages/StaffPage'), 'StaffPage');
 const SettingsAdminPage = page(() => import('./pages/SettingsAdminPage'), 'SettingsAdminPage');
 const AuditPage = page(() => import('./pages/AuditPage'), 'AuditPage');
 
-const ROLE_LABEL: Record<string, string> = { super_admin: 'Super Admin', manager: 'Manager', staff: 'Staff' };
-const POSITION_LABEL: Record<string, string> = { kitchen: 'Kitchen', front_desk: 'Front desk' };
+const ROLE_LABEL = { super_admin: 'Super Admin', manager: 'Manager', staff: 'Staff' };
+const POSITION_LABEL = { kitchen: 'Kitchen', front_desk: 'Front desk' };
 
 /** /admin/* : the staff panel, with its own chrome (no public header, footer or smooth scroll). */
 export function AdminApp() {
@@ -94,7 +93,7 @@ export function AdminApp() {
 }
 
 /** The server enforces every permission; this only avoids showing pages that would 403. */
-function guard(me: AdminMe, permission: Permission, element: React.ReactElement) {
+function guard(me, permission, element) {
   return can(me, permission) ? (
     element
   ) : (
@@ -104,7 +103,7 @@ function guard(me: AdminMe, permission: Permission, element: React.ReactElement)
   );
 }
 
-function AdminShell({ me, children }: { me: AdminMe | undefined; children: React.ReactNode }) {
+function AdminShell({ me, children }) {
   const { data: user } = useMe();
   const logout = useLogout();
   const [open, setOpen] = useState(false);

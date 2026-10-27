@@ -1,19 +1,8 @@
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../ui/Logo';
 
 /** Split-screen layout for sign-in and account flows: brand panel left, form right. */
-export function AuthLayout({
-  eyebrow,
-  title,
-  intro,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  intro?: ReactNode;
-  children: ReactNode;
-}) {
+export function AuthLayout({ eyebrow, title, intro, children }) {
   return (
     <div className="grid min-h-[calc(100dvh-4.5rem)] lg:grid-cols-[1fr_1.05fr]">
       <aside className="border-accent/15 bg-surface-raised relative hidden overflow-hidden border-r lg:flex lg:flex-col lg:items-center lg:justify-center lg:p-16">

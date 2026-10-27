@@ -1,10 +1,9 @@
 import { screen } from '@testing-library/react';
-import type { Order } from '@/features/checkout/api';
 import { mockApi, renderRoutes } from '@/test/utils';
 import { OrderTrackingPage } from './OrderTrackingPage';
 import { steps } from './steps';
 
-const order: Order = {
+const order = {
   reference: 'SA-ABC123',
   status: 'preparing',
   paymentStatus: 'paid',

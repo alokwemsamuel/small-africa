@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/toast';
-import { adminApi, type AdminReview } from '../api';
+import { adminApi } from '../api';
 import { AdminHeader, Empty, Loading, Pager, Panel, SelectField, StatusPill, TextAreaField } from '../ui';
 import { fmt } from '../format';
 
@@ -51,11 +51,11 @@ export function ReviewsAdminPage() {
   );
 }
 
-function ReviewCard({ review }: { review: AdminReview }) {
+function ReviewCard({ review }) {
   const qc = useQueryClient();
   const [reply, setReply] = useState(review.reply ?? '');
-  const [busy, setBusy] = useState<string | null>(null);
-  const act = async (body: { status?: string; reply?: string | null }, key: string) => {
+  const [busy, setBusy] = useState(null);
+  const act = async (body, key) => {
     setBusy(key);
     try {
       await adminApi.moderateReview(review.id, body);

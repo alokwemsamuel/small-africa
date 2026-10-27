@@ -1,6 +1,4 @@
-import type { Permission } from './api';
-
-export const ADMIN_NAV: { to: string; label: string; permission: Permission }[] = [
+export const ADMIN_NAV = [
   { to: '/admin', label: 'Dashboard', permission: 'dashboard.view' },
   { to: '/admin/orders', label: 'Orders', permission: 'orders.view' },
   { to: '/admin/reservations', label: 'Reservations', permission: 'reservations.manage' },

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMarkNotificationsRead, useNotifications } from '@/features/rewards/api';
 import { cn } from '@/lib/cn';
 
-const when = (iso: string) =>
+const when = (iso) =>
   new Date(iso.replace(' ', 'T') + '+01:00').toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
 
 /** In-app notification centre: interest, points, tier upgrades and offers. */
@@ -12,16 +12,16 @@ export function NotificationBell() {
   const markRead = useMarkNotificationsRead();
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  const wrap = useRef<HTMLDivElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
+  const wrap = useRef(null);
+  const button = useRef(null);
   const unread = data?.unread ?? 0;
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    const onDown = (e) => {
+      if (!wrap.current?.contains(e.target)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => {
+    const onKey = (e) => {
       if (e.key === 'Escape') {
         setOpen(false);
         button.current?.focus();

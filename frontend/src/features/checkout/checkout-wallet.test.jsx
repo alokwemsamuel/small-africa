@@ -87,7 +87,7 @@ it('lets a member pay the whole order with dining credit, without a card', async
       },
     }),
     'POST /checkout/quote': (_u, init) => {
-      const body = JSON.parse(String(init.body)) as { use_wallet?: boolean };
+      const body = JSON.parse(String(init.body));
       return {
         body: {
           quote: body.use_wallet ? { ...baseQuote, walletAppliedKobo: 3750000, payableKobo: 0 } : baseQuote,
@@ -125,8 +125,6 @@ it('lets a member pay the whole order with dining credit, without a card', async
   expect(router.state.location.pathname).toBe('/orders/SA-WAL123');
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   await waitFor(() => expect(cart.snapshot()).toHaveLength(0));
-  const placed = calls.find((c) => c.method === 'POST' && c.path === '/orders')!.body as {
-    use_wallet: boolean;
-  };
+  const placed = calls.find((c) => c.method === 'POST' && c.path === '/orders').body;
   expect(placed.use_wallet).toBe(true);
 });

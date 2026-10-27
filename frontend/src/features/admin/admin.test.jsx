@@ -3,10 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { mockApi, renderRoutes } from '@/test/utils';
 import { AdminApp } from './AdminApp';
-import type { AdminMe, Dashboard } from './api';
 import { niceTicks } from './scale';
 
-const user = (role: string, staffPosition: string | null = null) => ({
+const user = (role, staffPosition = null) => ({
   id: 9,
   firstName: 'Tomasz',
   lastName: 'Kowalski',
@@ -25,7 +24,7 @@ const user = (role: string, staffPosition: string | null = null) => ({
 });
 
 const kpi = { revenueKobo: 5550000, orders: 3, reservations: 4, covers: 11, averageOrderKobo: 1850000 };
-const dashboard: Dashboard = {
+const dashboard = {
   today: kpi,
   yesterday: { ...kpi, revenueKobo: 3700000, orders: 2, averageOrderKobo: 1850000 },
   period: { ...kpi, days: 7 },
@@ -54,13 +53,7 @@ const dashboard: Dashboard = {
   generatedAt: '2026-10-20T12:00:00+01:00',
 };
 
-function setup(
-  me: AdminMe,
-  role: string,
-  position: string | null,
-  extra: Parameters<typeof mockApi>[0] = {},
-  path = '/admin',
-) {
+function setup(me, role, position, extra = {}, path = '/admin') {
   const api = mockApi({
     'GET /auth/me': () => ({ body: { user: user(role, position) } }),
     'GET /admin/me': () => ({ body: me }),
@@ -83,7 +76,7 @@ function setup(
   return api;
 }
 
-const managerMe: AdminMe = {
+const managerMe = {
   permissions: [
     'dashboard.view',
     'orders.view',
@@ -107,7 +100,7 @@ const managerMe: AdminMe = {
   twoFactorEnabled: false,
   demoTools: false,
 };
-const kitchenMe: AdminMe = {
+const kitchenMe = {
   permissions: ['dashboard.view', 'orders.view', 'orders.status', 'menu.availability'],
   role: 'staff',
   staffPosition: 'kitchen',
@@ -120,7 +113,7 @@ describe('Admin panel', () => {
     setup(kitchenMe, 'staff', 'kitchen');
     await screen.findByRole('link', { name: 'Orders' });
     const nav = screen.getAllByRole('navigation', { name: 'Admin' });
-    const links = within(nav[0]!)
+    const links = within(nav[0])
       .getAllByRole('link')
       .map((a) => a.textContent);
     expect(links).toEqual(['Dashboard', 'Orders', 'Menu']);
@@ -131,7 +124,7 @@ describe('Admin panel', () => {
     setup(managerMe, 'manager', null);
     await screen.findByRole('link', { name: 'Orders' });
     const nav = screen.getAllByRole('navigation', { name: 'Admin' });
-    const links = within(nav[0]!)
+    const links = within(nav[0])
       .getAllByRole('link')
       .map((a) => a.textContent);
     expect(links).toContain('Interest Account');
@@ -151,7 +144,7 @@ describe('Admin panel', () => {
     const chart = screen.getByRole('img', { name: /Revenue per day/ });
     expect(chart.getAttribute('aria-label')).toMatch(/Highest: Tuesday,? 20 October, ₦37,000/);
     const user = userEvent.setup();
-    await user.click(screen.getAllByRole('button', { name: 'Show table' })[0]!);
+    await user.click(screen.getAllByRole('button', { name: 'Show table' })[0]);
     expect(screen.getByRole('cell', { name: '₦18,500' })).toBeInTheDocument();
     expect(screen.getByText('Reviews to moderate').nextSibling).toHaveTextContent('2');
   });

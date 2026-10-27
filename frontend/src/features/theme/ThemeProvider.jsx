@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMe, useUpdateProfile } from '@/features/auth/hooks';
 import { ThemeContext } from './context';
 import {
@@ -8,7 +8,6 @@ import {
   storePreference,
   systemPrefersLight,
   watchSystemTheme,
-  type ThemePreference,
 } from './theme';
 
 /**
@@ -16,14 +15,14 @@ import {
  * them across devices), then localStorage, then Dark. Changes are saved locally and, for
  * signed-in users, to their profile.
  */
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [preference, setPref] = useState<ThemePreference>(readStoredPreference);
+export function ThemeProvider({ children }) {
+  const [preference, setPref] = useState(readStoredPreference);
   const [prefersLight, setPrefersLight] = useState(systemPrefersLight);
   const resolved = resolveTheme(preference, prefersLight);
 
   const { data: user } = useMe();
   const updateProfile = useUpdateProfile();
-  const adoptedForUser = useRef<number | null>(null);
+  const adoptedForUser = useRef(null);
 
   // Follow live OS changes (only matters while "System" is selected, but cheap to keep).
   useEffect(() => watchSystemTheme(setPrefersLight), []);
@@ -42,7 +41,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const { mutate } = updateProfile;
   const setPreference = useCallback(
-    (next: ThemePreference) => {
+    (next) => {
       setPref(next);
       storePreference(next);
       if (user && user.themePreference !== next) {

@@ -3,9 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { renderRoutes, mockApi } from '@/test/utils';
 import { LoginPage } from './pages/LoginPage';
 import { RequireAuth } from './RequireAuth';
-import type { User } from './types';
 
-const guest: User = {
+const guest = {
   id: 3,
   firstName: 'Chiamaka',
   lastName: 'Bello',

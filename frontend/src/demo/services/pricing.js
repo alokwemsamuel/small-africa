@@ -1,4 +1,4 @@
-import { db, type Row } from '../db';
+import { db } from '../db';
 import { fail } from '../http';
 import { addDays, addMinutes, atom, hm, now, parse, sql, weekday, ymd } from '../time';
 
@@ -7,41 +7,23 @@ import { addDays, addMinutes, atom, hm, now, parse, sql, weekday, ymd } from '..
 const MAX_QTY_PER_LINE = 20;
 
 /** Opening window for a date, or null when closed (Settings::openingWindow). */
-export function openingWindow(date: Date): { opens: Date; closes: Date } | null {
+export function openingWindow(date) {
   const row = db.find('opening_hours', (h) => h.day_of_week === weekday(date));
   if (!row || row.is_closed || !row.opens_at || !row.closes_at) return null;
   const day = ymd(date);
   return { opens: parse(`${day} ${row.opens_at}`), closes: parse(`${day} ${row.closes_at}`) };
 }
 
-function soldOut(d: Row): boolean {
+function soldOut(d) {
   return !d.is_available || (d.sold_out_until !== null && d.sold_out_until >= ymd());
 }
 
-export interface Line {
-  dishId: number;
-  slug: string;
-  name: string;
-  kitchenId: number | null;
-  kitchen: string | null;
-  unitPriceKobo: number;
-  quantity: number;
-  lineTotalKobo: number;
-  portion: { id: number; name: string } | null;
-  addons: { id: number; name: string }[];
-  note: string | null;
-  containsPork: boolean;
-  isAlcoholic: boolean;
-  isFeatured: boolean;
-  category: string;
-}
-
-function priceLines(items: Row[], maxItems: number): Line[] {
+function priceLines(items, maxItems) {
   if (!items.length) throw fail.field('items', 'Your order is empty.');
   if (items.length > 40)
     throw fail.field('items', 'That’s a lot of different dishes. Please call us for large orders.');
   let totalQty = 0;
-  const lines = items.map((item): Line => {
+  const lines = items.map((item) => {
     const dishId = Number(item.dish_id);
     const qty = Number(item.quantity);
     if (!Number.isInteger(dishId) || !Number.isInteger(qty) || qty < 1 || qty > MAX_QTY_PER_LINE) {
@@ -60,7 +42,7 @@ function priceLines(items: Row[], maxItems: number): Line[] {
     }
     const options = db.where('dish_options', (o) => o.dish_id === dishId);
     const portions = options.filter((o) => o.option_group === 'portion');
-    let portion: Row | null = null;
+    let portion = null;
     if (portions.length) {
       const wanted = item.portion_id ?? null;
       for (const p of portions) {
@@ -68,7 +50,7 @@ function priceLines(items: Row[], maxItems: number): Line[] {
       }
       if (!portion) throw fail.field('items', `Please choose an option for ${dish.name}.`);
     }
-    const addonIds = [...new Set(((item.addon_ids ?? []) as unknown[]).map(Number))];
+    const addonIds = [...new Set((item.addon_ids ?? []).map(Number))];
     const addons = addonIds.map((aid) => {
       const match = options.find((o) => o.option_group === 'addon' && o.id === aid);
       if (!match)
@@ -109,7 +91,7 @@ function priceLines(items: Row[], maxItems: number): Line[] {
   return lines;
 }
 
-function voucher(voucherCode: string | null, lines: Line[], userId: number | null) {
+function voucher(voucherCode, lines, userId) {
   if (!voucherCode || !voucherCode.trim()) return { voucher: null, discount: 0 };
   if (userId === null) throw fail.field('voucher_code', 'Sign in to use a reward voucher.');
   const v = db.find(
@@ -143,13 +125,7 @@ function voucher(voucherCode: string | null, lines: Line[], userId: number | nul
 const WEEKDAY_NAMES = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
 
 /** CouponService::evaluate */
-export function evaluateCoupon(
-  couponCode: string,
-  lines: Line[],
-  orderDate: Date,
-  userId: number | null,
-  email: string,
-) {
+export function evaluateCoupon(couponCode, lines, orderDate, userId, email) {
   const coupon = db.find('coupons', (c) => c.code === couponCode.trim().toUpperCase());
   if (!coupon || !coupon.is_active) throw fail.field('coupon_code', 'That code isn’t valid.');
   const at = sql(orderDate);
@@ -169,7 +145,7 @@ export function evaluateCoupon(
     throw fail.field('coupon_code', 'That code has reached its usage limit.');
   }
   const mail = email.toLowerCase();
-  const mine = (o: Row) => o.customer_email === mail || (userId !== null && o.user_id === userId);
+  const mine = (o) => o.customer_email === mail || (userId !== null && o.user_id === userId);
   if (coupon.per_user_limit !== null) {
     const used = db
       .where('coupon_redemptions', (cr) => cr.coupon_id === coupon.id)
@@ -206,7 +182,7 @@ export function evaluateCoupon(
   return { coupon, discount };
 }
 
-function resolveTime(scheduled: string | null, lead: number, maxDays: number) {
+function resolveTime(scheduled, lead, maxDays) {
   const at = now();
   if (!scheduled) {
     const w = openingWindow(at);
@@ -237,13 +213,13 @@ function resolveTime(scheduled: string | null, lead: number, maxDays: number) {
 }
 
 /** PricingService::quote */
-export function quote(req: Row, userId: number | null) {
+export function quote(req, userId) {
   const ordering = db.settings('ordering');
   const pricing = db.settings('pricing');
   if (!(ordering.accepting_orders ?? true)) {
     throw fail.field('items', 'We’re not taking online orders right now. Please call or WhatsApp us.');
   }
-  const lines = priceLines(req.items as Row[], Number(ordering.max_items_per_order ?? 40));
+  const lines = priceLines(req.items, Number(ordering.max_items_per_order ?? 40));
   if (lines.some((l) => l.isAlcoholic) && !req.confirm_age) {
     throw fail.field('confirm_age', 'Please confirm you are 18 or over to order alcohol.');
   }
@@ -254,7 +230,7 @@ export function quote(req: Row, userId: number | null) {
     Number(ordering.max_schedule_days ?? 7),
   );
 
-  let zone: Row | null = null;
+  let zone = null;
   let deliveryFee = 0;
   if (req.fulfilment === 'delivery') {
     zone = db.find('delivery_zones', (z) => z.slug === (req.zone ?? '') && !!z.is_active);
@@ -269,14 +245,14 @@ export function quote(req: Row, userId: number | null) {
   }
   const account = userId ? db.find('loyalty_accounts', (a) => a.user_id === userId) : null;
   let freeDelivery = false;
-  const freeTiers = (db.settings('loyalty').free_delivery_tiers ?? ['gold', 'black_diamond']) as string[];
+  const freeTiers = db.settings('loyalty').free_delivery_tiers ?? ['gold', 'black_diamond'];
   if (deliveryFee > 0 && account && freeTiers.includes(account.tier)) {
     deliveryFee = 0;
     freeDelivery = true;
   }
   const v = voucher(req.voucher_code ?? null, lines, userId);
   let discount = 0;
-  let coupon: Row | null = null;
+  let coupon = null;
   if (req.coupon_code) {
     const result = evaluateCoupon(String(req.coupon_code), lines, when.at, userId, String(req.email ?? ''));
     coupon = result.coupon;
@@ -309,11 +285,9 @@ export function quote(req: Row, userId: number | null) {
     walletBalanceKobo: walletBalance,
     walletAppliedKobo: walletApplied,
     payableKobo: total - walletApplied,
-    fulfilment: req.fulfilment as 'delivery' | 'pickup',
+    fulfilment: req.fulfilment,
     zone: zone ? { id: zone.id, slug: zone.slug, name: zone.name, etaMinutes: zone.eta_minutes } : null,
     scheduledFor: when.scheduled ? `${ymd(when.at)} ${hm(when.at)}` : null,
     estimatedReadyAt: atom(addMinutes(when.at, zone ? zone.eta_minutes : 25)),
   };
 }
-
-export type Quote = ReturnType<typeof quote>;

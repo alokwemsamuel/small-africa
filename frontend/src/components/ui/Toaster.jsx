@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
-import { dismiss, getToasts, listeners, type Toast } from './toast';
+import { dismiss, getToasts, listeners } from './toast';
 
 /** Polite live region: announced by screen readers without stealing focus. */
 export function Toaster() {
@@ -24,7 +24,7 @@ export function Toaster() {
   );
 }
 
-function ToastItem({ toast: t }: { toast: Toast }) {
+function ToastItem({ toast: t }) {
   useEffect(() => {
     const timer = window.setTimeout(() => dismiss(t.id), 4500);
     return () => window.clearTimeout(timer);

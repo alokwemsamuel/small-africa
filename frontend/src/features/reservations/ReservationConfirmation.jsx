@@ -3,9 +3,9 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Alert } from '@/components/ui/Alert';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { formatTime } from '@/features/checkout/schedule';
-import { icsFor, longDate, reservationsApi, type Reservation } from './api';
+import { icsFor, longDate, reservationsApi } from './api';
 
-const STATUS_LABEL: Record<Reservation['status'], string> = {
+const STATUS_LABEL = {
   pending: 'Awaiting confirmation',
   confirmed: 'Confirmed',
   seated: 'Seated',
@@ -14,7 +14,7 @@ const STATUS_LABEL: Record<Reservation['status'], string> = {
   no_show: 'Missed',
 };
 
-function downloadIcs(r: Reservation) {
+function downloadIcs(r) {
   const url = URL.createObjectURL(new Blob([icsFor(r)], { type: 'text/calendar' }));
   const a = document.createElement('a');
   a.href = url;
@@ -24,19 +24,11 @@ function downloadIcs(r: Reservation) {
 }
 
 /** Shown straight after booking, and on the emailed manage link. */
-export function ReservationConfirmation({
-  reservation: initial,
-  manageToken,
-  isNew = false,
-}: {
-  reservation: Reservation;
-  manageToken: string | null;
-  isNew?: boolean;
-}) {
+export function ReservationConfirmation({ reservation: initial, manageToken, isNew = false }) {
   const [r, setR] = useState(initial);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const upcoming = r.status === 'pending' || r.status === 'confirmed';
 
   const cancel = async () => {
@@ -134,7 +126,7 @@ export function ReservationConfirmation({
   );
 }
 
-function Item({ label, children }: { label: string; children: React.ReactNode }) {
+function Item({ label, children }) {
   return (
     <div>
       <dt className="eyebrow text-muted">{label}</dt>

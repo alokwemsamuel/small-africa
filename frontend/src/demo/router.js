@@ -1,39 +1,20 @@
-import type { Permission } from '@/features/admin/api';
-import { ApiError, type RequestOptions } from '@/lib/api';
-import type { Row } from './db';
+import { ApiError } from '@/lib/api';
 import { fail } from './http';
 import { can, currentUser, STAFF_ROLES } from './services/auth';
 
-export interface Ctx {
-  params: Record<string, string>;
-  query: URLSearchParams;
-  body: Row;
-  form: FormData | undefined;
-  user: Row | null;
-  idempotencyKey: string | null;
-}
+const routes = [];
 
-/** A signed-in user is guaranteed for 'user', 'staff' and permission routes. */
-export type AuthedCtx = Ctx & { user: Row };
-
-type Guard = 'user' | 'staff' | Permission;
-type Handler = (ctx: AuthedCtx) => unknown;
-
-interface Route {
-  method: string;
-  pattern: RegExp;
-  keys: string[];
-  guard: Guard | null;
-  handler: Handler;
-}
-
-const routes: Route[] = [];
+/**
+ * What a route handler receives. For 'user', 'staff' and permission routes `user` is always set.
+ * @typedef {{ params: Record<string, string>, query: URLSearchParams, body: Record<string, any>,
+ *   form: FormData | undefined, user: Record<string, any> | null, idempotencyKey: string | null }} Ctx
+ */
 
 /** Registers a route. Path parameters: `:id` is numeric, any other `:name` is one path segment. */
-export function route(method: string, path: string, handler: Handler, guard: Guard | null = null): void {
-  const keys: string[] = [];
+export function route(method, path, handler, guard = null) {
+  const keys = [];
   const pattern = new RegExp(
-    `^${path.replace(/:(\w+)/g, (_, key: string) => {
+    `^${path.replace(/:(\w+)/g, (_, key) => {
       keys.push(key);
       return key === 'id' ? '([0-9]+)' : '([^/]+)';
     })}$`,
@@ -42,7 +23,7 @@ export function route(method: string, path: string, handler: Handler, guard: Gua
 }
 
 /** Handles one API call against the demo database, like the PHP app would. */
-export async function dispatch(path: string, options: RequestOptions): Promise<unknown> {
+export async function dispatch(path, options) {
   const method = options.method ?? 'GET';
   const [pathname = '', search = ''] = path.split('?');
   let pathMatched = false;
@@ -57,13 +38,13 @@ export async function dispatch(path: string, options: RequestOptions): Promise<u
       if (r.guard !== 'user' && !STAFF_ROLES.includes(user.role)) throw fail.forbidden();
       if (r.guard !== 'user' && r.guard !== 'staff' && !can(user, r.guard)) throw fail.forbidden();
     }
-    const params = Object.fromEntries(r.keys.map((k, i) => [k, decodeURIComponent(m[i + 1]!)]));
+    const params = Object.fromEntries(r.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])]));
     return r.handler({
       params,
       query: new URLSearchParams(search),
-      body: (options.body ?? {}) as Row,
+      body: options.body ?? {},
       form: options.formData,
-      user: user as Row,
+      user: user,
       idempotencyKey: options.idempotencyKey ?? null,
     });
   }

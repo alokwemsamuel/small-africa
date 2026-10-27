@@ -1,11 +1,10 @@
 import { toast } from '@/components/ui/toast';
 import { cart } from '@/features/cart/cart';
-import type { Dish } from './types';
 
-export const KITCHEN_LABEL = { nigerian: 'Nigerian', polish: 'Polish', continental: 'Continental' } as const;
+export const KITCHEN_LABEL = { nigerian: 'Nigerian', polish: 'Polish', continental: 'Continental' };
 
 /** Adds the dish with its default portion and no add-ons. */
-export function quickAdd(dish: Dish) {
+export function quickAdd(dish) {
   const portion = dish.options.portion.find((p) => p.isDefault) ?? dish.options.portion[0] ?? null;
   cart.add({
     dishId: dish.id,

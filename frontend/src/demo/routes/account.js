@@ -1,4 +1,4 @@
-import { db, type Row } from '../db';
+import { db } from '../db';
 import { fail, naira, validate, validateQuery } from '../http';
 import { code } from '../random';
 import { route } from '../router';
@@ -9,7 +9,7 @@ import { verifyTopup } from './public';
 
 /* ---------------------------------------------------------------- addresses */
 
-function listAddresses(userId: number) {
+function listAddresses(userId) {
   return db
     .where('addresses', (a) => a.user_id === userId)
     .sort((a, b) => b.is_default - a.is_default || a.id - b.id)
@@ -29,7 +29,7 @@ function listAddresses(userId: number) {
     });
 }
 
-function saveAddress(body: Row, userId: number, id: number | null) {
+function saveAddress(body, userId, id) {
   const data = validate(
     body,
     {
@@ -45,7 +45,7 @@ function saveAddress(body: Row, userId: number, id: number | null) {
   );
   const zone = db.find('delivery_zones', (z) => z.slug === data.zone && !!z.is_active);
   if (!zone) throw fail.field('zone', 'Choose a delivery area we serve.');
-  const values: Row = {
+  const values = {
     label: data.label,
     line1: data.line1,
     line2: data.line2 ?? null,
@@ -237,7 +237,7 @@ route(
   'POST',
   '/account/rewards/:slug/redeem',
   ({ params, user, idempotencyKey }) => ({
-    result: loyalty.redeem(user.id, params.slug!, idempotencyKey),
+    result: loyalty.redeem(user.id, params.slug, idempotencyKey),
     account: loyalty.summary(user.id),
   }),
   'user',
@@ -249,9 +249,7 @@ route(
   'POST',
   '/account/notifications/read',
   ({ body, user }) => {
-    const ids = Array.isArray(body.ids)
-      ? (body.ids as unknown[]).filter((x): x is number => Number.isInteger(x))
-      : null;
+    const ids = Array.isArray(body.ids) ? body.ids.filter((x) => Number.isInteger(x)) : null;
     loyalty.markRead(user.id, ids);
     return loyalty.notifications(user.id);
   },

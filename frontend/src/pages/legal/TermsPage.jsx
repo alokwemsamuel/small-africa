@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { LegalLayout, type LegalSection } from './LegalLayout';
+import { LegalLayout } from './LegalLayout';
 
-const sections: LegalSection[] = [
+const sections = [
   {
     id: 'about',
     title: 'About these terms',

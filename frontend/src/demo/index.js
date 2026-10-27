@@ -1,6 +1,6 @@
-import { ApiError, setTransport, type Transport } from '@/lib/api';
-import { buildState, type Snapshot } from './build';
-import { clearPersisted, loadPersisted, persist, setState, type DemoState } from './db';
+import { ApiError, setTransport } from '@/lib/api';
+import { buildState } from './build';
+import { clearPersisted, loadPersisted, persist, setState } from './db';
 import { dispatch } from './router';
 import './routes/public';
 import './routes/account';
@@ -12,8 +12,8 @@ import { now, ymd } from './time';
  * against a copy of the seeded database kept in localStorage. No server, no real payments.
  */
 
-const pause = (ms: number, signal?: AbortSignal) =>
-  new Promise<void>((resolve, reject) => {
+const pause = (ms, signal) =>
+  new Promise((resolve, reject) => {
     const t = setTimeout(resolve, ms);
     signal?.addEventListener('abort', () => {
       clearTimeout(t);
@@ -23,14 +23,14 @@ const pause = (ms: number, signal?: AbortSignal) =>
 
 let latency = true;
 
-const demoTransport: Transport = async <T>(path: string, options: Parameters<Transport>[1]) => {
+const demoTransport = async (path, options) => {
   // A short, realistic delay so loading states behave as they do against the real API.
   if (latency) await pause(120 + Math.random() * 200, options.signal);
   try {
     const result = await dispatch(path, options);
     if ((options.method ?? 'GET') !== 'GET') persist();
     // A copy, so screens can never change the database by editing what they were given.
-    return structuredClone(result) as T;
+    return structuredClone(result);
   } catch (e) {
     if (e instanceof ApiError) throw e;
     console.error('[demo]', path, e);
@@ -41,12 +41,12 @@ const demoTransport: Transport = async <T>(path: string, options: Parameters<Tra
 let snapshotUsed = false;
 
 /** Builds in a Web Worker so the page stays responsive while the demo starts. */
-function buildInWorker(): Promise<DemoState> {
+function buildInWorker() {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('./build.worker.ts', import.meta.url), { type: 'module' });
-    worker.onmessage = (e: MessageEvent<string>) => {
+    const worker = new Worker(new URL('./build.worker.js', import.meta.url), { type: 'module' });
+    worker.onmessage = (e) => {
       worker.terminate();
-      resolve(JSON.parse(e.data) as DemoState);
+      resolve(JSON.parse(e.data));
     };
     worker.onerror = (e) => {
       worker.terminate();
@@ -66,7 +66,7 @@ async function freshState() {
       // Fall back to building here (e.g. workers blocked).
     }
   }
-  const snapshot = (await import('./snapshot.json')).default as unknown as Snapshot;
+  const snapshot = (await import('./snapshot.json')).default;
   const consume = !snapshotUsed;
   snapshotUsed = true;
   return buildState(snapshot, now(), { consume });
@@ -77,7 +77,7 @@ async function freshState() {
  * changes (the first sign-in, order or booking): it is the same all day, so a reload rebuilds
  * it identically, and the first visit skips writing ~1.5 MB to storage.
  */
-export async function installDemo(options: { latency?: boolean } = {}): Promise<void> {
+export async function installDemo(options = {}) {
   latency = options.latency ?? true;
   const saved = loadPersisted();
   // A new day starts from fresh data, so "today" on the dashboard is always busy.
@@ -87,7 +87,7 @@ export async function installDemo(options: { latency?: boolean } = {}): Promise<
 }
 
 /** Starts the demo over (signed out, today's data). */
-export async function resetDemo(): Promise<void> {
+export async function resetDemo() {
   clearPersisted();
   await freshState();
 }

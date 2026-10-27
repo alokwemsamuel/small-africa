@@ -119,7 +119,7 @@
   animation: rise-in var(--rise-duration, 0.45s) cubic-bezier(0.22, 1, 0.36, 1) var(--rise-delay, 0s) both;
 }
 
-/* Scroll reveals (components/motion/Reveal.tsx). */
+/* Scroll reveals (components/motion/Reveal.jsx). */
 [data-reveal='pending'] {
   opacity: 0;
 }

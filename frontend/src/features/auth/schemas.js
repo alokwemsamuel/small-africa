@@ -3,8 +3,8 @@ import { z } from 'zod';
 /** Mirrors backend PasswordPolicy so users get instant feedback; the server still decides. */
 export const PASSWORD_MIN = 10;
 
-export function passwordProblems(password: string, personal: string[] = []): string[] {
-  const problems: string[] = [];
+export function passwordProblems(password, personal = []) {
+  const problems = [];
   if (password.length < PASSWORD_MIN) problems.push(`Use at least ${PASSWORD_MIN} characters.`);
   if (password.length > 128) problems.push('Use at most 128 characters.');
   const classes = [/[a-z]/, /[A-Z]/, /\d/, /[^a-zA-Z\d]/].filter((r) => r.test(password)).length;
@@ -17,7 +17,7 @@ export function passwordProblems(password: string, personal: string[] = []): str
 }
 
 /** 0–4 for the strength meter. */
-export function passwordScore(password: string): number {
+export function passwordScore(password) {
   if (!password) return 0;
   const classes = [/[a-z]/, /[A-Z]/, /\d/, /[^a-zA-Z\d]/].filter((r) => r.test(password)).length;
   let score = 0;
@@ -40,7 +40,6 @@ export const loginSchema = z.object({
   email,
   password: z.string().min(1, { error: 'Enter your password.' }),
 });
-export type LoginValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z
   .object({
@@ -70,10 +69,8 @@ export const registerSchema = z
       });
     }
   });
-export type RegisterValues = z.input<typeof registerSchema>;
 
 export const forgotSchema = z.object({ email });
-export type ForgotValues = z.infer<typeof forgotSchema>;
 
 export const resetSchema = z
   .object({ password: strongPassword, confirm: z.string() })
@@ -81,7 +78,6 @@ export const resetSchema = z
     if (v.password !== v.confirm)
       ctx.addIssue({ code: 'custom', path: ['confirm'], message: 'Passwords don’t match.' });
   });
-export type ResetValues = z.infer<typeof resetSchema>;
 
 export const twoFactorSchema = z.object({
   code: z
@@ -89,4 +85,3 @@ export const twoFactorSchema = z.object({
     .trim()
     .regex(/^\d{6}$/, { error: 'Enter the 6-digit code from your authenticator app.' }),
 });
-export type TwoFactorValues = z.infer<typeof twoFactorSchema>;

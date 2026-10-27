@@ -4,56 +4,56 @@
  * calculation below is plain UTC arithmetic and SQL-style strings compare as text.
  */
 const LAGOS_OFFSET_MS = 3_600_000;
-let frozen: number | null = null;
+let frozen = null;
 
 /** Tests freeze the clock at a Lagos wall time ('2026-10-30 19:15:00'), or pass null to unfreeze. */
-export function freezeClock(at: string | null): void {
+export function freezeClock(at) {
   frozen = at === null ? null : parse(at).getTime() - LAGOS_OFFSET_MS;
 }
 
-export function now(): Date {
+export function now() {
   return new Date((frozen ?? Date.now()) + LAGOS_OFFSET_MS);
 }
 
-const pad = (n: number, w = 2) => String(n).padStart(w, '0');
+const pad = (n, w = 2) => String(n).padStart(w, '0');
 
 /** 'YYYY-MM-DD' */
-export function ymd(d: Date = now()): string {
+export function ymd(d = now()) {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 }
 
 /** 'HH:MM' */
-export function hm(d: Date): string {
+export function hm(d) {
   return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
 /** 'YYYY-MM-DD HH:MM:SS', the format the API sends. */
-export function sql(d: Date = now()): string {
+export function sql(d = now()) {
   return `${ymd(d)} ${hm(d)}:${pad(d.getUTCSeconds())}`;
 }
 
 /** ISO 8601 with the Lagos offset (PHP's DATE_ATOM). */
-export function atom(d: Date): string {
+export function atom(d) {
   return `${ymd(d)}T${hm(d)}:${pad(d.getUTCSeconds())}+01:00`;
 }
 
 /** Parses 'YYYY-MM-DD', 'YYYY-MM-DD HH:MM' or 'YYYY-MM-DD HH:MM:SS' as Lagos wall time. */
-export function parse(s: string): Date {
+export function parse(s) {
   const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
   if (!m) throw new Error(`Bad date: ${s}`);
-  return new Date(Date.UTC(+m[1]!, +m[2]! - 1, +m[3]!, +(m[4] ?? 0), +(m[5] ?? 0), +(m[6] ?? 0)));
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 0), +(m[5] ?? 0), +(m[6] ?? 0)));
 }
 
-export function addMinutes(d: Date, minutes: number): Date {
+export function addMinutes(d, minutes) {
   return new Date(d.getTime() + minutes * 60_000);
 }
 
-export function addDays(d: Date, days: number): Date {
+export function addDays(d, days) {
   return new Date(d.getTime() + days * 86_400_000);
 }
 
 /** Calendar months, clamping the day (31 Jan + 1 month = 28/29 Feb), like PHP for our purposes. */
-export function addMonths(d: Date, months: number): Date {
+export function addMonths(d, months) {
   const y = d.getUTCFullYear();
   const m = d.getUTCMonth() + months;
   const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
@@ -62,21 +62,21 @@ export function addMonths(d: Date, months: number): Date {
   );
 }
 
-export function startOfDay(d: Date): Date {
+export function startOfDay(d) {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
-export function startOfMonth(d: Date): Date {
+export function startOfMonth(d) {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
 }
 
 /** 0 = Sunday … 6 = Saturday */
-export function weekday(d: Date): number {
+export function weekday(d) {
   return d.getUTCDay();
 }
 
 /** 'YYYY-MM' */
-export function period(d: Date): string {
+export function period(d) {
   return ymd(d).slice(0, 7);
 }
 
@@ -93,9 +93,9 @@ export const MONTHS = [
   'October',
   'November',
   'December',
-] as const;
+];
 
 /** 'October 2026' */
-export function monthLabel(d: Date): string {
+export function monthLabel(d) {
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }

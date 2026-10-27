@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/toast';
 import { ApiError } from '@/lib/api';
 import { formatNaira } from '@/lib/format';
-import { adminApi, type Coupon } from '../api';
+import { adminApi } from '../api';
 import {
   AdminHeader,
   CheckField,
@@ -22,7 +22,7 @@ import { fmt, tdClass, thClass } from '../format';
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const key = ['admin', 'coupons'];
 
-const describe = (c: Coupon) =>
+const describe = (c) =>
   `${c.discountType === 'percent' ? `${c.discountValue}%` : formatNaira(c.discountValue)} off` +
   (c.maxDiscountKobo ? ` (up to ${formatNaira(c.maxDiscountKobo)})` : '') +
   (c.minOrderKobo ? ` · min ${formatNaira(c.minOrderKobo)}` : '') +
@@ -36,7 +36,7 @@ export function CouponsPage() {
     queryKey: ['admin', 'menu'],
     queryFn: ({ signal }) => adminApi.menu(signal),
   });
-  const [editing, setEditing] = useState<Coupon | 'new' | null>(null);
+  const [editing, setEditing] = useState(null);
   const [showPersonal, setShowPersonal] = useState(false);
   if (!data) return <Loading error={error} />;
   const list = data.filter((c) => showPersonal || !c.personal);
@@ -134,17 +134,7 @@ export function CouponsPage() {
   );
 }
 
-function CouponEditor({
-  coupon,
-  kitchens,
-  onSaved,
-  onClose,
-}: {
-  coupon: Coupon | null;
-  kitchens: { id: number; name: string }[];
-  onSaved: (c: Coupon[]) => void;
-  onClose: () => void;
-}) {
+function CouponEditor({ coupon, kitchens, onSaved, onClose }) {
   const [c, setC] = useState({
     code: coupon?.code ?? '',
     description: coupon?.description ?? '',
@@ -163,8 +153,8 @@ function CouponEditor({
     is_active: coupon?.isActive ?? true,
     valid_weekdays: coupon?.validWeekdays ?? [],
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const n = (v: string) => (v === '' ? null : Number(v));
+  const [errors, setErrors] = useState({});
+  const n = (v) => (v === '' ? null : Number(v));
   return (
     <Modal title={coupon ? `Edit ${coupon.code}` : 'Create a coupon'} onClose={onClose} wide>
       <form
@@ -217,7 +207,7 @@ function CouponEditor({
         <SelectField
           label="Discount"
           value={c.discount_type}
-          onChange={(v) => setC({ ...c, discount_type: v as 'percent' | 'fixed' })}
+          onChange={(v) => setC({ ...c, discount_type: v })}
           options={[
             ['percent', 'Percentage'],
             ['fixed', 'Fixed amount (₦)'],
@@ -246,10 +236,7 @@ function CouponEditor({
           label="Only on"
           value={c.kitchen_id}
           onChange={(v) => setC({ ...c, kitchen_id: v })}
-          options={[
-            ['', 'Every kitchen'],
-            ...kitchens.map((k) => [String(k.id), k.name] as [string, string]),
-          ]}
+          options={[['', 'Every kitchen'], ...kitchens.map((k) => [String(k.id), k.name])]}
         />
         <div className="grid grid-cols-2 gap-3">
           <InputField

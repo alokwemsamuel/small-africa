@@ -6,14 +6,7 @@ import { toast } from '@/components/ui/toast';
 import { lagosNow } from '@/features/checkout/schedule';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
-import {
-  adminApi,
-  can,
-  useAdminMe,
-  type AdminReservation,
-  type Capacity,
-  type ReservationStatus,
-} from '../api';
+import { adminApi, can, useAdminMe } from '../api';
 import {
   AdminHeader,
   Empty,
@@ -27,17 +20,17 @@ import {
 } from '../ui';
 import { fmt } from '../format';
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const addDays = (iso: string, n: number) => {
+const pad = (n) => String(n).padStart(2, '0');
+const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (iso, n) => {
   const d = new Date(`${iso}T12:00:00`);
   d.setDate(d.getDate() + n);
   return ymd(d);
 };
-const dayHeading = (iso: string) =>
+const dayHeading = (iso) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long' });
 
-const ACTION: Partial<Record<ReservationStatus, string>> = {
+const ACTION = {
   confirmed: 'Confirm',
   seated: 'Seat',
   completed: 'Complete',
@@ -50,7 +43,7 @@ export function ReservationsAdminPage() {
   const [from, setFrom] = useState(today);
   const [status, setStatus] = useState('pending,confirmed,seated');
   const [q, setQ] = useState('');
-  const [capacityDate, setCapacityDate] = useState<string | null>(null);
+  const [capacityDate, setCapacityDate] = useState(null);
   const to = addDays(from, 6);
   const { data, error, isFetching } = useQuery({
     queryKey: ['admin', 'reservations', from, to, status, q],
@@ -59,7 +52,7 @@ export function ReservationsAdminPage() {
     refetchInterval: 60_000,
   });
 
-  const byDay = new Map<string, AdminReservation[]>();
+  const byDay = new Map();
   for (let i = 0; i < 7; i++) byDay.set(addDays(from, i), []);
   data?.reservations.forEach((r) => byDay.get(r.date)?.push(r));
 
@@ -156,14 +149,14 @@ export function ReservationsAdminPage() {
   );
 }
 
-function BookingRow({ r, areas }: { r: AdminReservation; areas: { slug: string; name: string }[] }) {
+function BookingRow({ r, areas }) {
   const qc = useQueryClient();
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState(null);
   const [table, setTable] = useState(r.tableLabel ?? '');
   const [cancel, setCancel] = useState(false);
   const [reason, setReason] = useState('');
-  const [err, setErr] = useState<string | null>(null);
-  const save = async (body: Record<string, unknown>, key: string) => {
+  const [err, setErr] = useState(null);
+  const save = async (body, key) => {
     setErr(null);
     setBusy(key);
     try {
@@ -286,28 +279,15 @@ function BookingRow({ r, areas }: { r: AdminReservation; areas: { slug: string; 
   );
 }
 
-function CapacityModal({
-  date,
-  onDate,
-  onClose,
-}: {
-  date: string;
-  onDate: (d: string) => void;
-  onClose: () => void;
-}) {
+function CapacityModal({ date, onDate, onClose }) {
   const qc = useQueryClient();
   const { data, error } = useQuery({
     queryKey: ['admin', 'capacity', date],
     queryFn: ({ signal }) => adminApi.capacity(date, signal),
   });
-  const [edit, setEdit] = useState<{
-    area: string;
-    time: string | null;
-    covers: string;
-    reason: string;
-  } | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const apply = (c: Capacity) => {
+  const [edit, setEdit] = useState(null);
+  const [err, setErr] = useState(null);
+  const apply = (c) => {
     qc.setQueryData(['admin', 'capacity', date], c);
     void qc.invalidateQueries({ queryKey: ['admin', 'reservations'] });
   };
@@ -398,7 +378,7 @@ function CapacityModal({
                     {s.override && !s.override.wholeDay && (
                       <button
                         type="button"
-                        onClick={async () => apply(await adminApi.clearCapacity(s.override!.id))}
+                        onClick={async () => apply(await adminApi.clearCapacity(s.override.id))}
                         className="text-accent mt-1 text-[11px] underline"
                       >
                         Reset
@@ -413,7 +393,7 @@ function CapacityModal({
                   {a.slots[0].override.reason && ` (${a.slots[0].override.reason})`}.{' '}
                   <button
                     type="button"
-                    onClick={async () => apply(await adminApi.clearCapacity(a.slots[0]!.override!.id))}
+                    onClick={async () => apply(await adminApi.clearCapacity(a.slots[0].override.id))}
                     className="text-accent underline"
                   >
                     Reset day

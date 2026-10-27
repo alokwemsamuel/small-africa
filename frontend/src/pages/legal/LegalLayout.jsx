@@ -1,27 +1,8 @@
-import type { ReactNode } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useSeo } from '@/lib/seo';
 
-export interface LegalSection {
-  id: string;
-  title: string;
-  body: ReactNode;
-}
-
 /** Shared layout for legal pages: table of contents + readable long-form typography. */
-export function LegalLayout({
-  title,
-  description,
-  updated,
-  intro,
-  sections,
-}: {
-  title: string;
-  description: string;
-  updated: string;
-  intro: ReactNode;
-  sections: LegalSection[];
-}) {
+export function LegalLayout({ title, description, updated, intro, sections }) {
   useSeo({ title, description });
   return (
     <>

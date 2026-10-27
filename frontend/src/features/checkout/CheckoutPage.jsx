@@ -18,7 +18,7 @@ import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
 import { useSeo } from '@/lib/seo';
 import { useLoyalty } from '@/features/rewards/api';
-import { checkoutApi, type CheckoutRequest, type Order } from './api';
+import { checkoutApi } from './api';
 import { formatTime, scheduleOptions } from './schedule';
 import { usePaymentPopup } from './usePaymentPopup';
 
@@ -35,7 +35,6 @@ const contactSchema = z.object({
   landmark: z.string().trim().max(160),
   notes: z.string().trim().max(500),
 });
-type Contact = z.infer<typeof contactSchema>;
 
 export function CheckoutPage() {
   useSeo({ title: 'Checkout' });
@@ -48,25 +47,25 @@ export function CheckoutPage() {
   const { data: loyalty } = useLoyalty(!!user);
   const vouchers = loyalty?.vouchers.filter((v) => !v.dineInOnly) ?? [];
 
-  const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('delivery');
+  const [fulfilment, setFulfilment] = useState('delivery');
   const [zone, setZone] = useState('');
-  const [addressId, setAddressId] = useState<number | 'new'>('new');
-  const [when, setWhen] = useState<'asap' | 'later'>('asap');
+  const [addressId, setAddressId] = useState('new');
+  const [when, setWhen] = useState('asap');
   const [schedDate, setSchedDate] = useState('');
   const [schedTime, setSchedTime] = useState('');
   const [couponInput, setCouponInput] = useState('');
-  const [coupon, setCoupon] = useState<string | null>(null);
-  const [couponError, setCouponError] = useState<string | null>(null);
+  const [coupon, setCoupon] = useState(null);
+  const [couponError, setCouponError] = useState(null);
   const [confirmAge, setConfirmAge] = useState(false);
   const [saveAddress, setSaveAddress] = useState(true);
-  const [payError, setPayError] = useState<string | null>(null);
+  const [payError, setPayError] = useState(null);
   const [paying, setPaying] = useState(false);
   const [useWallet, setUseWallet] = useState(false);
   const [voucher, setVoucher] = useState('');
   const payment = usePaymentPopup();
-  const idem = useRef<{ sig: string; key: string } | null>(null);
+  const idem = useRef(null);
 
-  const form = useForm<Contact>({
+  const form = useForm({
     resolver: zodResolver(contactSchema),
     defaultValues: { name: '', email: '', phone: '', line1: '', line2: '', landmark: '', notes: '' },
   });
@@ -102,7 +101,7 @@ export function CheckoutPage() {
     return () => clearTimeout(t);
   }, [typedEmail]);
 
-  const baseReq: CheckoutRequest = {
+  const baseReq = {
     fulfilment,
     zone: fulfilment === 'delivery' ? zone || null : null,
     scheduled_for: scheduledFor,
@@ -142,7 +141,7 @@ export function CheckoutPage() {
       form.setError('line1', { message: 'Enter your street address.' });
       return;
     }
-    const req: CheckoutRequest = {
+    const req = {
       ...baseReq,
       name: c.name,
       email: c.email,
@@ -173,7 +172,7 @@ export function CheckoutPage() {
     setPaying(true);
     try {
       const placed = await checkoutApi.place(items, req, idem.current.key);
-      let order: Order = placed.order;
+      let order = placed.order;
       if (placed.payment) {
         const result = await payment.open(placed.payment, {
           amountKobo: placed.order.totalKobo,
@@ -229,7 +228,7 @@ export function CheckoutPage() {
         <div className="flex flex-col gap-8">
           <Section n={1} title="Delivery or pickup">
             <div role="radiogroup" aria-label="Delivery or pickup" className="grid gap-3 sm:grid-cols-2">
-              {(['delivery', 'pickup'] as const).map((f) => (
+              {['delivery', 'pickup'].map((f) => (
                 <Choice
                   key={f}
                   checked={fulfilment === f}
@@ -624,7 +623,7 @@ export function CheckoutPage() {
   );
 }
 
-function Section({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+function Section({ n, title, children }) {
   return (
     <section
       aria-labelledby={`step-${n}`}
@@ -641,19 +640,7 @@ function Section({ n, title, children }: { n: number; title: string; children: R
   );
 }
 
-function Choice({
-  name,
-  checked,
-  onChange,
-  title,
-  children,
-}: {
-  name: string;
-  checked: boolean;
-  onChange: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Choice({ name, checked, onChange, title, children }) {
   return (
     <label
       className={cn(

@@ -1,4 +1,4 @@
-import { db, type Row } from './db';
+import { db } from './db';
 import { seeded } from './random';
 import { addDays, addMinutes, parse, sql, startOfDay, weekday, ymd } from './time';
 
@@ -69,7 +69,7 @@ const LAST = [
   'Williams',
 ];
 const KITCHEN_WEIGHT = { nigerian: 45, polish: 30, continental: 25 };
-const FAVOURITES: Record<string, number> = {
+const FAVOURITES = {
   'smoky-party-jollof': 14,
   'pierogi-ruskie': 11,
   'beef-suya-platter': 5,
@@ -90,18 +90,18 @@ const CANCEL_REASONS = [
 ];
 
 /** 'Paweł Wójcik' → 'pawelwojcik' (like the seeder's iconv transliteration). */
-const ascii = (name: string) =>
+const ascii = (name) =>
   name
     .replace(/ł/g, 'l')
     .normalize('NFKD')
     .replace(/[^A-Za-z]/g, '')
     .toLowerCase();
 
-export function generateOperations(at: Date): void {
+export function generateOperations(at) {
   // Same data all day (a rebuild after "Reset demo" looks the same), different each day.
   const rng = seeded(4242 + Math.floor(at.getTime() / 86_400_000));
-  const byKitchen: Record<string, Row[]> = {};
-  const drinks: Row[] = [];
+  const byKitchen = {};
+  const drinks = [];
   for (const d of db.where('dishes', (x) => x.deleted_at === null && !x.is_alcoholic)) {
     const category = db.byId('categories', d.category_id)?.slug;
     const kitchen = db.byId('kitchens', d.kitchen_id)?.slug;
@@ -111,18 +111,18 @@ export function generateOperations(at: Date): void {
     else if (kitchen) (byKitchen[kitchen] ??= []).push(row);
   }
   const zones = db.where('delivery_zones', (z) => !!z.is_active);
-  const coupon = (c: string) => db.find('coupons', (x) => x.code === c);
+  const coupon = (c) => db.find('coupons', (x) => x.code === c);
   const name = () => `${rng.pick(FIRST)} ${rng.pick(LAST)}`;
   const kitchenStaff = db.find('users', (u) => u.role === 'staff' && u.staff_position === 'kitchen');
   const frontDesk = db.find('users', (u) => u.role === 'staff' && u.staff_position === 'front_desk');
 
-  const pickDish = (kitchen: string) => {
-    const pool = byKitchen[kitchen]!;
-    return pool[rng.index(pool.map((d) => (FAVOURITES[d.slug] ?? 1) * (d.category === 'sides' ? 1 : 2)))]!;
+  const pickDish = (kitchen) => {
+    const pool = byKitchen[kitchen];
+    return pool[rng.index(pool.map((d) => (FAVOURITES[d.slug] ?? 1) * (d.category === 'sides' ? 1 : 2)))];
   };
 
   /** Older orders are finished; the last ~90 minutes are still moving through the kitchen. */
-  const status = (placed: Date, delivery: boolean): [string, number] => {
+  const status = (placed, delivery) => {
     const age = Math.floor((at.getTime() - placed.getTime()) / 60_000);
     if (age > 100) {
       return rng.int(1, 100) <= 4
@@ -136,8 +136,8 @@ export function generateOperations(at: Date): void {
     return [delivery ? 'delivered' : 'completed', Math.min(age, delivery ? 80 : 40)];
   };
 
-  const order = (placed: Date, dow: number, scheduledFor: Date | null = null) => {
-    const lines = new Map<number, { dish: Row; qty: number; total: number }>();
+  const order = (placed, dow, scheduledFor = null) => {
+    const lines = new Map();
     const signatureSlug = rng.int(1, 100) <= SIGNATURE_PERCENT ? rng.weighted(SIGNATURES) : null;
     const signature = signatureSlug
       ? Object.values(byKitchen)
@@ -162,7 +162,7 @@ export function generateOperations(at: Date): void {
       l.total = l.dish.price_kobo * l.qty;
       subtotal += l.total;
     }
-    let used: Row | null = null;
+    let used = null;
     let discount = 0;
     if (dow === 5 && kitchen === 'nigerian' && rng.int(1, 100) <= 40 && coupon('JOLLOFFRIDAY')) {
       const nigerian = [...lines.values()].reduce(
@@ -177,9 +177,7 @@ export function generateOperations(at: Date): void {
     }
     let delivery = rng.int(1, 100) <= 65;
     // Most deliveries go to the island (VI, Ikoyi, Lekki), fewer to the mainland.
-    let zone: Row | null = delivery
-      ? zones[rng.index(zones.map((_, i) => [5, 4, 4, 2, 1, 1, 1][i] ?? 1))]!
-      : null;
+    let zone = delivery ? zones[rng.index(zones.map((_, i) => [5, 4, 4, 2, 1, 1, 1][i] ?? 1))] : null;
     let fees = 50000 + (zone ? zone.fee_kobo : 0);
     if (zone && subtotal < zone.min_order_kobo) {
       delivery = false;
@@ -189,7 +187,7 @@ export function generateOperations(at: Date): void {
     const total = subtotal - discount + fees;
     const [state, minutes] = scheduledFor ? ['received', 0] : status(placed, delivery);
     const guest = name();
-    let reference: string;
+    let reference;
     do reference = rng.code(6, 'SA-');
     while (db.find('orders', (o) => o.reference === reference));
     const o = db.insert('orders', {
@@ -231,23 +229,21 @@ export function generateOperations(at: Date): void {
       const dish = db.byId('dishes', l.dish.id);
       if (dish) dish.popularity += l.qty;
     }
-    const steps: [string, number][] =
+    const steps =
       state === 'cancelled'
         ? [
             ['pending_payment', -1],
             ['received', 0],
             ['cancelled', minutes],
           ]
-        : (
-            [
-              ['pending_payment', -1],
-              ['received', 0],
-              ['preparing', 4],
-              ['ready', 28],
-              [delivery ? 'out_for_delivery' : 'completed', 34],
-              ...(delivery ? ([['delivered', minutes]] as [string, number][]) : []),
-            ] as [string, number][]
-          ).filter(([, m]) => m <= minutes);
+        : [
+            ['pending_payment', -1],
+            ['received', 0],
+            ['preparing', 4],
+            ['ready', 28],
+            [delivery ? 'out_for_delivery' : 'completed', 34],
+            ...(delivery ? [['delivered', minutes]] : []),
+          ].filter(([, m]) => m <= minutes);
     for (const [s, m] of steps) {
       // Kitchen staff move orders to preparing/ready; the front desk sends and completes them.
       const by = ['preparing', 'ready'].includes(s)
@@ -321,7 +317,7 @@ export function generateOperations(at: Date): void {
   auditTrail(at, kitchenStaff, frontDesk);
 }
 
-function reservations(at: Date, rng: ReturnType<typeof seeded>, name: () => string): void {
+function reservations(at, rng, name) {
   const areas = db.where('seating_areas', (a) => !!a.is_active);
   const times = db
     .where('reservation_slots', (s) => !!s.is_active)
@@ -348,7 +344,7 @@ function reservations(at: Date, rng: ReturnType<typeof seeded>, name: () => stri
     'High chair needed',
     'Nut allergy at the table',
   ];
-  const book = (offset: number, guest: Row | null) => {
+  const book = (offset, guest) => {
     const day = addDays(startOfDay(at), offset);
     const time = rng.int(1, 100) <= 70 ? rng.pick(dinner) : rng.pick(times);
     const area = rng.pick(areas);
@@ -368,7 +364,7 @@ function reservations(at: Date, rng: ReturnType<typeof seeded>, name: () => stri
           : rng.int(1, 100) <= 60
             ? 'pending'
             : 'cancelled';
-    let code: string;
+    let code;
     do code = rng.code(6, 'R-');
     while (db.find('reservations', (r) => r.code === code));
     db.insert('reservations', {
@@ -400,7 +396,7 @@ function reservations(at: Date, rng: ReturnType<typeof seeded>, name: () => stri
 }
 
 /** Most published reviews come from real (guest) orders, so the admin shows them as verified. */
-function linkReviews(rng: ReturnType<typeof seeded>): void {
+function linkReviews(rng) {
   const done = db.where('orders', (o) => o.user_id === null && ['delivered', 'completed'].includes(o.status));
   if (!done.length) return;
   for (const r of db.where('reviews', (x) => x.user_id === null && x.order_id === null)) {
@@ -409,17 +405,10 @@ function linkReviews(rng: ReturnType<typeof seeded>): void {
 }
 
 /** A plausible recent audit trail, so the Audit page isn't empty on first open. */
-function auditTrail(at: Date, kitchen: Row | null, desk: Row | null): void {
+function auditTrail(at, kitchen, desk) {
   const admin = db.find('users', (u) => u.role === 'super_admin');
   const manager = db.find('users', (u) => u.role === 'manager');
-  const log = (
-    actor: Row | null,
-    action: string,
-    type: string | null,
-    id: string | number | null,
-    when: Date,
-    meta: Row | null = null,
-  ) =>
+  const log = (actor, action, type, id, when, meta = null) =>
     db.insert('audit_logs', {
       actor_user_id: actor?.id ?? null,
       action,
@@ -429,7 +418,7 @@ function auditTrail(at: Date, kitchen: Row | null, desk: Row | null): void {
       ip: '102.89.34.17',
       created_at: sql(when),
     });
-  const entries: [Date, () => void][] = [];
+  const entries = [];
   for (const r of db.all('interest_runs')) {
     entries.push([
       parse(r.started_at),
@@ -447,7 +436,7 @@ function auditTrail(at: Date, kitchen: Row | null, desk: Row | null): void {
       [kitchen, '10:02'],
       [desk, '10:15'],
       [manager, '11:40'],
-    ] as [Row | null, string][]) {
+    ]) {
       const when = parse(`${ymd(day)} ${h}`);
       if (user && when < at) entries.push([when, () => log(user, 'auth.login', 'user', user.id, when)]);
     }

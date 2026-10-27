@@ -9,6 +9,8 @@ export function DemoRibbon() {
   const [busy, setBusy] = useState(false);
 
   const reset = async () => {
+    // Build-time constant: other builds drop the import below, so they ship no demo code or data.
+    if (import.meta.env.VITE_DEMO_MODE !== 'true') return;
     setBusy(true);
     const { resetDemo } = await import('@/demo');
     await resetDemo();

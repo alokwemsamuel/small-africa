@@ -6,7 +6,7 @@ import { toast } from '@/components/ui/toast';
 import { ThemeSegmented } from '@/features/theme/ThemeSwitcher';
 import { ApiError } from '@/lib/api';
 import { formatNaira } from '@/lib/format';
-import { adminApi, type AdminSettings } from '../api';
+import { adminApi } from '../api';
 import { AdminHeader, CheckField, InputField, Loading, Panel } from '../ui';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -16,7 +16,7 @@ export function SettingsAdminPage() {
   const qc = useQueryClient();
   const { data, error } = useQuery({ queryKey: key, queryFn: ({ signal }) => adminApi.settings(signal) });
   if (!data) return <Loading error={error} />;
-  const saved = (s: AdminSettings) => {
+  const saved = (s) => {
     qc.setQueryData(key, s);
     void qc.invalidateQueries({ queryKey: ['public'] });
     toast('Settings saved');
@@ -42,10 +42,10 @@ export function SettingsAdminPage() {
   );
 }
 
-function useSave(onSaved: (s: AdminSettings) => void) {
-  const [errors, setErrors] = useState<Record<string, string>>({});
+function useSave(onSaved) {
+  const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
-  const run = async (fn: () => Promise<AdminSettings>) => {
+  const run = async (fn) => {
     setBusy(true);
     setErrors({});
     try {
@@ -59,20 +59,16 @@ function useSave(onSaved: (s: AdminSettings) => void) {
   return { errors, busy, run };
 }
 
-function Errors({ errors }: { errors: Record<string, string> }) {
+function Errors({ errors }) {
   const list = Object.entries(errors).filter(([k]) => k !== '_');
   if (!errors._ && list.length === 0) return null;
   return <Alert tone="error">{list.length ? list.map(([, v]) => v).join(' ') : errors._}</Alert>;
 }
 
-function Restaurant({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSettings) => void }) {
+function Restaurant({ data, onSaved }) {
   const [r, setR] = useState({ ...data.groups.restaurant });
   const { errors, busy, run } = useSave(onSaved);
-  const field = (
-    k: string,
-    label: string,
-    extra: Partial<React.InputHTMLAttributes<HTMLInputElement>> = {},
-  ) => (
+  const field = (k, label, extra = {}) => (
     <InputField
       label={label}
       value={r[k] ?? ''}
@@ -110,7 +106,7 @@ function Restaurant({ data, onSaved }: { data: AdminSettings; onSaved: (s: Admin
   );
 }
 
-function Pricing({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSettings) => void }) {
+function Pricing({ data, onSaved }) {
   const p = data.groups.pricing;
   const [f, setF] = useState({
     vat: String(p.vat_rate_bp / 100),
@@ -181,7 +177,7 @@ function Pricing({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSet
   );
 }
 
-function Ordering({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSettings) => void }) {
+function Ordering({ data, onSaved }) {
   const [o, setO] = useState({ ...data.groups.ordering });
   const [r, setR] = useState({ ...data.groups.reservations });
   const { errors, busy, run } = useSave(onSaved);
@@ -251,7 +247,7 @@ function Ordering({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSe
   );
 }
 
-function Hours({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSettings) => void }) {
+function Hours({ data, onSaved }) {
   const [h, setH] = useState(data.hours.map((d) => ({ ...d })));
   const { errors, busy, run } = useSave(onSaved);
   return (
@@ -327,7 +323,7 @@ function Hours({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSetti
   );
 }
 
-function Zones({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSettings) => void }) {
+function Zones({ data, onSaved }) {
   const { errors, run } = useSave(onSaved);
   const [adding, setAdding] = useState({ name: '', fee: '', min: '15000', eta: '45' });
   return (
@@ -389,13 +385,7 @@ function Zones({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSetti
   );
 }
 
-function ZoneRow({
-  zone,
-  onSave,
-}: {
-  zone: AdminSettings['zones'][number];
-  onSave: (b: Record<string, unknown>) => void;
-}) {
+function ZoneRow({ zone, onSave }) {
   const [z, setZ] = useState({
     fee: String(zone.feeKobo / 100),
     min: String(zone.minOrderKobo / 100),
@@ -457,7 +447,7 @@ function ZoneRow({
   );
 }
 
-function Seating({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSettings) => void }) {
+function Seating({ data, onSaved }) {
   const { errors, run } = useSave(onSaved);
   return (
     <Panel title="Seating areas">
@@ -477,13 +467,7 @@ function Seating({ data, onSaved }: { data: AdminSettings; onSaved: (s: AdminSet
   );
 }
 
-function SeatingRow({
-  area,
-  onSave,
-}: {
-  area: AdminSettings['seating'][number];
-  onSave: (b: Record<string, unknown>) => void;
-}) {
+function SeatingRow({ area, onSave }) {
   const [s, setS] = useState({
     covers: String(area.coversPerSlot),
     min: String(area.minParty),

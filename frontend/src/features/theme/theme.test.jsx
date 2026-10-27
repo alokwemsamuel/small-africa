@@ -9,7 +9,7 @@ import { ThemeMenu, ThemeSegmented } from './ThemeSwitcher';
 import { THEME_STORAGE_KEY } from './theme';
 
 const root = document.documentElement;
-const user = (themePreference: string | null) => ({
+const user = (themePreference) => ({
   id: 3,
   firstName: 'Chiamaka',
   lastName: 'Bello',
@@ -136,7 +136,7 @@ describe('public/theme-init.js (runs before React)', () => {
     ['garbage', true, 'dark'],
   ])('stored=%s prefersLight=%s → %s', (stored, prefersLight, expected) => {
     if (stored) localStorage.setItem(THEME_STORAGE_KEY, stored);
-    mockColorScheme(prefersLight as boolean);
+    mockColorScheme(prefersLight);
     run();
     expect(root.dataset.theme).toBe(expected);
     expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe(

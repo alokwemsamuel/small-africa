@@ -1,4 +1,4 @@
-import { db, type Row } from '../db';
+import { db } from '../db';
 import { fail, naira } from '../http';
 import { code } from '../random';
 import {
@@ -23,33 +23,31 @@ import { LoyaltyRules } from './loyaltyRules';
 export const VOUCHER_DAYS = 90;
 const STAMP_CARD_SIZE = 10;
 
-export function rules(): LoyaltyRules {
+export function rules() {
   return new LoyaltyRules(db.settings('loyalty'));
 }
 
 /* -------------------------------------------------------------------- ledger */
 
-export function account(userId: number): Row {
+export function account(userId) {
   return (
     db.find('loyalty_accounts', (a) => a.user_id === userId) ??
     db.insert('loyalty_accounts', { user_id: userId })
   );
 }
 
-type Kind = 'wallet' | 'points';
-
 /** Appends one ledger row and updates the cached balance. Replaying an idempotency key changes nothing. */
 function move(
-  kind: Kind,
-  userId: number,
-  direction: 'credit' | 'debit',
-  type: string,
-  amount: number,
-  description: string,
-  reference: string | null = null,
-  idempotencyKey: string | null = null,
-  actorId: number | null = null,
-): { id: number; balanceAfter: number; replayed: boolean } {
+  kind,
+  userId,
+  direction,
+  type,
+  amount,
+  description,
+  reference = null,
+  idempotencyKey = null,
+  actorId = null,
+) {
   if (amount <= 0) throw new Error('Ledger amounts must be positive.');
   const [table, amountCol, balanceCol, cacheCol] =
     kind === 'wallet'
@@ -83,15 +81,13 @@ function move(
 }
 
 export const ledger = {
-  wallet: (...args: Parameters<typeof move> extends [Kind, ...infer R] ? R : never) =>
-    move('wallet', ...args),
-  points: (...args: Parameters<typeof move> extends [Kind, ...infer R] ? R : never) =>
-    move('points', ...args),
+  wallet: (...args) => move('wallet', ...args),
+  points: (...args) => move('points', ...args),
   /** The lowest wallet balance held between two instants (opening balance included). */
-  lowestWalletBalance(userId: number, fromSql: string, toSql: string): number {
+  lowestWalletBalance(userId, fromSql, toSql) {
     const rows = db.where('wallet_ledger', (r) => r.user_id === userId);
     const before = rows.filter((r) => r.created_at < fromSql);
-    const opening = before.length ? before[before.length - 1]!.balance_after_kobo : 0;
+    const opening = before.length ? before[before.length - 1].balance_after_kobo : 0;
     const inside = rows
       .filter((r) => r.created_at >= fromSql && r.created_at < toSql)
       .map((r) => r.balance_after_kobo);
@@ -101,13 +97,7 @@ export const ledger = {
 
 /* -------------------------------------------------------------- notifications */
 
-export function notify(
-  userId: number,
-  type: string,
-  title: string,
-  body: string,
-  data: Row | null = null,
-): void {
+export function notify(userId, type, title, body, data = null) {
   // The real API also emails; the demo sends no email.
   db.insert('notifications', {
     user_id: userId,
@@ -118,7 +108,7 @@ export function notify(
   });
 }
 
-export function notifications(userId: number) {
+export function notifications(userId) {
   const rows = db.where('notifications', (n) => n.user_id === userId).sort((a, b) => b.id - a.id);
   return {
     items: rows.slice(0, 30).map((n) => ({
@@ -133,7 +123,7 @@ export function notifications(userId: number) {
   };
 }
 
-export function markRead(userId: number, ids: number[] | null): void {
+export function markRead(userId, ids) {
   if (ids && ids.length === 0) return;
   for (const n of db.where('notifications', (r) => r.user_id === userId && r.read_at === null)) {
     if (!ids || ids.includes(n.id)) n.read_at = sql();
@@ -142,7 +132,7 @@ export function markRead(userId: number, ids: number[] | null): void {
 
 /* ------------------------------------------------------------------ dashboard */
 
-export function spend12m(userId: number): number {
+export function spend12m(userId) {
   const since = sql(addMonths(now(), -12));
   const orders = db
     .where(
@@ -161,7 +151,7 @@ export function spend12m(userId: number): number {
   return orders + visits;
 }
 
-export function vouchers(userId: number) {
+export function vouchers(userId) {
   const at = sql();
   return db
     .where('reward_vouchers', (v) => v.user_id === userId && v.status === 'issued' && v.expires_at > at)
@@ -175,7 +165,7 @@ export function vouchers(userId: number) {
     }));
 }
 
-export function summary(userId: number) {
+export function summary(userId) {
   const a = account(userId);
   const user = db.byId('users', userId) ?? {};
   const r = rules();
@@ -183,7 +173,7 @@ export function summary(userId: number) {
   const at = now();
   const spend = spend12m(userId);
   const tiers = r.tiers();
-  const tier = tiers.find((t) => t.key === a.tier) ?? tiers[0]!;
+  const tier = tiers.find((t) => t.key === a.tier) ?? tiers[0];
   const points = Number(a.points_balance);
 
   const catalog = db
@@ -200,7 +190,7 @@ export function summary(userId: number) {
       affordable: points >= x.points_cost,
     }));
   const nextCatalog = catalog.find((x) => !x.affordable) ?? null;
-  const stampRewards = ((s.stamp_rewards ?? []) as Row[]).map((x) => ({
+  const stampRewards = (s.stamp_rewards ?? []).map((x) => ({
     stamp: Number(x.stamp),
     reward: String(x.reward),
   }));
@@ -254,10 +244,10 @@ export function summary(userId: number) {
           : null,
       },
       topup: {
-        presetsKobo: ((s.topup_presets_naira ?? []) as number[]).map((n) => Number(n) * 100),
+        presetsKobo: (s.topup_presets_naira ?? []).map((n) => Number(n) * 100),
         minKobo: r.topupLimits().min,
         maxKobo: r.topupLimits().max,
-        bonusBands: ((s.topup_bonus_tiers ?? []) as Row[]).map((b) => ({
+        bonusBands: (s.topup_bonus_tiers ?? []).map((b) => ({
           minKobo: Number(b.min_naira) * 100,
           bonusBp: Number(b.bonus_bp),
         })),
@@ -267,7 +257,7 @@ export function summary(userId: number) {
       balance: points,
       valueKobo: r.pointsToCreditKobo(points),
       earnPer1000Naira: Number(s.earn_points_per_1000_naira ?? 5),
-      doublePointsWeekdays: ((s.double_points_weekdays ?? []) as number[]).map(Number),
+      doublePointsWeekdays: (s.double_points_weekdays ?? []).map(Number),
       expiresAt: points > 0 && a.last_activity_at ? ymd(addMonths(parse(a.last_activity_at), months)) : null,
       nextReward: nextCatalog
         ? {
@@ -319,7 +309,7 @@ export function summary(userId: number) {
   };
 }
 
-export function history(userId: number, kind: string, before: number | null, limit = 20) {
+export function history(userId, kind, before, limit = 20) {
   const [table, amount, balance] =
     kind === 'points'
       ? ['points_ledger', 'points', 'balance_after']
@@ -341,13 +331,13 @@ export function history(userId: number, kind: string, before: number | null, lim
       description: r.description,
       at: r.created_at,
     })),
-    nextBefore: more && page.length ? page[page.length - 1]!.id : null,
+    nextBefore: more && page.length ? page[page.length - 1].id : null,
   };
 }
 
 /* ---------------------------------------------------------- earning and tiers */
 
-export function onOrderCompleted(order: Row): void {
+export function onOrderCompleted(order) {
   if (!order.user_id || order.loyalty_processed_at !== null || order.payment_status !== 'paid') return;
   const items = db.where('order_items', (i) => i.order_id === order.id);
   const subtotal = Number(order.subtotal_kobo);
@@ -360,13 +350,7 @@ export function onOrderCompleted(order: Row): void {
   maybeRewardReferral(order.user_id);
 }
 
-export function recordSpend(
-  userId: number,
-  reference: string,
-  lines: { amountKobo: number; featured: boolean }[],
-  at: Date,
-  order: Row | null = null,
-): void {
+export function recordSpend(userId, reference, lines, at, order = null) {
   const r = rules();
   const s = r.s;
   const user = db.byId('users', userId);
@@ -389,7 +373,7 @@ export function recordSpend(
       `earn:${reference}`,
     );
   const stamp = r.addStamp(Number(a.stamps));
-  let voucher: ReturnType<typeof issueVoucher> | null = null;
+  let voucher = null;
   if (stamp.reward) {
     voucher = issueVoucher(
       userId,
@@ -455,7 +439,7 @@ export function recordSpend(
   recalculateTier(userId, false);
 }
 
-export function recordVisit(userId: number, amountKobo: number, actorId: number, note: string | null) {
+export function recordVisit(userId, amountKobo, actorId, note) {
   if (!db.find('users', (u) => u.id === userId && u.role === 'customer' && u.is_active)) {
     throw fail.notFound('We couldn’t find that member.');
   }
@@ -487,7 +471,7 @@ export function recordVisit(userId: number, amountKobo: number, actorId: number,
   return { reference, points };
 }
 
-export function recalculateTier(userId: number, allowDowngrade: boolean): string | null {
+export function recalculateTier(userId, allowDowngrade) {
   const r = rules();
   const spend = spend12m(userId);
   const a = account(userId);
@@ -515,14 +499,14 @@ export function recalculateTier(userId: number, allowDowngrade: boolean): string
 /* -------------------------------------------------------------- redemptions */
 
 export function issueVoucher(
-  userId: number,
-  source: string,
-  title: string,
-  rewardId: number | null,
-  dishId: number | null,
-  category: string | null,
-  dineInOnly: boolean,
-  days: number,
+  userId,
+  source,
+  title,
+  rewardId,
+  dishId,
+  category,
+  dineInOnly,
+  days,
   pointsSpent = 0,
 ) {
   const voucherCode = code(6, 'RW-');
@@ -542,7 +526,7 @@ export function issueVoucher(
   return { code: voucherCode, title, expiresAt: expires, dineInOnly };
 }
 
-export function redeem(userId: number, slug: string, idempotencyKey: string | null) {
+export function redeem(userId, slug, idempotencyKey) {
   const reward = db.find('rewards_catalog', (x) => x.slug === slug && !!x.is_active);
   if (!reward) throw fail.notFound('That reward isn’t available.');
   const min = Number(rules().s.min_points_to_redeem);
@@ -558,7 +542,7 @@ export function redeem(userId: number, slug: string, idempotencyKey: string | nu
     key,
   );
   if (entry.replayed) return { type: 'replayed', pointsBalance: entry.balanceAfter };
-  const out: Row = { type: reward.reward_type, pointsBalance: entry.balanceAfter };
+  const out = { type: reward.reward_type, pointsBalance: entry.balanceAfter };
   if (reward.reward_type === 'credit') {
     ledger.wallet(
       userId,
@@ -596,7 +580,7 @@ export function redeem(userId: number, slug: string, idempotencyKey: string | nu
 
 /* ---------------------------------------------------------------- referrals */
 
-export function maybeRewardReferral(friendId: number): void {
+export function maybeRewardReferral(friendId) {
   const referral = db.find('referrals', (x) => x.referred_user_id === friendId && x.status === 'pending');
   if (!referral) return;
   const friend = db.byId('users', friendId);
@@ -611,7 +595,7 @@ export function maybeRewardReferral(friendId: number): void {
     )
     .sort((a, b) => String(a.placed_at).localeCompare(String(b.placed_at)))[0];
   if (!friend || !referrer || !firstOrder || friend.email_verified_at === null) return;
-  const digits = (p: string | null) =>
+  const digits = (p) =>
     String(p ?? '')
       .replace(/\D/g, '')
       .slice(-10);
@@ -673,14 +657,7 @@ export function maybeRewardReferral(friendId: number): void {
 
 /* ---------------------------------------------------------------- admin tools */
 
-export function adjust(
-  actorId: number,
-  userId: number,
-  kind: string,
-  direction: 'credit' | 'debit',
-  amount: number,
-  reason: string,
-) {
+export function adjust(actorId, userId, kind, direction, amount, reason) {
   if (reason.trim().length < 5) throw fail.field('reason', 'Please give a reason (at least 5 characters).');
   const entry =
     kind === 'points'
@@ -710,7 +687,7 @@ export function adjust(
 
 /* ------------------------------------------------------------------- wallet */
 
-export function topupToPublic(t: Row) {
+export function topupToPublic(t) {
   return {
     reference: t.reference,
     amountKobo: t.amount_kobo,
@@ -721,7 +698,7 @@ export function topupToPublic(t: Row) {
 }
 
 /** Credits a paid top-up (and its bonus) exactly once. */
-export function creditTopup(topup: Row): void {
+export function creditTopup(topup) {
   if (topup.status === 'paid') return;
   const userId = topup.user_id;
   const amount = Number(topup.amount_kobo);
@@ -763,7 +740,7 @@ export function creditTopup(topup: Row): void {
 /* ------------------------------------------------------------------ interest */
 
 /** InterestService::run. `demo` may pay the current month to date. Never pays a member twice. */
-export function runInterest(periodKey: string, trigger: 'cron' | 'admin' | 'demo', actorId: number | null) {
+export function runInterest(periodKey, trigger, actorId) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodKey)) throw fail.badRequest('Period must look like 2026-10.');
   const start = parse(`${periodKey}-01`);
   const end = addMonths(start, 1);

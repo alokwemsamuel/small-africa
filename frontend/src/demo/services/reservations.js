@@ -1,4 +1,4 @@
-import { db, type Row } from '../db';
+import { db } from '../db';
 import { fail } from '../http';
 import { code } from '../random';
 import { addDays, addMinutes, now, parse, startOfDay, ymd } from '../time';
@@ -9,7 +9,7 @@ import { openingWindow } from './pricing';
 
 const ACTIVE = ['pending', 'confirmed', 'seated'];
 
-export const STAFF_TRANSITIONS: Record<string, string[]> = {
+export const STAFF_TRANSITIONS = {
   pending: ['confirmed', 'cancelled'],
   confirmed: ['seated', 'cancelled', 'no_show'],
   seated: ['completed'],
@@ -18,11 +18,11 @@ export const STAFF_TRANSITIONS: Record<string, string[]> = {
   no_show: ['confirmed'],
 };
 
-export function manageToken(reservationCode: string): string {
+export function manageToken(reservationCode) {
   return `demo-${btoa(`manage:${reservationCode}`).replace(/[^A-Za-z0-9]/g, '')}`;
 }
 
-export function capacity(areaId: number, date: string, time: string, fallback: number): number {
+export function capacity(areaId, date, time, fallback) {
   const overrides = db.where(
     'capacity_overrides',
     (o) => o.seating_area_id === areaId && o.service_date === date,
@@ -33,7 +33,7 @@ export function capacity(areaId: number, date: string, time: string, fallback: n
   return o ? o.covers : fallback;
 }
 
-export function bookedCovers(areaId: number, date: string, time: string): number {
+export function bookedCovers(areaId, date, time) {
   return db
     .where(
       'reservations',
@@ -46,7 +46,7 @@ export function bookedCovers(areaId: number, date: string, time: string): number
     .reduce((s, r) => s + r.party_size, 0);
 }
 
-function parseDate(date: string): Date {
+function parseDate(date) {
   const day = parse(date);
   if (ymd(day) !== date) throw fail.field('date', 'Choose a valid date.');
   const today = startOfDay(now());
@@ -56,18 +56,18 @@ function parseDate(date: string): Date {
   return day;
 }
 
-export function activeSlots(): string[] {
+export function activeSlots() {
   return db
     .where('reservation_slots', (s) => !!s.is_active)
     .map((s) => String(s.start_time).slice(0, 5))
     .sort();
 }
 
-export function activeAreas(): Row[] {
+export function activeAreas() {
   return db.where('seating_areas', (a) => !!a.is_active).sort((a, b) => a.sort_order - b.sort_order);
 }
 
-export function availability(date: string, partySize: number) {
+export function availability(date, partySize) {
   const day = parseDate(date);
   const rules = db.settings('reservations');
   const maxParty = Number(rules.max_party_online ?? 12);
@@ -111,7 +111,7 @@ export function availability(date: string, partySize: number) {
   };
 }
 
-export function toPublic(r: Row) {
+export function toPublic(r) {
   const area = db.byId('seating_areas', r.seating_area_id);
   return {
     code: r.code,
@@ -127,7 +127,7 @@ export function toPublic(r: Row) {
   };
 }
 
-export function create(data: Row, user: Row | null) {
+export function create(data, user) {
   const avail = availability(data.date, data.party_size);
   const area = avail.areas.find((a) => a.slug === data.area);
   if (!area) throw fail.field('area', 'Choose where you’d like to sit.');
@@ -135,7 +135,7 @@ export function create(data: Row, user: Row | null) {
     throw fail.field('area', `${area.name} seats ${area.minParty}–${area.maxParty} guests.`);
   const slot = area.slots.find((s) => s.time === data.time);
   if (!slot || !slot.available) throw fail.field('time', 'That time isn’t available. Please choose another.');
-  const areaRow = db.find('seating_areas', (a) => a.slug === data.area)!;
+  const areaRow = db.find('seating_areas', (a) => a.slug === data.area);
   if (
     bookedCovers(areaRow.id, data.date, data.time) + data.party_size >
     capacity(areaRow.id, data.date, data.time, areaRow.covers_per_slot)
@@ -145,7 +145,7 @@ export function create(data: Row, user: Row | null) {
       'slot_taken',
     );
   }
-  let reservationCode: string;
+  let reservationCode;
   do reservationCode = code(6, 'R-');
   while (db.find('reservations', (r) => r.code === reservationCode));
   const row = db.insert('reservations', {
@@ -166,7 +166,7 @@ export function create(data: Row, user: Row | null) {
   return { reservation: toPublic(row), manageToken: manageToken(row.code) };
 }
 
-function authorised(reservationCode: string, user: Row | null, token: string | null): Row {
+function authorised(reservationCode, user, token) {
   const row = db.find('reservations', (r) => r.code === reservationCode.toUpperCase());
   const owner = row && user && (row.user_id === user.id || row.guest_email === user.email);
   const tokenOk = row && token && token === manageToken(row.code);
@@ -174,11 +174,11 @@ function authorised(reservationCode: string, user: Row | null, token: string | n
   return row;
 }
 
-export function find(reservationCode: string, user: Row | null, token: string | null) {
+export function find(reservationCode, user, token) {
   return toPublic(authorised(reservationCode, user, token));
 }
 
-export function cancel(reservationCode: string, user: Row | null, token: string | null) {
+export function cancel(reservationCode, user, token) {
   const row = authorised(reservationCode, user, token);
   if (!['pending', 'confirmed'].includes(row.status)) {
     throw fail.conflict('This booking can no longer be cancelled online. Please call us.');
@@ -190,10 +190,10 @@ export function cancel(reservationCode: string, user: Row | null, token: string 
   return toPublic(row);
 }
 
-export function staffUpdate(reservationCode: string, data: Row, actorId: number): Row {
+export function staffUpdate(reservationCode, data, actorId) {
   const row = db.find('reservations', (r) => r.code === reservationCode.toUpperCase());
   if (!row) throw fail.notFound('We couldn’t find that booking.');
-  const set: Row = {};
+  const set = {};
   if (data.status && data.status !== row.status) {
     if (!(STAFF_TRANSITIONS[row.status] ?? []).includes(data.status)) {
       throw fail.conflict(`A booking that is ${row.status} can’t become ${data.status}.`);
@@ -221,7 +221,7 @@ export function staffUpdate(reservationCode: string, data: Row, actorId: number)
   return row;
 }
 
-export function listForUser(userId: number, email: string) {
+export function listForUser(userId, email) {
   return db
     .where('reservations', (r) => r.user_id === userId || r.guest_email === email)
     .sort((a, b) => `${b.service_date} ${b.start_time}`.localeCompare(`${a.service_date} ${a.start_time}`))

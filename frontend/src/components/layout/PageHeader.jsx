@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Photo } from '../ui/Photo';
 import { Reveal } from '../motion/Reveal';
 
@@ -6,19 +5,7 @@ import { Reveal } from '../motion/Reveal';
  * Editorial page header. The optional photo sits under a gradient of the page's own surface
  * colour, so the heading keeps AA contrast in both Dark and Light themes.
  */
-export function PageHeader({
-  eyebrow,
-  title,
-  intro,
-  photo,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  intro?: ReactNode;
-  photo?: string;
-  children?: ReactNode;
-}) {
+export function PageHeader({ eyebrow, title, intro, photo, children }) {
   return (
     <header className="relative isolate overflow-hidden">
       {photo && (

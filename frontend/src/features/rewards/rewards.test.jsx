@@ -1,12 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NotificationBell } from '@/components/layout/NotificationBell';
-import type { User } from '@/features/auth/types';
 import { mockApi, renderRoutes } from '@/test/utils';
-import { bonusFor, type LoyaltySummary } from './api';
+import { bonusFor } from './api';
 import { InterestAccountPanel } from './InterestAccountPanel';
 
-const guest: User = {
+const guest = {
   id: 3,
   firstName: 'Chiamaka',
   lastName: 'Bello',
@@ -29,7 +28,7 @@ const bands = [
   { minKobo: 5000000, bonusBp: 500 },
 ];
 
-const account: LoyaltySummary = {
+const account = {
   member: { name: 'Chiamaka Bello', since: '2025-08-01 00:00:00', birthdayWeek: false, hasBirthday: true },
   tier: {
     key: 'gold',
@@ -117,7 +116,7 @@ const account: LoyaltySummary = {
   offers: [],
 };
 
-function setup(extra: Parameters<typeof mockApi>[0] = {}) {
+function setup(extra = {}) {
   const api = mockApi({
     'GET /auth/me': () => ({ body: { user: guest } }),
     'GET /account/loyalty': () => ({ body: account }),
@@ -182,7 +181,7 @@ describe('InterestAccountPanel', () => {
     await waitFor(() =>
       expect(calls.find((c) => c.path === '/account/rewards/credit-1000/redeem')).toBeDefined(),
     );
-    const call = calls.find((c) => c.path === '/account/rewards/credit-1000/redeem')!;
+    const call = calls.find((c) => c.path === '/account/rewards/credit-1000/redeem');
     expect(call.headers['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/);
   });
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PHOTOS, PHOTO_WIDTHS } from '@/content/photos';
 import { cn } from '@/lib/cn';
 
-const KITCHEN_ART: Record<string, { from: string; to: string }> = {
+const KITCHEN_ART = {
   nigerian: { from: '#B4492F', to: '#3a1a10' },
   polish: { from: '#A3243B', to: '#2a0c12' },
   continental: { from: '#2E4A3B', to: '#0f1a14' },
@@ -10,39 +10,24 @@ const KITCHEN_ART: Record<string, { from: string; to: string }> = {
 };
 
 /** Callers may position the photo themselves (e.g. absolute backgrounds); otherwise it is relative. */
-const position = (className?: string) =>
+const position = (className) =>
   /(^|\s)(absolute|fixed|sticky)(\s|$)/.test(className ?? '') ? '' : 'relative';
-
-interface PhotoProps {
-  /** Key in the generated photo manifest, e.g. "dishes/smoky-party-jollof". */
-  name: string;
-  alt?: string;
-  /** `sizes` attribute: how wide the image renders, so the browser picks the right file. */
-  sizes: string;
-  className?: string;
-  /** Above-the-fold images load eagerly with high priority; everything else is lazy. */
-  priority?: boolean;
-  /** Shown when no photo exists for `name`: an elegant illustrated placeholder in kitchen colours. */
-  fallbackKitchen?: string | null;
-  fallbackLabel?: string;
-  /** An uploaded photo (admin menu manager) that replaces the stock one. */
-  src?: string | null;
-}
 
 /**
  * Responsive AVIF/WebP image from frontend/public/img with a blurred placeholder,
  * explicit aspect ratio (no layout shift) and lazy loading.
+ *
+ * @param {object} props
+ * @param {string} props.name key in the generated photo manifest, e.g. "dishes/smoky-party-jollof"
+ * @param {string} [props.alt]
+ * @param {string} props.sizes `sizes` attribute: how wide the image renders, so the browser picks the right file
+ * @param {string} [props.className]
+ * @param {boolean} [props.priority] above-the-fold images load eagerly with high priority; everything else is lazy
+ * @param {string | null} [props.fallbackKitchen] shown when no photo exists for `name`: an illustrated placeholder in kitchen colours
+ * @param {string} [props.fallbackLabel]
+ * @param {string | null} [props.src] an uploaded photo (admin menu manager) that replaces the stock one
  */
-export function Photo({
-  name,
-  alt,
-  sizes,
-  className,
-  priority,
-  fallbackKitchen,
-  fallbackLabel,
-  src,
-}: PhotoProps) {
+export function Photo({ name, alt, sizes, className, priority, fallbackKitchen, fallbackLabel, src }) {
   const photo = PHOTOS[name];
   const [loaded, setLoaded] = useState(false);
 
@@ -62,7 +47,7 @@ export function Photo({
   }
 
   if (!photo) {
-    const art = KITCHEN_ART[fallbackKitchen ?? 'bar'] ?? KITCHEN_ART.bar!;
+    const art = KITCHEN_ART[fallbackKitchen ?? 'bar'] ?? KITCHEN_ART.bar;
     return (
       <div
         role="img"
@@ -84,7 +69,7 @@ export function Photo({
 
   const widths = photo.wide ? PHOTO_WIDTHS.wide : PHOTO_WIDTHS.dish;
   const base = `${import.meta.env.BASE_URL}img/${photo.file}`;
-  const srcset = (ext: string) => widths.map((w) => `${base}-${w}.${ext} ${w}w`).join(', ');
+  const srcset = (ext) => widths.map((w) => `${base}-${w}.${ext} ${w}w`).join(', ');
   const [w, h] = photo.wide ? [16, 10] : [4, 3];
 
   return (

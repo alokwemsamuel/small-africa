@@ -1,6 +1,5 @@
-import type { Permission } from '@/features/admin/api';
 import { ApiError } from '@/lib/api';
-import { db, getState, type Row } from '../db';
+import { db, getState } from '../db';
 import { fail } from '../http';
 import { sha256 } from '../random';
 import { sql } from '../time';
@@ -14,15 +13,15 @@ import { audit } from './audit';
 export const STAFF_ROLES = ['super_admin', 'manager', 'staff'];
 const SALT = 'small-africa-demo:';
 
-export const hashPassword = (password: string) => sha256(SALT + password);
+export const hashPassword = (password) => sha256(SALT + password);
 
-export function currentUser(): Row | null {
+export function currentUser() {
   const id = getState().userId;
   const user = id ? db.byId('users', id) : null;
   return user && user.is_active ? user : null;
 }
 
-export function userToPublic(u: Row) {
+export function userToPublic(u) {
   return {
     id: u.id,
     firstName: u.first_name,
@@ -60,8 +59,8 @@ const COMMON = [
 ];
 
 /** PasswordPolicy::problems */
-export function passwordProblems(password: string, personal: string[]): string[] {
-  const problems: string[] = [];
+export function passwordProblems(password, personal) {
+  const problems = [];
   const len = [...password].length;
   if (len < 10) problems.push('Use at least 10 characters.');
   if (len > 128) problems.push('Use at most 128 characters.');
@@ -77,7 +76,7 @@ export function passwordProblems(password: string, personal: string[]): string[]
   return problems;
 }
 
-export async function login(email: string, password: string) {
+export async function login(email, password) {
   const user = db.find('users', (u) => u.email === email.trim().toLowerCase());
   const hash = await hashPassword(password);
   if (!user || !user.is_active || getState().passwords[user.id] !== hash) {
@@ -89,15 +88,15 @@ export async function login(email: string, password: string) {
   return userToPublic(user);
 }
 
-function newReferralCode(firstName: string): string {
+function newReferralCode(firstName) {
   const base = (firstName.replace(/[^A-Za-z]/g, '').toUpperCase() || 'GUEST').slice(0, 8);
-  let referral: string;
+  let referral;
   do referral = base + String(1000 + Math.floor(Math.random() * 9000));
   while (db.find('users', (u) => u.referral_code === referral));
   return referral;
 }
 
-export async function register(data: Row) {
+export async function register(data) {
   const problems = passwordProblems(data.password, [
     data.first_name,
     data.last_name,
@@ -110,7 +109,7 @@ export async function register(data: Row) {
       'An account with this email already exists. Try signing in or resetting your password.',
     );
   }
-  let referrer: Row | null = null;
+  let referrer = null;
   if (data.referral_code) {
     referrer = db.find(
       'users',
@@ -144,7 +143,7 @@ export async function register(data: Row) {
   return userToPublic(user);
 }
 
-export async function changePassword(user: Row, current: string, next: string): Promise<void> {
+export async function changePassword(user, current, next) {
   if (getState().passwords[user.id] !== (await hashPassword(current))) {
     throw fail.field('current_password', 'Your current password is incorrect.');
   }
@@ -163,7 +162,7 @@ export async function changePassword(user: Row, current: string, next: string): 
 const MANAGERS = ['super_admin', 'manager'];
 
 /** App\Security\Permissions::MAP */
-export const PERMISSIONS: Record<Permission, string[]> = {
+export const PERMISSIONS = {
   'dashboard.view': ['super_admin', 'manager', 'staff:kitchen', 'staff:front_desk'],
   'orders.view': ['super_admin', 'manager', 'staff:kitchen', 'staff:front_desk'],
   'orders.status': ['super_admin', 'manager', 'staff:kitchen', 'staff:front_desk'],
@@ -185,7 +184,7 @@ export const PERMISSIONS: Record<Permission, string[]> = {
   'audit.view': MANAGERS,
 };
 
-export function can(user: Row | null, permission: Permission): boolean {
+export function can(user, permission) {
   if (!user || !user.is_active) return false;
   const grants = PERMISSIONS[permission];
   return (
@@ -194,6 +193,6 @@ export function can(user: Row | null, permission: Permission): boolean {
   );
 }
 
-export function permissionsFor(user: Row): Permission[] {
-  return (Object.keys(PERMISSIONS) as Permission[]).filter((p) => can(user, p));
+export function permissionsFor(user) {
+  return Object.keys(PERMISSIONS).filter((p) => can(user, p));
 }

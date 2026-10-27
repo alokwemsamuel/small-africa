@@ -1,16 +1,9 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { Link, type LinkProps } from 'react-router-dom';
-import { buttonClasses, type Size, type Variant } from './buttonStyles';
+import { forwardRef } from 'react';
+import { Link } from 'react-router-dom';
+import { buttonClasses } from './buttonStyles';
 import { Spinner } from './Spinner';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
-  size?: Size;
-  loading?: boolean;
-  children: ReactNode;
-}
-
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+export const Button = forwardRef(function Button(
   {
     variant = 'primary',
     size = 'md',
@@ -38,11 +31,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   );
 });
 
-interface ButtonLinkProps extends LinkProps {
-  variant?: Variant;
-  size?: Size;
-}
-
-export function ButtonLink({ variant = 'primary', size = 'md', className, ...rest }: ButtonLinkProps) {
-  return <Link className={buttonClasses(variant, size, className as string | undefined)} {...rest} />;
+export function ButtonLink({ variant = 'primary', size = 'md', className, ...rest }) {
+  return <Link className={buttonClasses(variant, size, className)} {...rest} />;
 }

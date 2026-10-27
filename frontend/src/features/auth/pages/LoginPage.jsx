@@ -9,8 +9,8 @@ import { TextField } from '@/components/ui/TextField';
 import { env } from '@/lib/env';
 import { applyServerErrors } from '@/lib/forms';
 import { useLogin, useTwoFactorLogin } from '../hooks';
-import { loginSchema, twoFactorSchema, type LoginValues, type TwoFactorValues } from '../schemas';
-import { isStaff, type User } from '../types';
+import { loginSchema, twoFactorSchema } from '../schemas';
+import { isStaff } from '../types';
 
 const DEMO_ACCOUNTS = [
   { role: 'Super Admin', email: 'admin@smallafrica.demo', password: 'SmallAfrica@Admin2026' },
@@ -19,7 +19,7 @@ const DEMO_ACCOUNTS = [
 ];
 
 /** Only same-site paths are followed after sign-in (prevents open redirects). */
-function safeRedirect(from: unknown): string | null {
+function safeRedirect(from) {
   return typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') && !from.startsWith('/\\')
     ? from
     : null;
@@ -30,8 +30,8 @@ export function LoginPage() {
   const location = useLocation();
   const [twoFactor, setTwoFactor] = useState(false);
 
-  const done = (user: User) => {
-    const from = safeRedirect((location.state as { from?: unknown } | null)?.from);
+  const done = (user) => {
+    const from = safeRedirect(location.state?.from);
     navigate(from ?? (isStaff(user) ? '/admin' : '/account'), { replace: true });
   };
 
@@ -63,10 +63,10 @@ export function LoginPage() {
   );
 }
 
-function PasswordForm({ onDone, onTwoFactor }: { onDone: (u: User) => void; onTwoFactor: () => void }) {
+function PasswordForm({ onDone, onTwoFactor }) {
   const login = useLogin();
-  const [formError, setFormError] = useState<string | null>(null);
-  const { register, handleSubmit, setError, setValue, formState } = useForm<LoginValues>({
+  const [formError, setFormError] = useState(null);
+  const { register, handleSubmit, setError, setValue, formState } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
@@ -114,10 +114,10 @@ function PasswordForm({ onDone, onTwoFactor }: { onDone: (u: User) => void; onTw
   );
 }
 
-function TwoFactorForm({ onDone }: { onDone: (u: User) => void }) {
+function TwoFactorForm({ onDone }) {
   const verify = useTwoFactorLogin();
-  const [formError, setFormError] = useState<string | null>(null);
-  const { register, handleSubmit, setError, setFocus, formState } = useForm<TwoFactorValues>({
+  const [formError, setFormError] = useState(null);
+  const { register, handleSubmit, setError, setFocus, formState } = useForm({
     resolver: zodResolver(twoFactorSchema),
     defaultValues: { code: '' },
   });

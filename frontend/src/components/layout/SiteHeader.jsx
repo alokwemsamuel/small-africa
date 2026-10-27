@@ -168,7 +168,7 @@ export function SiteHeader() {
   );
 }
 
-function CartLink({ count }: { count: number }) {
+function CartLink({ count }) {
   const label = count ? `Your order, ${count} ${count === 1 ? 'item' : 'items'}` : 'Your order (empty)';
   return (
     <Link

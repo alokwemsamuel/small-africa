@@ -2,42 +2,33 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { niceTicks } from './scale';
 
-export interface Datum {
-  key: string;
-  /** Axis label (short), e.g. "Mon 20". */
-  label: string;
-  /** Tooltip / table label (long), e.g. "Tuesday 20 October". */
-  fullLabel: string;
-  value: number;
-  display: string;
-}
-
 /**
  * Single-series column chart (SVG). One colour (the validated chart token), no legend: the
  * title names the series. Bars ≤ 24px with a 4px rounded top and square base, hairline grid,
  * a tooltip on hover and keyboard focus (arrow keys move between days), and a table view.
+ *
+ * @typedef {object} Datum
+ * @property {string} key
+ * @property {string} label axis label (short), e.g. "Mon 20"
+ * @property {string} fullLabel tooltip / table label (long), e.g. "Tuesday 20 October"
+ * @property {number} value
+ * @property {string} display the value formatted for people
+ *
+ * @param {object} props
+ * @param {string} props.title
+ * @param {Datum[]} props.data
+ * @param {(v: number) => string} props.tickFormat
+ * @param {boolean} [props.integer] whole-number ticks (counts)
+ * @param {number} [props.height]
  */
-export function ColumnChart({
-  title,
-  data,
-  tickFormat,
-  integer = false,
-  height = 220,
-}: {
-  title: string;
-  data: Datum[];
-  tickFormat: (v: number) => string;
-  /** Whole-number ticks (counts). */
-  integer?: boolean;
-  height?: number;
-}) {
+export function ColumnChart({ title, data, tickFormat, integer = false, height = 220 }) {
   const id = useId();
-  const [active, setActive] = useState<number | null>(null);
+  const [active, setActive] = useState(null);
   const [table, setTable] = useState(false);
   const max = Math.max(0, ...data.map((d) => d.value));
   const ticks = useMemo(() => niceTicks(max, 4, integer), [max, integer]);
   // Draw at the real rendered width, so labels are true 12px text rather than scaled down.
-  const box = useRef<HTMLDivElement>(null);
+  const box = useRef(null);
   const [measured, setMeasured] = useState(640);
   useEffect(() => {
     const el = box.current;
@@ -55,12 +46,12 @@ export function ColumnChart({
   const plotH = H - pad.t - pad.b;
   const band = plotW / Math.max(1, data.length);
   const barW = Math.min(24, Math.max(4, band - 2)); // ≥ 2px surface gap between neighbours
-  const y = (v: number) => pad.t + plotH - (v / top) * plotH;
+  const y = (v) => pad.t + plotH - (v / top) * plotH;
   const labelEvery = Math.ceil(data.length / Math.max(3, Math.floor(plotW / 64)));
   const peak = data.reduce((best, d, i) => (d.value > (data[best]?.value ?? -1) ? i : best), 0);
 
   const summary = data.length
-    ? `${title}. Highest: ${data[peak]!.fullLabel}, ${data[peak]!.display}. Latest: ${data[data.length - 1]!.fullLabel}, ${data[data.length - 1]!.display}.`
+    ? `${title}. Highest: ${data[peak].fullLabel}, ${data[peak].display}. Latest: ${data[data.length - 1].fullLabel}, ${data[data.length - 1].display}.`
     : `${title}: no data.`;
 
   return (
@@ -206,13 +197,7 @@ export function ColumnChart({
 }
 
 /** Ranked single-series bars as HTML (labels never clip: they sit beside the bar). */
-export function BarList({
-  title,
-  items,
-}: {
-  title: string;
-  items: { label: string; value: number; display: string; detail?: string }[];
-}) {
+export function BarList({ title, items }) {
   const max = Math.max(1, ...items.map((i) => i.value));
   return (
     <figure>

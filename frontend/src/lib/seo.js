@@ -5,8 +5,8 @@ const SITE = 'Small Africa';
 const DEFAULT_DESCRIPTION =
   'Small Africa is a fine-dining restaurant and lounge in Victoria Island, Lagos, serving Nigerian, Polish and Continental cuisine. Three kitchens. One table.';
 
-function setMeta(attr: 'name' | 'property', key: string, value: string) {
-  let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+function setMeta(attr, key, value) {
+  let el = document.head.querySelector(`meta[${attr}="${key}"]`);
   if (!el) {
     el = document.createElement('meta');
     el.setAttribute(attr, key);
@@ -16,15 +16,7 @@ function setMeta(attr: 'name' | 'property', key: string, value: string) {
 }
 
 /** Per-page title, description, Open Graph tags and canonical URL. */
-export function useSeo({
-  title,
-  description,
-  image,
-}: {
-  title?: string;
-  description?: string;
-  image?: string;
-}) {
+export function useSeo({ title, description, image }) {
   useEffect(() => {
     const fullTitle = title
       ? `${title} · ${SITE}`
@@ -37,7 +29,7 @@ export function useSeo({
     setMeta('property', 'og:description', desc);
     setMeta('property', 'og:url', url);
     if (image) setMeta('property', 'og:image', image);
-    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    let canonical = document.head.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.rel = 'canonical';

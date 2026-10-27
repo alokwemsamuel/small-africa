@@ -13,23 +13,17 @@ import {
   filterDishes,
   filtersFromParams,
   paramsFromFilters,
-  type MenuFilters,
-  type SortKey,
 } from './filters';
 import { useMenu } from './hooks';
-import type { CategorySlug, Kitchen } from './types';
 
-const KITCHEN_TABS: { value: Kitchen | 'all'; label: string }[] = [
+const KITCHEN_TABS = [
   { value: 'all', label: 'All kitchens' },
   { value: 'nigerian', label: 'Nigerian' },
   { value: 'polish', label: 'Polish' },
   { value: 'continental', label: 'Continental' },
 ];
 
-const DIETARY: {
-  key: keyof Pick<MenuFilters, 'noPork' | 'vegetarian' | 'glutenFree' | 'noNuts'>;
-  label: string;
-}[] = [
+const DIETARY = [
   { key: 'noPork', label: 'No pork' },
   { key: 'vegetarian', label: 'Vegetarian' },
   { key: 'glutenFree', label: 'Gluten-free' },
@@ -47,7 +41,7 @@ export function MenuPage() {
   const filters = filtersFromParams(params);
   const deferredQuery = useDeferredValue(filters.q);
 
-  const update = (patch: Partial<MenuFilters>) =>
+  const update = (patch) =>
     setParams(paramsFromFilters({ ...filters, ...patch }), { replace: true, preventScrollReset: true });
 
   const results = useMemo(
@@ -105,7 +99,7 @@ export function MenuPage() {
                 <span className="text-muted shrink-0">Sort</span>
                 <select
                   value={filters.sort}
-                  onChange={(e) => update({ sort: e.target.value as SortKey })}
+                  onChange={(e) => update({ sort: e.target.value })}
                   className="border-input bg-surface-inset text-primary focus:border-accent min-h-11 flex-1 rounded-full border px-4 focus:outline-none"
                 >
                   <option value="recommended">Chef’s picks</option>
@@ -129,7 +123,7 @@ export function MenuPage() {
                   key={c.slug}
                   label={c.name}
                   active={filters.category === c.slug}
-                  onClick={() => update({ category: c.slug as CategorySlug })}
+                  onClick={() => update({ category: c.slug })}
                 />
               ))}
             </div>
@@ -238,7 +232,7 @@ export function MenuPage() {
   );
 }
 
-function CategoryChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function CategoryChip({ label, active, onClick }) {
   return (
     <button
       type="button"

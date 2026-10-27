@@ -9,15 +9,15 @@ import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { TextField } from '@/components/ui/TextField';
 import { applyServerErrors } from '@/lib/forms';
 import { useResetPassword } from '../hooks';
-import { resetSchema, type ResetValues } from '../schemas';
+import { resetSchema } from '../schemas';
 
 export function ResetPasswordPage() {
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const reset = useResetPassword();
   const [done, setDone] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const { register, handleSubmit, setError, watch, formState } = useForm<ResetValues>({
+  const [formError, setFormError] = useState(null);
+  const { register, handleSubmit, setError, watch, formState } = useForm({
     resolver: zodResolver(resetSchema),
     defaultValues: { password: '', confirm: '' },
   });

@@ -15,13 +15,13 @@ import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { applyServerErrors } from '@/lib/forms';
 import { useSeo } from '@/lib/seo';
-import { reservationsApi, type Reservation } from './api';
+import { reservationsApi } from './api';
 import { ReservationConfirmation } from './ReservationConfirmation';
 
 const MAX_ONLINE_PARTY = 12;
 const MAX_DAYS_AHEAD = 60;
 
-export const OCCASIONS = [
+const OCCASIONS = [
   ['none', 'No special occasion'],
   ['birthday', 'Birthday'],
   ['anniversary', 'Anniversary'],
@@ -29,7 +29,7 @@ export const OCCASIONS = [
   ['business', 'Business dinner'],
   ['celebration', 'Celebration'],
   ['other', 'Something else'],
-] as const;
+];
 
 const phone = /^(\+?234|0)[789][01]\d{8}$|^\+[1-9]\d{7,14}$/;
 const detailsSchema = z.object({
@@ -39,13 +39,12 @@ const detailsSchema = z.object({
     .string()
     .trim()
     .refine((v) => phone.test(v.replace(/[\s\-()]/g, '')), { error: 'Enter a valid phone number.' }),
-  occasion: z.enum(OCCASIONS.map(([v]) => v) as [string, ...string[]]),
+  occasion: z.enum(OCCASIONS.map(([v]) => v)),
   notes: z.string().trim().max(500),
 });
-type Details = z.infer<typeof detailsSchema>;
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const pad = (n) => String(n).padStart(2, '0');
+const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 export function ReservationsPage() {
   useSeo({
@@ -57,9 +56,9 @@ export function ReservationsPage() {
   const today = lagosNow();
   const [date, setDate] = useState(ymd(today));
   const [party, setParty] = useState(2);
-  const [slot, setSlot] = useState<{ area: string; time: string } | null>(null);
-  const [booked, setBooked] = useState<{ reservation: Reservation; manageToken: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [slot, setSlot] = useState(null);
+  const [booked, setBooked] = useState(null);
+  const [error, setError] = useState(null);
 
   const availability = useQuery({
     queryKey: ['reservations', 'availability', date, party],
@@ -70,7 +69,7 @@ export function ReservationsPage() {
   });
   useEffect(() => setSlot(null), [date, party]);
 
-  const form = useForm<Details>({
+  const form = useForm({
     resolver: zodResolver(detailsSchema),
     defaultValues: { name: '', email: '', phone: '', occasion: 'none', notes: '' },
   });

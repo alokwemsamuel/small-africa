@@ -4,10 +4,10 @@ import { renderRoutes } from '@/test/utils';
 import { Hero } from './Hero';
 
 /** Answers media queries from a list of the ones that should match. */
-function media(matching: string[]) {
+function media(matching) {
   vi.stubGlobal(
     'matchMedia',
-    vi.fn((query: string) => ({
+    vi.fn((query) => ({
       matches: matching.some((m) => query.includes(m)),
       media: query,
       onchange: null,
@@ -51,7 +51,7 @@ afterEach(() => {
 });
 
 const render = () => renderRoutes([{ path: '/', element: <Hero /> }]);
-const sources = (c: HTMLElement) => [...c.querySelectorAll('video source')].map((s) => s.getAttribute('src'));
+const sources = (c) => [...c.querySelectorAll('video source')].map((s) => s.getAttribute('src'));
 
 describe('Hero', () => {
   it('plays the 1920×1080 loop on desktop, muted and inline, with a pause button', async () => {
@@ -59,7 +59,7 @@ describe('Hero', () => {
     const { container } = render();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Three kitchens.One table.');
     await waitFor(() => expect(container.querySelector('video')).not.toBeNull());
-    const video = container.querySelector('video')!;
+    const video = container.querySelector('video');
     expect(video.muted).toBe(true);
     expect(video).toHaveAttribute('playsinline');
     expect(video).toHaveAttribute('loop');

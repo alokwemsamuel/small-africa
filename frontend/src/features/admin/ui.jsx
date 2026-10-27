@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { Alert } from '@/components/ui/Alert';
@@ -7,15 +7,7 @@ import { fmt } from './format';
 
 /* ------------------------------------------------------------------ layout bits */
 
-export function AdminHeader({
-  title,
-  intro,
-  actions,
-}: {
-  title: string;
-  intro?: ReactNode;
-  actions?: ReactNode;
-}) {
+export function AdminHeader({ title, intro, actions }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -27,17 +19,7 @@ export function AdminHeader({
   );
 }
 
-export function Panel({
-  title,
-  actions,
-  children,
-  className,
-}: {
-  title?: string;
-  actions?: ReactNode;
-  children: ReactNode;
-  className?: string;
-}) {
+export function Panel({ title, actions, children, className }) {
   const id = useId();
   return (
     <section
@@ -59,7 +41,7 @@ export function Panel({
   );
 }
 
-export function Loading({ error, label = 'Loading' }: { error?: unknown; label?: string }) {
+export function Loading({ error, label = 'Loading' }) {
   if (error)
     return <Alert tone="error">{error instanceof Error ? error.message : 'Could not load this page.'}</Alert>;
   return (
@@ -69,7 +51,7 @@ export function Loading({ error, label = 'Loading' }: { error?: unknown; label?:
   );
 }
 
-export function Empty({ children }: { children: ReactNode }) {
+export function Empty({ children }) {
   return (
     <p className="text-secondary border-line rounded-md border border-dashed p-6 text-center text-sm">
       {children}
@@ -79,8 +61,7 @@ export function Empty({ children }: { children: ReactNode }) {
 
 /* ------------------------------------------------------------------ status pills */
 
-type Tone = 'neutral' | 'info' | 'progress' | 'good' | 'warn' | 'bad';
-const TONE: Record<Tone, string> = {
+const TONE = {
   neutral: 'border-line text-secondary',
   info: 'border-accent/50 text-primary',
   progress: 'border-accent text-primary bg-accent-fill/10',
@@ -88,7 +69,7 @@ const TONE: Record<Tone, string> = {
   warn: 'border-accent text-primary bg-accent-fill/15',
   bad: 'border-danger/60 text-primary bg-danger/10',
 };
-const DOT: Record<Tone, string> = {
+const DOT = {
   neutral: 'bg-muted',
   info: 'bg-accent',
   progress: 'bg-accent-fill',
@@ -97,7 +78,7 @@ const DOT: Record<Tone, string> = {
   bad: 'bg-danger',
 };
 
-const STATUS_TONE: Record<string, Tone> = {
+const STATUS_TONE = {
   pending_payment: 'neutral',
   received: 'info',
   preparing: 'progress',
@@ -129,7 +110,7 @@ const STATUS_TONE: Record<string, Tone> = {
 };
 
 /** A status always shows its name: colour is never the only signal. */
-export function StatusPill({ status, label }: { status: string; label?: string }) {
+export function StatusPill({ status, label }) {
   const tone = STATUS_TONE[status] ?? 'neutral';
   return (
     <span
@@ -149,21 +130,7 @@ export function StatusPill({ status, label }: { status: string; label?: string }
 const fieldClass =
   'border-input bg-surface-inset text-primary focus:border-accent min-h-11 w-full rounded-sm border px-3 text-sm focus:outline-none disabled:opacity-60';
 
-export function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  className,
-  hideLabel,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: [string, string][];
-  className?: string;
-  hideLabel?: boolean;
-}) {
+export function SelectField({ label, value, onChange, options, className, hideLabel }) {
   return (
     <label className={cn('flex flex-col justify-end gap-1.5', className)}>
       <span className={cn('eyebrow text-muted', hideLabel && 'sr-only')}>{label}</span>
@@ -178,13 +145,7 @@ export function SelectField({
   );
 }
 
-export function InputField({
-  label,
-  className,
-  hideLabel,
-  error,
-  ...rest
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hideLabel?: boolean; error?: string }) {
+export function InputField({ label, className, hideLabel, error, ...rest }) {
   const id = useId();
   return (
     <div className={cn('flex flex-col justify-end gap-1.5', className)}>
@@ -207,11 +168,7 @@ export function InputField({
   );
 }
 
-export function TextAreaField({
-  label,
-  className,
-  ...rest
-}: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
+export function TextAreaField({ label, className, ...rest }) {
   const id = useId();
   return (
     <div className={cn('flex flex-col justify-end gap-1.5', className)}>
@@ -223,17 +180,7 @@ export function TextAreaField({
   );
 }
 
-export function CheckField({
-  label,
-  checked,
-  onChange,
-  className,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  className?: string;
-}) {
+export function CheckField({ label, checked, onChange, className }) {
   return (
     <label className={cn('flex min-h-11 items-center gap-2 text-sm', className)}>
       <input
@@ -247,15 +194,7 @@ export function CheckField({
   );
 }
 
-export function SearchBox({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-}) {
+export function SearchBox({ value, onChange, placeholder }) {
   return (
     <InputField
       label="Search"
@@ -271,7 +210,7 @@ export function SearchBox({
 
 /* ------------------------------------------------------------------ pagination */
 
-export function Pager({ page, pages, onPage }: { page: number; pages: number; onPage: (p: number) => void }) {
+export function Pager({ page, pages, onPage }) {
   if (pages <= 1) return null;
   return (
     <nav aria-label="Pages" className="mt-4 flex items-center justify-end gap-2 text-sm">
@@ -290,18 +229,8 @@ export function Pager({ page, pages, onPage }: { page: number; pages: number; on
 
 /* ------------------------------------------------------------------ modal */
 
-export function Modal({
-  title,
-  onClose,
-  children,
-  wide,
-}: {
-  title: string;
-  onClose: () => void;
-  children: ReactNode;
-  wide?: boolean;
-}) {
-  const ref = useRef<HTMLDialogElement>(null);
+export function Modal({ title, onClose, children, wide }) {
+  const ref = useRef(null);
   const id = useId();
   useEffect(() => {
     const d = ref.current;
@@ -341,15 +270,7 @@ export function Modal({
 
 /* ------------------------------------------------------------------ stat tile */
 
-export function StatTile({
-  label,
-  value,
-  delta,
-}: {
-  label: string;
-  value: string;
-  delta?: { text: string; good: boolean | null };
-}) {
+export function StatTile({ label, value, delta }) {
   return (
     <div className="border-line bg-surface-raised rounded-md border p-5">
       <p className="text-secondary text-sm">{label}</p>

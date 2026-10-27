@@ -1,22 +1,12 @@
 import { useEffect, useRef } from 'react';
 
-interface Mote {
-  x: number;
-  y: number;
-  r: number;
-  vy: number;
-  drift: number;
-  phase: number;
-  alpha: number;
-}
-
 /**
  * Subtle gold dust drifting up through the hero light. A single 2D canvas (no WebGL), about
  * 40 motes on desktop and 22 on phones, drawn only while the hero is on screen and the tab is
  * visible. `running` lets the hero's pause button stop it too.
  */
-export function GoldParticles({ running, className }: { running: boolean; className?: string }) {
-  const canvas = useRef<HTMLCanvasElement>(null);
+export function GoldParticles({ running, className }) {
+  const canvas = useRef(null);
 
   useEffect(() => {
     const el = canvas.current;
@@ -25,9 +15,9 @@ export function GoldParticles({ running, className }: { running: boolean; classN
 
     let w = 0;
     let h = 0;
-    let motes: Mote[] = [];
+    let motes = [];
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const spawn = (anywhere: boolean): Mote => ({
+    const spawn = (anywhere) => ({
       x: Math.random() * w,
       y: anywhere ? Math.random() * h : h + 10,
       r: 0.6 + Math.random() * 1.8,
@@ -55,7 +45,7 @@ export function GoldParticles({ running, className }: { running: boolean; classN
 
     let raf = 0;
     let last = performance.now();
-    const frame = (now: number) => {
+    const frame = (now) => {
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;

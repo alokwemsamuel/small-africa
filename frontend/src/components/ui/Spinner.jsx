@@ -1,6 +1,6 @@
 import { cn } from '@/lib/cn';
 
-export function Spinner({ className, label = 'Loading' }: { className?: string; label?: string }) {
+export function Spinner({ className, label = 'Loading' }) {
   return (
     <span role={label ? 'status' : undefined} className="inline-flex items-center">
       <svg

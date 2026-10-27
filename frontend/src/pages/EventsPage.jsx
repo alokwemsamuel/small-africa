@@ -14,7 +14,7 @@ import { applyServerErrors } from '@/lib/forms';
 import { formatNaira } from '@/lib/format';
 import { useSeo } from '@/lib/seo';
 
-const PACKAGE_PHOTOS: Record<string, string> = {
+const PACKAGE_PHOTOS = {
   'private-dining': 'ambience/private-dining',
   corporate: 'ambience/chandelier-room',
   celebration: 'ambience/celebration-hall',
@@ -35,13 +35,12 @@ const schema = z.object({
   package: z.string(),
   event_date: z.string().min(1, { error: 'Choose a date.' }),
   guests: z.coerce
-    .number<string>({ error: 'Enter the number of guests.' })
+    .number({ error: 'Enter the number of guests.' })
     .int()
     .min(2, { error: 'At least 2 guests.' })
     .max(500),
   message: z.string().max(2000),
 });
-type Values = z.input<typeof schema>;
 
 export function EventsPage() {
   useSeo({
@@ -117,11 +116,11 @@ export function EventsPage() {
   );
 }
 
-function EnquiryForm({ packages }: { packages: { slug: string; name: string }[] }) {
-  const [done, setDone] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
+function EnquiryForm({ packages }) {
+  const [done, setDone] = useState(null);
+  const [formError, setFormError] = useState(null);
   const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
-  const { register, handleSubmit, setError, formState } = useForm<Values, unknown, z.output<typeof schema>>({
+  const { register, handleSubmit, setError, formState } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       name: '',
@@ -139,7 +138,7 @@ function EnquiryForm({ packages }: { packages: { slug: string; name: string }[] 
   const onSubmit = handleSubmit(async (v) => {
     setFormError(null);
     try {
-      const r = await api<{ message: string }>('/events/enquiries', {
+      const r = await api('/events/enquiries', {
         method: 'POST',
         body: { ...v, company: v.company || null, package: v.package || null, message: v.message || null },
       });

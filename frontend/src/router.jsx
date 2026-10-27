@@ -1,6 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
 import { lazy, Suspense } from 'react';
-import type { RouteObject } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { RequireAuth } from './features/auth/RequireAuth';
 import { STAFF_ROLES } from './features/auth/types';
@@ -20,8 +19,7 @@ export const queryClient = new QueryClient({
 });
 
 /** Every page except Home is code-split so the first visit stays fast. */
-const page = <K extends string>(load: () => Promise<Record<K, React.ComponentType>>, name: K) =>
-  lazy(() => load().then((m) => ({ default: m[name] })));
+const page = (load, name) => lazy(() => load().then((m) => ({ default: m[name] })));
 
 const MenuPage = page(() => import('./features/menu/MenuPage'), 'MenuPage');
 const DishDetailPage = page(() => import('./features/menu/DishDetailPage'), 'DishDetailPage');
@@ -54,7 +52,7 @@ const RewardsTermsPage = page(() => import('./pages/legal/RewardsTermsPage'), 'R
 const AccountPage = page(() => import('./features/account/AccountPage'), 'AccountPage');
 const AdminApp = page(() => import('./features/admin/AdminApp'), 'AdminApp');
 
-export const routes: RouteObject[] = [
+export const routes = [
   {
     element: <AppLayout />,
     children: [

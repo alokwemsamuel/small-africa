@@ -1,36 +1,20 @@
-import { useLayoutEffect, useRef, type ElementType, type ReactNode } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { cn } from '@/lib/cn';
 import { prefersReducedMotion } from './useReducedMotion';
-
-type Effect = 'rise' | 'fade' | 'clip';
 
 /**
  * Scroll-triggered reveal: CSS animations started by an IntersectionObserver, so no animation
  * library loads for it. Animates only transform/opacity/clip-path (no layout shift). With
  * reduced motion the content simply appears. `stagger` animates direct children in turn.
  */
-export function Reveal({
-  children,
-  as: Tag = 'div',
-  effect = 'rise',
-  stagger,
-  delay = 0,
-  className,
-}: {
-  children: ReactNode;
-  as?: ElementType;
-  effect?: Effect;
-  stagger?: number;
-  delay?: number;
-  className?: string;
-}) {
-  const ref = useRef<HTMLElement>(null);
+export function Reveal({ children, as: Tag = 'div', effect = 'rise', stagger, delay = 0, className }) {
+  const ref = useRef(null);
 
   // Layout effect: content is hidden before the first paint, so it never flashes.
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || prefersReducedMotion() || typeof IntersectionObserver === 'undefined') return;
-    const targets = (stagger ? Array.from(el.children) : [el]) as HTMLElement[];
+    const targets = stagger ? Array.from(el.children) : [el];
     targets.forEach((t, i) => {
       t.dataset.reveal = 'pending';
       t.dataset.revealEffect = effect;

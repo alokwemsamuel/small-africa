@@ -8,7 +8,7 @@ import { useSite } from '@/features/menu/hooks';
 import { useSeo } from '@/lib/seo';
 import { loyaltyApi } from './api';
 
-const naira = (n: number) => `₦${n.toLocaleString('en-NG')}`;
+const naira = (n) => `₦${n.toLocaleString('en-NG')}`;
 
 /** Public explainer for the Small Africa Interest Account. */
 export function RewardsPage() {

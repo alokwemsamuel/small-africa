@@ -1,4 +1,4 @@
-import { db, type Row } from '../db';
+import { db } from '../db';
 import { fail } from '../http';
 import { code } from '../random';
 import { sql } from '../time';
@@ -8,7 +8,7 @@ import { quote } from './pricing';
 
 /** Port of App\Services\OrderService and PaymentAttempts, with the simulated gateway. */
 
-export const TRANSITIONS: Record<string, string[]> = {
+export const TRANSITIONS = {
   received: ['preparing', 'cancelled'],
   preparing: ['ready', 'cancelled'],
   ready: ['out_for_delivery', 'completed'],
@@ -22,13 +22,13 @@ export const TRANSITIONS: Record<string, string[]> = {
 const MAX_ATTEMPTS = 9;
 
 /** Stands in for the API's HMAC tracking token: unguessable enough for a browser-only demo. */
-export function trackingToken(reference: string): string {
+export function trackingToken(reference) {
   return `demo-${btoa(`track:${reference}`).replace(/[^A-Za-z0-9]/g, '')}`;
 }
 
 /* ----------------------------------------------------------- payment attempts */
 
-export function latestPayment(purpose: string, payableId: number): Row | null {
+export function latestPayment(purpose, payableId) {
   return (
     db
       .where('payments', (p) => p.purpose === purpose && p.payable_id === payableId)
@@ -37,13 +37,7 @@ export function latestPayment(purpose: string, payableId: number): Row | null {
 }
 
 /** PaymentAttempts::start: resumes an open attempt, or opens a new one with a new reference. */
-export function startPayment(
-  purpose: string,
-  payableId: number,
-  userId: number | null,
-  baseReference: string,
-  amountKobo: number,
-) {
+export function startPayment(purpose, payableId, userId, baseReference, amountKobo) {
   const rows = db
     .where('payments', (p) => p.purpose === purpose && p.payable_id === payableId)
     .sort((a, b) => b.attempt - a.attempt || b.id - a.id);
@@ -69,7 +63,7 @@ export function startPayment(
     });
   }
   return {
-    provider: 'simulated' as const,
+    provider: 'simulated',
     reference: attempt.reference,
     accessCode: attempt.access_code,
     authorizationUrl: null,
@@ -77,10 +71,8 @@ export function startPayment(
 }
 
 /** The simulated gateway's answer for an attempt: whatever the guest chose in the popup. */
-export function checkPayment(payment: Row): 'success' | 'failed' | 'abandoned' | 'pending' {
-  const outcome = payment.provider_payload
-    ? (JSON.parse(payment.provider_payload).simulated_outcome as string)
-    : null;
+export function checkPayment(payment) {
+  const outcome = payment.provider_payload ? JSON.parse(payment.provider_payload).simulated_outcome : null;
   if (outcome === 'failed' || outcome === 'abandoned') {
     if (payment.status === 'initialized') payment.status = outcome;
     return outcome;
@@ -89,14 +81,14 @@ export function checkPayment(payment: Row): 'success' | 'failed' | 'abandoned' |
 }
 
 /** Marks an attempt successful exactly once. */
-export function markSuccess(payment: Row): boolean {
+export function markSuccess(payment) {
   if (payment.status === 'success') return false;
   Object.assign(payment, { status: 'success', verified_at: sql() });
   return true;
 }
 
 /** Records the guest's choice in the simulated popup on the latest attempt. */
-export function recordSimulatedOutcome(purpose: string, payableId: number, outcome: string): void {
+export function recordSimulatedOutcome(purpose, payableId, outcome) {
   const latest = latestPayment(purpose, payableId);
   if (latest && latest.status === 'initialized')
     latest.provider_payload = JSON.stringify({ simulated_outcome: outcome });
@@ -104,9 +96,9 @@ export function recordSimulatedOutcome(purpose: string, payableId: number, outco
 
 /* --------------------------------------------------------------------- orders */
 
-export function toPublic(o: Row, withDetail = false) {
+export function toPublic(o, withDetail = false) {
   const zone = db.byId('delivery_zones', o.delivery_zone_id);
-  const out: Row = {
+  const out = {
     reference: o.reference,
     status: o.status,
     paymentStatus: o.payment_status,
@@ -130,7 +122,7 @@ export function toPublic(o: Row, withDetail = false) {
     out.items = db
       .where('order_items', (i) => i.order_id === o.id)
       .map((i) => {
-        const opts = JSON.parse(i.options ?? '{}') as Row;
+        const opts = JSON.parse(i.options ?? '{}');
         return {
           dishId: i.dish_id,
           slug: db.byId('dishes', i.dish_id)?.slug ?? null,
@@ -147,14 +139,14 @@ export function toPublic(o: Row, withDetail = false) {
     out.history = db
       .where('order_status_history', (h) => h.order_id === o.id)
       .map((h) => ({ status: h.status, at: h.created_at }));
-    const address = o.address_snapshot ? (JSON.parse(o.address_snapshot) as Row) : null;
+    const address = o.address_snapshot ? JSON.parse(o.address_snapshot) : null;
     out.deliveryArea = address ? (address.area ?? zone?.name ?? null) : null;
     out.reviewable = ['delivered', 'completed'].includes(o.status);
   }
   return out;
 }
 
-function resume(order: Row) {
+function resume(order) {
   const token = trackingToken(order.reference);
   let payment = null;
   if (order.payment_status !== 'paid') {
@@ -167,7 +159,7 @@ function resume(order: Row) {
   return { order: toPublic(order), payment, trackingToken: token, publicKey: null };
 }
 
-export function create(req: Row, user: Row | null, idempotencyKey: string | null) {
+export function create(req, user, idempotencyKey) {
   if (idempotencyKey !== null) {
     const existing = db.find('orders', (o) => o.idempotency_key === idempotencyKey);
     if (existing) {
@@ -177,7 +169,7 @@ export function create(req: Row, user: Row | null, idempotencyKey: string | null
   }
   const userId = user ? user.id : null;
   const q = quote(req, userId);
-  let reference: string;
+  let reference;
   do reference = code(6, 'SA-');
   while (db.find('orders', (o) => o.reference === reference));
   const now = sql();
@@ -259,7 +251,7 @@ export function create(req: Row, user: Row | null, idempotencyKey: string | null
   return resume(order);
 }
 
-function applyPaid(order: Row): void {
+function applyPaid(order) {
   const now = sql();
   Object.assign(order, {
     payment_status: 'paid',
@@ -285,7 +277,7 @@ function applyPaid(order: Row): void {
 }
 
 /** Confirms the latest payment attempt with the (simulated) gateway, never the browser. */
-export function verifyPayment(reference: string) {
+export function verifyPayment(reference) {
   const order = db.find('orders', (o) => o.reference === reference.toUpperCase());
   if (!order) throw fail.notFound('We couldn’t find that payment.');
   if (order.payment_status !== 'paid') {
@@ -307,7 +299,7 @@ export function verifyPayment(reference: string) {
   return toPublic(order);
 }
 
-export function findForTracking(reference: string, user: Row | null, token: string | null) {
+export function findForTracking(reference, user, token) {
   const order = db.find('orders', (o) => o.reference === reference.toUpperCase());
   const owner = order && user && order.user_id === user.id;
   const staff = user && ['super_admin', 'manager', 'staff'].includes(user.role);
@@ -316,7 +308,7 @@ export function findForTracking(reference: string, user: Row | null, token: stri
   return toPublic(order, true);
 }
 
-export function listForUser(userId: number) {
+export function listForUser(userId) {
   return db
     .where('orders', (o) => o.user_id === userId && o.status !== 'pending_payment')
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -324,7 +316,7 @@ export function listForUser(userId: number) {
     .map((o) => toPublic(o, true));
 }
 
-function releaseHolds(order: Row): void {
+function releaseHolds(order) {
   if (order.wallet_applied_kobo > 0 && order.user_id) {
     ledger.wallet(
       order.user_id,
@@ -342,12 +334,7 @@ function releaseHolds(order: Row): void {
   }
 }
 
-export function updateStatus(
-  reference: string,
-  to: string,
-  actorId: number | null,
-  note: string | null = null,
-): void {
+export function updateStatus(reference, to, actorId, note = null) {
   const order = db.find('orders', (o) => o.reference === reference);
   if (!order) throw fail.notFound();
   let allowed = TRANSITIONS[order.status] ?? [];
@@ -367,22 +354,22 @@ export function updateStatus(
 }
 
 /** Basket lines rebuilt from a past order at today's prices (OrderController::reorder). */
-export function reorder(reference: string, userId: number) {
+export function reorder(reference, userId) {
   const order = db.find('orders', (o) => o.reference === reference.toUpperCase() && o.user_id === userId);
   if (!order) throw fail.notFound('We couldn’t find that order.');
   const today = sql().slice(0, 10);
-  const lines: Row[] = [];
-  const unavailable: string[] = [];
+  const lines = [];
+  const unavailable = [];
   for (const item of db.where('order_items', (i) => i.order_id === order.id)) {
     const dish = db.find('dishes', (d) => d.id === item.dish_id && d.deleted_at === null);
     if (!dish || !dish.is_available || (dish.sold_out_until !== null && dish.sold_out_until >= today)) {
       unavailable.push(item.dish_name);
       continue;
     }
-    const opts = JSON.parse(item.options ?? '{}') as Row;
+    const opts = JSON.parse(item.options ?? '{}');
     const valid = new Map(db.where('dish_options', (o) => o.dish_id === dish.id).map((o) => [o.id, o]));
     const portion = opts.portion?.id ? (valid.get(opts.portion.id) ?? null) : null;
-    const addons = ((opts.addons ?? []) as Row[]).map((a) => valid.get(a.id)).filter((a): a is Row => !!a);
+    const addons = (opts.addons ?? []).map((a) => valid.get(a.id)).filter((a) => !!a);
     lines.push({
       dishId: dish.id,
       slug: dish.slug,
@@ -404,7 +391,7 @@ export function reorder(reference: string, userId: number) {
 }
 
 /** Saves a delivery address used at checkout (CheckoutController::saveAddress). */
-export function saveCheckoutAddress(userId: number, req: Row): void {
+export function saveCheckoutAddress(userId, req) {
   const zone = db.find('delivery_zones', (z) => z.slug === req.zone);
   const mine = db.where('addresses', (a) => a.user_id === userId);
   if (mine.some((a) => a.line1 === req.address.line1) || mine.length >= 10) return;

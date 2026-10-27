@@ -11,24 +11,16 @@ import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { TextField } from '@/components/ui/TextField';
 import { applyServerErrors } from '@/lib/forms';
 import { useRegister } from '../hooks';
-import { registerSchema, type RegisterValues } from '../schemas';
+import { registerSchema } from '../schemas';
 
-const FIELDS = [
-  'first_name',
-  'last_name',
-  'email',
-  'phone',
-  'password',
-  'referral_code',
-  'accept_terms',
-] as const;
+const FIELDS = ['first_name', 'last_name', 'email', 'phone', 'password', 'referral_code', 'accept_terms'];
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const registerUser = useRegister();
-  const [formError, setFormError] = useState<string | null>(null);
-  const { register, handleSubmit, setError, watch, formState } = useForm<RegisterValues>({
+  const [formError, setFormError] = useState(null);
+  const { register, handleSubmit, setError, watch, formState } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       first_name: '',

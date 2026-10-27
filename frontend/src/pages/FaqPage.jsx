@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useSeo } from '@/lib/seo';
 
-const FAQ: { group: string; items: [string, React.ReactNode][] }[] = [
+const FAQ = [
   {
     group: 'Dining with us',
     items: [

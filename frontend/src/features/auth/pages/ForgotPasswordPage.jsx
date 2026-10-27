@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { applyServerErrors } from '@/lib/forms';
 import { useForgotPassword } from '../hooks';
-import { forgotSchema, type ForgotValues } from '../schemas';
+import { forgotSchema } from '../schemas';
 
 export function ForgotPasswordPage() {
   const forgot = useForgotPassword();
-  const [sent, setSent] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const { register, handleSubmit, setError, formState } = useForm<ForgotValues>({
+  const [sent, setSent] = useState(null);
+  const [formError, setFormError] = useState(null);
+  const { register, handleSubmit, setError, formState } = useForm({
     resolver: zodResolver(forgotSchema),
     defaultValues: { email: '' },
   });

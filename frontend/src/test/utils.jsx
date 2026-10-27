@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi } from 'vitest';
 import { setCsrfToken } from '@/lib/api';
 
 /** Renders routes at `path` with a fresh query client. */
-export function renderRoutes(routes: RouteObject[], path = '/') {
+export function renderRoutes(routes, path = '/') {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -18,13 +18,11 @@ export function renderRoutes(routes: RouteObject[], path = '/') {
   return { ...utils, router, client };
 }
 
-type Handler = (url: string, init: RequestInit) => { status?: number; body: unknown };
-
 /** Replaces global fetch with a router of JSON handlers keyed by "METHOD /path". */
-export function mockApi(handlers: Record<string, Handler>) {
+export function mockApi(handlers) {
   setCsrfToken(null);
-  const calls: { method: string; path: string; body: unknown; headers: Record<string, string> }[] = [];
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+  const calls = [];
+  const fetchMock = vi.fn(async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input.toString();
     const path = url.replace(/^.*\/api/, '');
     const method = (init.method ?? 'GET').toUpperCase();
@@ -32,9 +30,9 @@ export function mockApi(handlers: Record<string, Handler>) {
       method,
       path,
       body: init.body ? JSON.parse(String(init.body)) : undefined,
-      headers: (init.headers ?? {}) as Record<string, string>,
+      headers: init.headers ?? {},
     });
-    const csrf: Handler = () => ({ body: { csrfToken: 'test-token' } });
+    const csrf = () => ({ body: { csrfToken: 'test-token' } });
     const handler = handlers[`${method} ${path}`] ?? (path === '/auth/csrf' ? csrf : undefined);
     if (!handler)
       return new Response(JSON.stringify({ error: { code: 'not_found', message: 'nf' } }), { status: 404 });

@@ -1,7 +1,6 @@
 import { DEFAULT_FILTERS, filterDishes, filtersFromParams, normalise, paramsFromFilters } from './filters';
-import type { Dish } from './types';
 
-const dish = (over: Partial<Dish>): Dish => ({
+const dish = (over) => ({
   id: 1,
   slug: 'x',
   name: 'X',
@@ -115,10 +114,10 @@ describe('menu filters', () => {
   it('round-trips through URL parameters and ignores junk', () => {
     const f = {
       ...DEFAULT_FILTERS,
-      kitchen: 'polish' as const,
+      kitchen: 'polish',
       noPork: true,
       maxSpice: 1,
-      sort: 'popular' as const,
+      sort: 'popular',
       q: 'pierogi',
     };
     expect(filtersFromParams(paramsFromFilters(f))).toEqual(f);

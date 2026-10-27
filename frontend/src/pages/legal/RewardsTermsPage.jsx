@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useSite } from '@/features/menu/hooks';
-import { LegalLayout, type LegalSection } from './LegalLayout';
+import { LegalLayout } from './LegalLayout';
 
-const naira = (n: number) => `₦${n.toLocaleString('en-NG')}`;
+const naira = (n) => `₦${n.toLocaleString('en-NG')}`;
 
 /** Rules of the Small Africa Interest Account. Figures come from the live loyalty settings. */
 export function RewardsTermsPage() {
@@ -13,7 +13,7 @@ export function RewardsTermsPage() {
   const min = naira(l?.interestMinBalanceNaira ?? 20000);
   const referral = naira(l?.referralCreditNaira ?? 2000);
 
-  const sections: LegalSection[] = [
+  const sections = [
     {
       id: 'what',
       title: 'What the Interest Account is',

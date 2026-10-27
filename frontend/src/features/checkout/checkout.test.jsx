@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { cart } from '@/features/cart/cart';
 import { mockApi, renderRoutes } from '@/test/utils';
 import { CheckoutPage } from './CheckoutPage';
-import type { Order, Quote } from './api';
 
 const site = {
   restaurant: {},
@@ -24,7 +23,7 @@ const site = {
   ],
 };
 
-const quote: Quote = {
+const quote = {
   lines: [
     {
       dishId: 1,
@@ -61,7 +60,7 @@ const quote: Quote = {
   estimatedReadyAt: '2026-10-20 12:30',
 };
 
-const order = (paymentStatus: Order['paymentStatus']): Order => ({
+const order = (paymentStatus) => ({
   reference: 'SA-ABC123',
   status: paymentStatus === 'paid' ? 'received' : 'pending_payment',
   paymentStatus,
@@ -89,7 +88,7 @@ const placed = {
   publicKey: null,
 };
 
-function setup(outcome: 'paid' | 'failed' = 'paid') {
+function setup(outcome = 'paid') {
   cart.clear();
   cart.add(
     {
@@ -140,8 +139,8 @@ describe('CheckoutPage', () => {
   it('shows the server total and sends only identifiers, never prices', async () => {
     const { calls } = setup();
     await fillAndPay();
-    const placeCall = calls.find((c) => c.method === 'POST' && c.path === '/orders')!;
-    const body = placeCall.body as { items: Record<string, unknown>[]; fulfilment: string };
+    const placeCall = calls.find((c) => c.method === 'POST' && c.path === '/orders');
+    const body = placeCall.body;
     expect(body.fulfilment).toBe('pickup');
     expect(body.items).toEqual([{ dish_id: 1, quantity: 2, portion_id: null, addon_ids: [], note: null }]);
     expect(JSON.stringify(body)).not.toMatch(/price|total/i);

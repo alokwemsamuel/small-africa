@@ -1,26 +1,13 @@
-import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-type Tone = 'error' | 'success' | 'info';
-
-const tones: Record<Tone, string> = {
+const tones = {
   error: 'border-danger/60 bg-danger/10 text-primary',
   success: 'border-success/60 bg-success/15 text-primary',
   info: 'border-accent/50 bg-accent-fill/10 text-primary',
 };
-const marks: Record<Tone, string> = { error: '!', success: '✓', info: 'i' };
+const marks = { error: '!', success: '✓', info: 'i' };
 
-export function Alert({
-  tone = 'info',
-  title,
-  children,
-  className,
-}: {
-  tone?: Tone;
-  title?: string;
-  children?: ReactNode;
-  className?: string;
-}) {
+export function Alert({ tone = 'info', title, children, className }) {
   return (
     <div
       role={tone === 'error' ? 'alert' : 'status'}

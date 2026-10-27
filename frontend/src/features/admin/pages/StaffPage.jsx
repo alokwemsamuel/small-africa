@@ -5,16 +5,16 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/toast';
 import { useMe } from '@/features/auth/hooks';
 import { ApiError } from '@/lib/api';
-import { adminApi, type StaffMember } from '../api';
+import { adminApi } from '../api';
 import { AdminHeader, InputField, Loading, Modal, Panel, SelectField, StatusPill } from '../ui';
 import { fmt, tdClass, thClass } from '../format';
 
-const ROLES: [string, string][] = [
+const ROLES = [
   ['staff', 'Staff'],
   ['manager', 'Manager'],
   ['super_admin', 'Super Admin'],
 ];
-const WHAT_THEY_CAN_DO: Record<string, string> = {
+const WHAT_THEY_CAN_DO = {
   kitchen: 'Kitchen: orders in the kitchen, sold-out switches.',
   front_desk: 'Front desk: orders, reservations, customers, dine-in bills, enquiries.',
   manager: 'Manager: everything except staff and balance adjustments.',
@@ -27,10 +27,10 @@ export function StaffPage() {
   const { data: me } = useMe();
   const { data, error } = useQuery({ queryKey: key, queryFn: ({ signal }) => adminApi.staff(signal) });
   const [adding, setAdding] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState(null);
   if (!data) return <Loading error={error} />;
 
-  const update = async (s: StaffMember, body: Record<string, unknown>, msg: string) => {
+  const update = async (s, body, msg) => {
     setErr(null);
     try {
       qc.setQueryData(key, await adminApi.updateStaff(s.id, body));
@@ -191,7 +191,7 @@ export function StaffPage() {
   );
 }
 
-function InviteStaff({ onDone, onClose }: { onDone: (s: StaffMember[]) => void; onClose: () => void }) {
+function InviteStaff({ onDone, onClose }) {
   const [f, setF] = useState({
     first_name: '',
     last_name: '',
@@ -200,7 +200,7 @@ function InviteStaff({ onDone, onClose }: { onDone: (s: StaffMember[]) => void; 
     role: 'staff',
     staff_position: 'front_desk',
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState({});
   return (
     <Modal title="Invite staff" onClose={onClose}>
       <form

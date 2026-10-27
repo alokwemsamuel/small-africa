@@ -3,39 +3,39 @@ import { useSyncExternalStore } from 'react';
 /**
  * Persistent cart (localStorage: a UI convenience, never auth data).
  * Prices here are for display only; the server recalculates every total at checkout.
+ *
+ * @typedef {object} CartLine
+ * @property {string} key dish + chosen options, so the same dish with different options is a separate line
+ * @property {number} dishId
+ * @property {string} slug
+ * @property {string} name
+ * @property {string | null} kitchen
+ * @property {number} unitPriceKobo dish price + portion + add-ons, for display
+ * @property {number} quantity 1–20
+ * @property {number | null} portionId
+ * @property {string | null} portionName
+ * @property {number[]} addonIds
+ * @property {string[]} addonNames
+ * @property {boolean} containsPork
+ * @property {string} [note]
  */
-export interface CartLine {
-  key: string; // dish + chosen options, so the same dish with different options is a separate line
-  dishId: number;
-  slug: string;
-  name: string;
-  kitchen: string | null;
-  unitPriceKobo: number;
-  quantity: number;
-  portionId: number | null;
-  portionName: string | null;
-  addonIds: number[];
-  addonNames: string[];
-  containsPork: boolean;
-  note?: string;
-}
 
 const STORAGE_KEY = 'sa-cart-v1';
 const MAX_QTY = 20;
-let lines: CartLine[] = load();
-const listeners = new Set<() => void>();
+let lines = load();
+const listeners = new Set();
 
-function load(): CartLine[] {
+function load() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
-    return Array.isArray(parsed) ? (parsed as CartLine[]).filter((l) => typeof l?.dishId === 'number') : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((l) => typeof l?.dishId === 'number') : [];
   } catch {
     return [];
   }
 }
 
-function commit(next: CartLine[]) {
+function commit(next) {
   lines = next;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -45,12 +45,12 @@ function commit(next: CartLine[]) {
   listeners.forEach((l) => l());
 }
 
-export function lineKey(dishId: number, portionId: number | null, addonIds: number[]): string {
+export function lineKey(dishId, portionId, addonIds) {
   return [dishId, portionId ?? 0, [...addonIds].sort((a, b) => a - b).join('.')].join(':');
 }
 
 export const cart = {
-  add(line: Omit<CartLine, 'key' | 'quantity'>, quantity = 1) {
+  add(line, quantity = 1) {
     const key = lineKey(line.dishId, line.portionId, line.addonIds);
     const existing = lines.find((l) => l.key === key);
     commit(
@@ -59,22 +59,22 @@ export const cart = {
         : [...lines, { ...line, key, quantity: Math.min(MAX_QTY, quantity) }],
     );
   },
-  setQuantity(key: string, quantity: number) {
+  setQuantity(key, quantity) {
     commit(
       quantity <= 0
         ? lines.filter((l) => l.key !== key)
         : lines.map((l) => (l.key === key ? { ...l, quantity: Math.min(MAX_QTY, quantity) } : l)),
     );
   },
-  remove(key: string) {
+  remove(key) {
     commit(lines.filter((l) => l.key !== key));
   },
   clear() {
     commit([]);
   },
-  subscribe(fn: () => void) {
+  subscribe(fn) {
     listeners.add(fn);
-    const onStorage = (e: StorageEvent) => {
+    const onStorage = (e) => {
       if (e.key === STORAGE_KEY) {
         lines = load();
         fn();

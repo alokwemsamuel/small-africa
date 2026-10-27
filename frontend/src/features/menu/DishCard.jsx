@@ -7,17 +7,8 @@ import { mediaUrl } from '@/lib/env';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
 import { KITCHEN_LABEL, quickAdd } from './actions';
-import type { Dish } from './types';
 
-export function DishCard({
-  dish,
-  priority,
-  className,
-}: {
-  dish: Dish;
-  priority?: boolean;
-  className?: string;
-}) {
+export function DishCard({ dish, priority, className }) {
   const hasChoices = dish.options.portion.length > 1;
   return (
     <article

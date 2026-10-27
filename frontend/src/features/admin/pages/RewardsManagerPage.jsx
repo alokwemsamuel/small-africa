@@ -8,7 +8,7 @@ import { lagosNow } from '@/features/checkout/schedule';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
-import { adminApi, can, useAdminMe, type AdminReward, type LoyaltySettings } from '../api';
+import { adminApi, can, useAdminMe } from '../api';
 import { BarList } from '../charts';
 import {
   AdminHeader,
@@ -32,13 +32,12 @@ const TABS = [
   ['rewards', 'Rewards menu'],
   ['ledger', 'Ledger'],
   ['interest', 'Interest runs'],
-] as const;
-type Tab = (typeof TABS)[number][0];
+];
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function RewardsManagerPage() {
   const [params, setParams] = useSearchParams();
-  const tab = (TABS.find(([t]) => t === params.get('tab'))?.[0] ?? 'overview') as Tab;
+  const tab = TABS.find(([t]) => t === params.get('tab'))?.[0] ?? 'overview';
   return (
     <div className="flex flex-col gap-6">
       <AdminHeader
@@ -121,9 +120,9 @@ function Overview() {
               ['Referrals', issued.referrals],
               ['Points and rewards', issued.rewards],
             ].map(([label, v]) => ({
-              label: label as string,
-              value: v as number,
-              display: formatNaira(v as number),
+              label: label,
+              value: v,
+              display: formatNaira(v),
             }))}
           />
           <p className="text-secondary border-line mt-4 border-t pt-3 text-sm">
@@ -202,21 +201,19 @@ function Rules() {
     queryKey: ['admin', 'loyalty', 'settings'],
     queryFn: ({ signal }) => adminApi.loyaltySettings(signal),
   });
-  const [draft, setDraft] = useState<LoyaltySettings | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [draft, setDraft] = useState(null);
+  const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   if (!data) return <Loading error={error} />;
   const s = draft ?? data.settings;
-  const up = (patch: Partial<LoyaltySettings>) => setDraft({ ...s, ...patch });
-  const num = (k: keyof LoyaltySettings, label: string, opts: { suffix?: string; step?: string } = {}) => (
+  const up = (patch) => setDraft({ ...s, ...patch });
+  const num = (k, label, opts = {}) => (
     <InputField
       label={`${label}${opts.suffix ? ` (${opts.suffix})` : ''}`}
       type="number"
       step={opts.step ?? '1'}
-      value={String(s[k] as number)}
-      onChange={(e) =>
-        up({ [k]: e.target.value === '' ? '' : Number(e.target.value) } as Partial<LoyaltySettings>)
-      }
+      value={String(s[k])}
+      onChange={(e) => up({ [k]: e.target.value === '' ? '' : Number(e.target.value) })}
       error={errors[k]}
     />
   );
@@ -542,7 +539,7 @@ function RewardsMenu() {
     queryKey: ['admin', 'loyalty', 'settings'],
     queryFn: ({ signal }) => adminApi.loyaltySettings(signal),
   });
-  const [editing, setEditing] = useState<AdminReward | 'new' | null>(null);
+  const [editing, setEditing] = useState(null);
   if (!data) return <Loading error={error} />;
   return (
     <Panel
@@ -587,17 +584,7 @@ function RewardsMenu() {
   );
 }
 
-function RewardEditor({
-  reward,
-  categories,
-  onSaved,
-  onClose,
-}: {
-  reward: AdminReward | null;
-  categories: { slug: string; name: string }[];
-  onSaved: (r: AdminReward[]) => void;
-  onClose: () => void;
-}) {
+function RewardEditor({ reward, categories, onSaved, onClose }) {
   const [r, setR] = useState({
     name: reward?.name ?? '',
     description: reward?.description ?? '',
@@ -608,7 +595,7 @@ function RewardEditor({
     dine_in_only: reward?.dineInOnly ?? false,
     is_active: reward?.isActive ?? true,
   });
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   return (
     <Modal title={reward ? `Edit ${reward.name}` : 'Add a reward'} onClose={onClose}>
       <form
@@ -655,7 +642,7 @@ function RewardEditor({
           <SelectField
             label="Type"
             value={r.reward_type}
-            onChange={(v) => setR({ ...r, reward_type: v as 'credit' | 'item' | 'upgrade' })}
+            onChange={(v) => setR({ ...r, reward_type: v })}
             options={[
               ['credit', 'Dining credit'],
               ['item', 'Free item'],
@@ -677,7 +664,7 @@ function RewardEditor({
               onChange={(v) => setR({ ...r, category_slug: v })}
               options={[
                 ['', 'A specific dish (set by developer)'],
-                ...categories.map((c) => [c.slug, c.name] as [string, string]),
+                ...categories.map((c) => [c.slug, c.name]),
               ]}
             />
           )}
@@ -707,7 +694,7 @@ function RewardEditor({
 /* ------------------------------------------------------------------ ledger */
 
 function Ledger() {
-  const [kind, setKind] = useState<'wallet' | 'points'>('wallet');
+  const [kind, setKind] = useState('wallet');
   const [type, setType] = useState('');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
@@ -729,7 +716,7 @@ function Ledger() {
           'adjustment',
         ]
       : ['earn', 'bonus', 'streak', 'redeem', 'expire', 'adjustment'];
-  const show = (n: number) => (kind === 'wallet' ? formatNaira(n) : fmt.number(n));
+  const show = (n) => (kind === 'wallet' ? formatNaira(n) : fmt.number(n));
   return (
     <Panel>
       <div className="mb-4 flex flex-wrap items-end gap-3">
@@ -737,7 +724,7 @@ function Ledger() {
           label="Ledger"
           value={kind}
           onChange={(v) => {
-            setKind(v as 'wallet' | 'points');
+            setKind(v);
             setType('');
             setPage(1);
           }}
@@ -754,7 +741,7 @@ function Ledger() {
             setType(v);
             setPage(1);
           }}
-          options={[['', 'All types'], ...types.map((t) => [t, fmt.label(t)] as [string, string])]}
+          options={[['', 'All types'], ...types.map((t) => [t, fmt.label(t)])]}
           className="w-48"
         />
         <SearchBox
@@ -852,10 +839,10 @@ function InterestRuns() {
     `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}`,
   );
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState(null);
   if (!data) return <Loading error={error} />;
 
-  const run = async (fn: () => ReturnType<typeof adminApi.runInterest>) => {
+  const run = async (fn) => {
     setBusy(true);
     setMessage(null);
     try {

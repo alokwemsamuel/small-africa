@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { mockApi, renderRoutes } from '@/test/utils';
 import { lagosNow } from '@/features/checkout/schedule';
-import { icsFor, type Reservation } from './api';
+import { icsFor } from './api';
 import { ManageReservationPage } from './ManageReservationPage';
 import { ReservationsPage } from './ReservationsPage';
 
@@ -27,7 +27,7 @@ const availability = {
   ],
 };
 
-const reservation: Reservation = {
+const reservation = {
   code: 'R-7KQ2PX',
   status: 'confirmed',
   date: '2026-10-30',
@@ -66,10 +66,7 @@ describe('ReservationsPage', () => {
 
     expect(await screen.findByText('See you soon, Ada')).toBeInTheDocument();
     expect(screen.getByText('R-7KQ2PX')).toBeInTheDocument();
-    const booking = calls.find((c) => c.method === 'POST' && c.path === '/reservations')!.body as Record<
-      string,
-      unknown
-    >;
+    const booking = calls.find((c) => c.method === 'POST' && c.path === '/reservations').body;
     expect(booking).toMatchObject({ time: '19:00', party_size: 2, area: 'main', occasion: 'birthday' });
   });
 

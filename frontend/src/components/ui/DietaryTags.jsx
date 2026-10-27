@@ -1,15 +1,6 @@
 import { cn } from '@/lib/cn';
 
-export interface DietaryInfo {
-  spiceLevel: number;
-  isVegetarian: boolean;
-  isGlutenFree: boolean;
-  containsNuts: boolean;
-  containsPork: boolean;
-  isAlcoholic: boolean;
-}
-
-function Tag({ children, strong, title }: { children: React.ReactNode; strong?: boolean; title?: string }) {
+function Tag({ children, strong, title }) {
   return (
     <li
       title={title}
@@ -27,15 +18,7 @@ function Tag({ children, strong, title }: { children: React.ReactNode; strong?: 
  * Dietary and allergen tags. "Contains pork" and "Contains nuts" are always shown when they
  * apply (strong style) because guests filter on them. Every tag is plain text, never colour alone.
  */
-export function DietaryTags({
-  info,
-  className,
-  compact,
-}: {
-  info: DietaryInfo;
-  className?: string;
-  compact?: boolean;
-}) {
+export function DietaryTags({ info, className, compact }) {
   const spice = Math.max(0, Math.min(3, info.spiceLevel));
   return (
     <ul className={cn('flex flex-wrap gap-1.5', className)} aria-label="Dietary information">

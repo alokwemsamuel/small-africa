@@ -1,15 +1,8 @@
 import { createContext, useContext } from 'react';
-import type { ResolvedTheme, ThemePreference } from './theme';
 
-export interface ThemeContextValue {
-  preference: ThemePreference;
-  resolved: ResolvedTheme;
-  setPreference: (p: ThemePreference) => void;
-}
+export const ThemeContext = createContext(null);
 
-export const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-export function useTheme(): ThemeContextValue {
+export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme must be used inside <ThemeProvider>');
   return ctx;

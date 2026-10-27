@@ -4,10 +4,9 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/toast';
-import type { OrderStatus } from '@/features/checkout/api';
 import { ApiError } from '@/lib/api';
 import { formatNaira } from '@/lib/format';
-import { adminApi, can, useAdminMe, type AdminOrder } from '../api';
+import { adminApi, can, useAdminMe } from '../api';
 import {
   AdminHeader,
   Empty,
@@ -23,7 +22,7 @@ import {
 } from '../ui';
 import { fmt, tdClass, thClass } from '../format';
 
-const STATUS_FILTERS: [string, string][] = [
+const STATUS_FILTERS = [
   ['received,preparing,ready,out_for_delivery', 'Active'],
   ['', 'All'],
   ['received', 'Received'],
@@ -34,7 +33,7 @@ const STATUS_FILTERS: [string, string][] = [
   ['cancelled', 'Cancelled'],
 ];
 
-const ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
+const ACTION_LABEL = {
   preparing: 'Start preparing',
   ready: 'Mark ready',
   out_for_delivery: 'Out for delivery',
@@ -50,7 +49,7 @@ export function OrdersPage() {
   const status = params.get('status') ?? 'received,preparing,ready,out_for_delivery';
   const page = Number(params.get('page') ?? 1);
   const [q, setQ] = useState(params.get('q') ?? '');
-  const set = (k: string, v: string) =>
+  const set = (k, v) =>
     setParams(
       (p) => {
         if (v) p.set(k, v);
@@ -205,25 +204,25 @@ export function OrdersPage() {
   );
 }
 
-function OrderDetail({ reference, onClose }: { reference: string; onClose: () => void }) {
+function OrderDetail({ reference, onClose }) {
   const qc = useQueryClient();
   const { data: me } = useAdminMe();
   const { data: order, error } = useQuery({
     queryKey: ['admin', 'order', reference],
     queryFn: ({ signal }) => adminApi.order(reference, signal),
   });
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [refund, setRefund] = useState(false);
   const [note, setNote] = useState('');
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState(null);
 
-  const update = (o: AdminOrder) => {
+  const update = (o) => {
     qc.setQueryData(['admin', 'order', reference], o);
     void qc.invalidateQueries({ queryKey: ['admin', 'orders'] });
     void qc.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
   };
-  const move = async (to: OrderStatus, reason?: string) => {
+  const move = async (to, reason) => {
     setErr(null);
     setBusy(to);
     try {
@@ -237,7 +236,7 @@ function OrderDetail({ reference, onClose }: { reference: string; onClose: () =>
       setBusy(null);
     }
   };
-  const flag = async (value: boolean) => {
+  const flag = async (value) => {
     setErr(null);
     try {
       update(await adminApi.refundFlag(reference, value, note));

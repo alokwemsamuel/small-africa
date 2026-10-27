@@ -1,106 +1,75 @@
-import type { Kitchen } from '@/components/ui/Badge';
+/**
+ * Data shapes for the public menu and site information (GET /menu, /menu/{slug}, /site).
+ * Documentation only: there is no runtime code in this file. Money is integer kobo.
+ *
+ * @typedef {'nigerian' | 'polish' | 'continental'} Kitchen
+ * @typedef {'starters' | 'soups' | 'mains' | 'grills' | 'sides' | 'desserts' | 'drinks' | 'tasting'} CategorySlug
+ *
+ * @typedef {object} DishOption
+ * @property {number} id
+ * @property {string} name
+ * @property {number} priceDeltaKobo added to the dish price (can be negative for a smaller portion)
+ * @property {boolean} isDefault
+ *
+ * @typedef {object} Dish
+ * @property {number} id
+ * @property {string} slug
+ * @property {string} name
+ * @property {Kitchen | null} kitchen null for drinks
+ * @property {CategorySlug} category
+ * @property {string} shortDescription
+ * @property {string} description
+ * @property {string | null} ingredients
+ * @property {string[]} allergens
+ * @property {number} priceKobo
+ * @property {number} spiceLevel 0–3
+ * @property {boolean} isVegetarian
+ * @property {boolean} isGlutenFree
+ * @property {boolean} containsNuts
+ * @property {boolean} containsPork
+ * @property {boolean} isAlcoholic
+ * @property {boolean} isFeatured
+ * @property {boolean} isAvailable false when off the menu or sold out today
+ * @property {number} popularity
+ * @property {string | null} imageUrl uploaded photo ('/media/…'), else the stock photo is used
+ * @property {string} imageAlt
+ * @property {{ portion: DishOption[], addon: DishOption[] }} options
+ *
+ * @typedef {object} Review
+ * @property {number} id
+ * @property {string} author e.g. 'Funmilayo A.'
+ * @property {number} rating 1–5
+ * @property {string | null} title
+ * @property {string} body
+ * @property {string | null} dish
+ * @property {string | null} reply the restaurant's reply
+ * @property {string} createdAt
+ *
+ * @typedef {Dish & { tastingCourses: { courseNo: number, kitchen: Kitchen, name: string,
+ *   description: string }[], related: Dish[], reviews: Review[] }} DishDetail
+ *
+ * @typedef {object} KitchenInfo
+ * @property {number} id
+ * @property {Kitchen} slug
+ * @property {string} name
+ * @property {string} tagline
+ * @property {string} description
+ * @property {string} accentColor
+ *
+ * @typedef {object} MenuData
+ * @property {KitchenInfo[]} kitchens
+ * @property {{ id: number, slug: CategorySlug, name: string }[]} categories
+ * @property {Dish[]} dishes
+ *
+ * @typedef {object} SiteInfo
+ * @property {Record<string, string>} restaurant name, tagline, address, phone, whatsapp, email…
+ * @property {{ pricesIncludeVat: boolean, vatRateBp: number, serviceChargeDineInBp: number }} pricing
+ * @property {{ dayOfWeek: number, opensAt: string | null, closesAt: string | null, isClosed: boolean }[]} openingHours
+ * @property {{ slug: string, name: string, feeKobo: number, minOrderKobo: number, etaMinutes: number }[]} deliveryZones
+ * @property {{ slug: string, name: string, description: string, minParty: number, maxParty: number }[]} seatingAreas
+ * @property {object[]} eventPackages
+ * @property {object} loyalty tiers and headline Interest Account rules
+ * @property {Review[]} testimonials
+ */
 
-export type { Kitchen };
-export type CategorySlug =
-  'starters' | 'soups' | 'mains' | 'grills' | 'sides' | 'desserts' | 'drinks' | 'tasting';
-
-export interface DishOption {
-  id: number;
-  name: string;
-  priceDeltaKobo: number;
-  isDefault: boolean;
-}
-
-export interface Dish {
-  id: number;
-  slug: string;
-  name: string;
-  kitchen: Kitchen | null;
-  category: CategorySlug;
-  shortDescription: string;
-  description: string;
-  ingredients: string | null;
-  allergens: string[];
-  priceKobo: number;
-  spiceLevel: number;
-  isVegetarian: boolean;
-  isGlutenFree: boolean;
-  containsNuts: boolean;
-  containsPork: boolean;
-  isAlcoholic: boolean;
-  isFeatured: boolean;
-  isAvailable: boolean;
-  popularity: number;
-  imageUrl: string | null;
-  imageAlt: string;
-  options: { portion: DishOption[]; addon: DishOption[] };
-}
-
-export interface Review {
-  id: number;
-  author: string;
-  rating: number;
-  title: string | null;
-  body: string;
-  dish: string | null;
-  reply: string | null;
-  createdAt: string;
-}
-
-export interface DishDetail extends Dish {
-  tastingCourses: { courseNo: number; kitchen: Kitchen; name: string; description: string }[];
-  related: Dish[];
-  reviews: Review[];
-}
-
-export interface KitchenInfo {
-  id: number;
-  slug: Kitchen;
-  name: string;
-  tagline: string;
-  description: string;
-  accentColor: string;
-}
-
-export interface MenuData {
-  kitchens: KitchenInfo[];
-  categories: { id: number; slug: CategorySlug; name: string }[];
-  dishes: Dish[];
-}
-
-export interface SiteInfo {
-  restaurant: {
-    name: string;
-    tagline: string;
-    address: string;
-    phone: string;
-    whatsapp: string;
-    email: string;
-    instagram: string;
-    tiktok: string;
-    map_embed_query: string;
-  };
-  pricing: { pricesIncludeVat: boolean; vatRateBp: number; serviceChargeDineInBp: number };
-  openingHours: { dayOfWeek: number; opensAt: string | null; closesAt: string | null; isClosed: boolean }[];
-  deliveryZones: { slug: string; name: string; feeKobo: number; minOrderKobo: number; etaMinutes: number }[];
-  seatingAreas: { slug: string; name: string; description: string; minParty: number; maxParty: number }[];
-  eventPackages: {
-    id: number;
-    slug: string;
-    name: string;
-    summary: string;
-    pricePerGuestKobo: number;
-    minGuests: number;
-    maxGuests: number;
-    features: string[];
-  }[];
-  loyalty: {
-    tiers: { key: string; name: string; min_spend_naira: number; multiplier: number; perks: string[] }[];
-    earnPointsPer1000Naira: number;
-    interestRateBp: number;
-    interestCapNaira: number;
-    interestMinBalanceNaira: number;
-    referralCreditNaira: number;
-  };
-  testimonials: Review[];
-}
+export {};

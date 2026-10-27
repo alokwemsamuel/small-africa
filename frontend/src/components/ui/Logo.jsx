@@ -1,6 +1,6 @@
 import { cn } from '@/lib/cn';
 
-const asset = (file: string) => `${import.meta.env.BASE_URL}brand/${file}`;
+const asset = (file) => `${import.meta.env.BASE_URL}brand/${file}`;
 
 const FILES = {
   mark: { dark: 'small-africa-mark-gold.svg', light: 'small-africa-mark-obsidian.svg', w: 200, h: 200 },
@@ -10,19 +10,13 @@ const FILES = {
     w: 676,
     h: 200,
   },
-} as const;
+};
 
 /**
  * Gold logo on dark, obsidian logo on light. Both are rendered and CSS hides the wrong one
  * (see .on-dark-only / .on-light-only), so the swap is instant and correct before React loads.
  */
-export function Logo({
-  variant = 'horizontal',
-  className,
-}: {
-  variant?: 'mark' | 'horizontal';
-  className?: string;
-}) {
+export function Logo({ variant = 'horizontal', className }) {
   const f = FILES[variant];
   const alt = variant === 'mark' ? 'Small Africa' : 'Small Africa: Three kitchens. One table.';
   const size = variant === 'mark' ? 'h-auto' : 'w-auto';

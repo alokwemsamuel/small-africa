@@ -3,19 +3,19 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatNaira } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { adminApi, can, useAdminMe, type Kpi } from '../api';
-import { BarList, ColumnChart, type Datum } from '../charts';
+import { adminApi, can, useAdminMe } from '../api';
+import { BarList, ColumnChart } from '../charts';
 import { AdminHeader, Empty, Loading, Panel, StatusPill, StatTile } from '../ui';
 import { fmt } from '../format';
 
-const dayLabel = (iso: string, long: boolean) =>
+const dayLabel = (iso, long) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(
     'en-NG',
     long ? { weekday: 'long', day: 'numeric', month: 'long' } : { weekday: 'short', day: 'numeric' },
   );
 
 /** "+12% vs yesterday" — up is good for every figure on this page. */
-function delta(now: number, before: number, unit = 'vs yesterday') {
+function delta(now, before, unit = 'vs yesterday') {
   if (before === 0)
     return now === 0
       ? { text: `No change ${unit}`, good: null }
@@ -26,7 +26,7 @@ function delta(now: number, before: number, unit = 'vs yesterday') {
 
 export function DashboardPage() {
   const { data: me } = useAdminMe();
-  const [days, setDays] = useState<7 | 30>(7);
+  const [days, setDays] = useState(7);
   const { data, error, isFetching } = useQuery({
     queryKey: ['admin', 'dashboard', days],
     queryFn: ({ signal }) => adminApi.dashboard(days, signal),
@@ -36,16 +36,16 @@ export function DashboardPage() {
   });
   if (!data) return <Loading error={error} label="Loading dashboard" />;
 
-  const t: Kpi = data.today;
-  const y: Kpi = data.yesterday;
-  const revenue: Datum[] = data.series.map((s) => ({
+  const t = data.today;
+  const y = data.yesterday;
+  const revenue = data.series.map((s) => ({
     key: s.date,
     label: dayLabel(s.date, false),
     fullLabel: dayLabel(s.date, true),
     value: s.revenueKobo,
     display: formatNaira(s.revenueKobo),
   }));
-  const orders: Datum[] = data.series.map((s) => ({
+  const orders = data.series.map((s) => ({
     key: s.date,
     label: dayLabel(s.date, false),
     fullLabel: dayLabel(s.date, true),
@@ -60,7 +60,7 @@ export function DashboardPage() {
         intro={`Today in Lagos. Updated ${fmt.time(data.generatedAt)}; refreshes every 30 seconds.`}
         actions={
           <div role="group" aria-label="Period" className="border-line flex rounded-full border p-1">
-            {([7, 30] as const).map((d) => (
+            {[7, 30].map((d) => (
               <button
                 key={d}
                 type="button"
@@ -205,17 +205,7 @@ export function DashboardPage() {
   );
 }
 
-function Shortcut({
-  to,
-  label,
-  value,
-  detail,
-}: {
-  to: string;
-  label: string;
-  value: number;
-  detail?: string;
-}) {
+function Shortcut({ to, label, value, detail }) {
   return (
     <Link
       to={to}

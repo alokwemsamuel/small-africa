@@ -1,7 +1,7 @@
 import { ButtonLink } from '@/components/ui/Button';
 
 /** Routes that exist in the navigation but are built in later phases. */
-export function PlaceholderPage({ title, phase }: { title: string; phase: string }) {
+export function PlaceholderPage({ title, phase }) {
   return (
     <section className="container-luxe flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
       <p className="text-accent eyebrow">{phase}</p>

@@ -1,36 +1,35 @@
 import { ApiError } from '@/lib/api';
-import type { Row } from './db';
 
 /** The API's error responses (HttpError / ValidationError), as the client sees them. */
 export const fail = {
-  fields: (fields: Record<string, string>, message = 'Please check the highlighted fields.') =>
+  fields: (fields, message = 'Please check the highlighted fields.') =>
     new ApiError(422, 'validation_failed', message, fields),
-  field: (field: string, message: string) => fail.fields({ [field]: message }),
-  badRequest: (message: string, code = 'bad_request') => new ApiError(400, code, message),
+  field: (field, message) => fail.fields({ [field]: message }),
+  badRequest: (message, code = 'bad_request') => new ApiError(400, code, message),
   unauthorized: (message = 'Please sign in to continue.') => new ApiError(401, 'unauthenticated', message),
   forbidden: (message = "You don't have permission to do that.") => new ApiError(403, 'forbidden', message),
   notFound: (message = 'We couldn’t find that.') => new ApiError(404, 'not_found', message),
-  conflict: (message: string, code = 'conflict') => new ApiError(409, code, message),
+  conflict: (message, code = 'conflict') => new ApiError(409, code, message),
 };
 
 /** PHP regex literal ('/^a$/i' or '#^https://#') to a RegExp. */
-function phpRegex(src: string): RegExp {
-  const delim = src[0]!;
+function phpRegex(src) {
+  const delim = src[0];
   const end = src.lastIndexOf(delim);
   return new RegExp(src.slice(1, end), src.slice(end + 1).replace(/[^imsu]/g, ''));
 }
 
-function parseRules(rules: string): Record<string, string> {
-  const out: Record<string, string> = {};
+function parseRules(rules) {
+  const out = {};
   // regex rules may contain '|' so it must be last, as in the API.
   const m = /\|?regex:(.+)$/.exec(rules);
   if (m) {
-    out.regex = m[1]!;
+    out.regex = m[1];
     rules = rules.slice(0, -m[0].length);
   }
   for (const rule of rules.split('|').filter(Boolean)) {
     const [name, ...arg] = rule.split(':');
-    out[name!] = arg.join(':');
+    out[name] = arg.join(':');
   }
   return out;
 }
@@ -38,20 +37,20 @@ function parseRules(rules: string): Record<string, string> {
 const PHONE = /^(\+?234|0)[789][01]\d{8}$|^\+[1-9]\d{7,14}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export function normalisePhone(phone: string): string {
+export function normalisePhone(phone) {
   const digits = phone.replace(/[\s\-()]/g, '');
   const local = /^0([789][01]\d{8})$/.exec(digits) ?? /^234([789][01]\d{8})$/.exec(digits);
   return local ? `+234${local[1]}` : digits;
 }
 
-function validDate(value: string): boolean {
+function validDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [y, m, d] = value.split('-').map(Number) as [number, number, number];
+  const [y, m, d] = value.split('-').map(Number);
   const t = new Date(Date.UTC(y, m - 1, d));
   return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
 }
 
-function check(value: unknown, r: Record<string, string>, label: string, data: Row): string | null {
+function check(value, r, label, data) {
   const inList = () =>
     r.in !== undefined && !r.in.split(',').includes(String(value)) ? `${label} is not a valid option.` : null;
   if ('int' in r) {
@@ -64,7 +63,7 @@ function check(value: unknown, r: Record<string, string>, label: string, data: R
     return inList();
   }
   if ('bool' in r) {
-    return [true, false, 0, 1, '0', '1', 'true', 'false'].includes(value as never)
+    return [true, false, 0, 1, '0', '1', 'true', 'false'].includes(value)
       ? null
       : `${label} must be yes or no.`;
   }
@@ -84,11 +83,11 @@ function check(value: unknown, r: Record<string, string>, label: string, data: R
   return inList();
 }
 
-function cast(value: unknown, r: Record<string, string>): unknown {
+function cast(value, r) {
   if ('int' in r) return Number(value);
-  if ('bool' in r) return [true, 1, '1', 'true'].includes(value as never);
-  if ('email' in r) return (value as string).toLowerCase();
-  if ('phone' in r) return normalisePhone(value as string);
+  if ('bool' in r) return [true, 1, '1', 'true'].includes(value);
+  if ('email' in r) return value.toLowerCase();
+  if ('phone' in r) return normalisePhone(value);
   return value;
 }
 
@@ -96,9 +95,9 @@ function cast(value: unknown, r: Record<string, string>): unknown {
  * Port of App\Support\Validator: same rules, messages and normalisation. Returns only the
  * declared fields; fields that were sent empty come back as null, absent fields stay absent.
  */
-export function validate(data: Row, rules: Record<string, string>, labels: Record<string, string> = {}): Row {
-  const clean: Row = {};
-  const errors: Record<string, string> = {};
+export function validate(data, rules, labels = {}) {
+  const clean = {};
+  const errors = {};
   for (const [field, ruleString] of Object.entries(rules)) {
     const r = parseRules(ruleString);
     const label = labels[field] ?? field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ');
@@ -119,15 +118,11 @@ export function validate(data: Row, rules: Record<string, string>, labels: Recor
 }
 
 /** Validates query-string parameters (values arrive as strings). */
-export function validateQuery(
-  query: URLSearchParams,
-  rules: Record<string, string>,
-  labels?: Record<string, string>,
-) {
+export function validateQuery(query, rules, labels) {
   return validate(Object.fromEntries(query.entries()), rules, labels);
 }
 
 /** '₦12,500' from kobo (Notifier::naira). */
-export function naira(kobo: number): string {
+export function naira(kobo) {
   return `₦${Math.trunc(kobo / 100).toLocaleString('en-US')}`;
 }

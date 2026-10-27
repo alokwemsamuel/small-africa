@@ -2,29 +2,25 @@ import { sql } from './time';
 
 /**
  * The demo's database: the API's tables as arrays of rows (snake_case columns, kobo amounts,
- * 'YYYY-MM-DD HH:MM:SS' Lagos times), kept in this browser's localStorage. Rows are untyped on
- * purpose: they mirror SQL rows, and the handlers port PHP code that reads them the same way.
+ * 'YYYY-MM-DD HH:MM:SS' Lagos times), kept in this browser's localStorage. Rows are plain
+ * objects on purpose: they mirror SQL rows, and the handlers port PHP code that reads them the same way.
+ *
+ * @typedef {Record<string, any>} Row
+ *
+ * @typedef {object} DemoState
+ * @property {number} version
+ * @property {string} builtOn Lagos date the data was built for: a new day rebuilds it, so "today" is always busy
+ * @property {Record<string, Row[]>} tables
+ * @property {Record<string, number>} nextId
+ * @property {number | null} userId the signed-in demo user (the real API keeps this in a server-side session)
+ * @property {Record<number, string>} passwords SHA-256 of salt + password for accounts that can sign in. Demo only.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Row = Record<string, any>;
-
-export interface DemoState {
-  version: number;
-  /** Lagos date the data was built for: a new day rebuilds it, so "today" is always busy. */
-  builtOn: string;
-  tables: Record<string, Row[]>;
-  nextId: Record<string, number>;
-  /** The signed-in demo user (the real API keeps this in a server-side session). */
-  userId: number | null;
-  /** SHA-256 of salt + password for accounts that can sign in. Demo only. */
-  passwords: Record<number, string>;
-}
 
 export const STATE_VERSION = 1;
 const STORAGE_KEY = 'sa-demo-db-v1';
 
 /** Column defaults from the migrations, for the columns the handlers rely on. */
-const DEFAULTS: Record<string, Row> = {
+const DEFAULTS = {
   users: {
     staff_position: null,
     phone: null,
@@ -167,35 +163,35 @@ const DEFAULTS: Record<string, Row> = {
 /** Tables with no `id` column (keyed some other way). */
 const NO_ID = new Set(['loyalty_accounts', 'settings', 'opening_hours']);
 
-let state: DemoState | null = null;
+let state = null;
 
-export function setState(next: DemoState): void {
+export function setState(next) {
   state = next;
 }
 
-export function getState(): DemoState {
+export function getState() {
   if (!state) throw new Error('Demo database not loaded');
   return state;
 }
 
 export const db = {
-  all(table: string): Row[] {
+  all(table) {
     const s = getState();
     return (s.tables[table] ??= []);
   },
-  find(table: string, pred: (r: Row) => boolean): Row | null {
+  find(table, pred) {
     return db.all(table).find(pred) ?? null;
   },
-  where(table: string, pred: (r: Row) => boolean): Row[] {
+  where(table, pred) {
     return db.all(table).filter(pred);
   },
-  byId(table: string, id: unknown): Row | null {
+  byId(table, id) {
     return id === null || id === undefined ? null : db.find(table, (r) => r.id === Number(id));
   },
   /** Inserts a row with the table's defaults, a new id and created_at; returns the stored row. */
-  insert(table: string, values: Row): Row {
+  insert(table, values) {
     const s = getState();
-    const row: Row = { ...DEFAULTS[table], created_at: sql(), ...values };
+    const row = { ...DEFAULTS[table], created_at: sql(), ...values };
     if (!NO_ID.has(table) && row.id === undefined) {
       row.id = s.nextId[table] ?? 1;
       s.nextId[table] = row.id + 1;
@@ -203,16 +199,16 @@ export const db = {
     db.all(table).push(row);
     return row;
   },
-  delete(table: string, pred: (r: Row) => boolean): void {
+  delete(table, pred) {
     const s = getState();
     s.tables[table] = db.all(table).filter((r) => !pred(r));
   },
   /** JSON settings group (the `settings` table), like Settings::group(). */
-  settings(group: string): Row {
+  settings(group) {
     const row = db.find('settings', (r) => r.setting_key === group);
-    return row ? (JSON.parse(row.setting_value) as Row) : {};
+    return row ? JSON.parse(row.setting_value) : {};
   },
-  saveSettings(group: string, value: Row): void {
+  saveSettings(group, value) {
     const row = db.find('settings', (r) => r.setting_key === group);
     if (row) row.setting_value = JSON.stringify(value);
     else db.insert('settings', { setting_key: group, setting_value: JSON.stringify(value) });
@@ -220,15 +216,15 @@ export const db = {
 };
 
 /** Next free id for every table, after loading rows that already carry ids. */
-export function nextIds(tables: Record<string, Row[]>): Record<string, number> {
-  const out: Record<string, number> = {};
+export function nextIds(tables) {
+  const out = {};
   for (const [name, rows] of Object.entries(tables)) {
     out[name] = rows.reduce((max, r) => (typeof r.id === 'number' && r.id >= max ? r.id + 1 : max), 1);
   }
   return out;
 }
 
-export function persist(): void {
+export function persist() {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(getState()));
   } catch {
@@ -236,17 +232,17 @@ export function persist(): void {
   }
 }
 
-export function loadPersisted(): DemoState | null {
+export function loadPersisted() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as DemoState) : null;
+    const parsed = raw ? JSON.parse(raw) : null;
     return parsed && parsed.version === STATE_VERSION ? parsed : null;
   } catch {
     return null;
   }
 }
 
-export function clearPersisted(): void {
+export function clearPersisted() {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
   } catch {

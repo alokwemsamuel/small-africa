@@ -9,7 +9,7 @@ import { fmt, tdClass, thClass } from '../format';
 export function CustomersPage() {
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState(params.get('q') ?? '');
-  const set = (k: string, v: string) =>
+  const set = (k, v) =>
     setParams(
       (p) => {
         if (v) p.set(k, v);

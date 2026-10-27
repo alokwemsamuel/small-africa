@@ -1,17 +1,15 @@
 /** Mirrors public/theme-init.js, which applies the same logic before React loads. */
-export type ThemePreference = 'dark' | 'light' | 'system';
-export type ResolvedTheme = 'dark' | 'light';
 
 export const THEME_STORAGE_KEY = 'sa-theme';
-export const THEME_COLORS: Record<ResolvedTheme, string> = { dark: '#0E0C0A', light: '#F6EFE3' };
+export const THEME_COLORS = { dark: '#0E0C0A', light: '#F6EFE3' };
 const LIGHT_QUERY = '(prefers-color-scheme: light)';
 
-export function isThemePreference(v: unknown): v is ThemePreference {
+export function isThemePreference(v) {
   return v === 'dark' || v === 'light' || v === 'system';
 }
 
 /** UI preference only (never auth data). Storage can be blocked, so every access is guarded. */
-export function readStoredPreference(): ThemePreference {
+export function readStoredPreference() {
   try {
     const v = window.localStorage.getItem(THEME_STORAGE_KEY);
     return isThemePreference(v) ? v : 'dark';
@@ -20,7 +18,7 @@ export function readStoredPreference(): ThemePreference {
   }
 }
 
-export function storePreference(pref: ThemePreference): void {
+export function storePreference(pref) {
   try {
     window.localStorage.setItem(THEME_STORAGE_KEY, pref);
   } catch {
@@ -28,15 +26,15 @@ export function storePreference(pref: ThemePreference): void {
   }
 }
 
-export function systemPrefersLight(): boolean {
+export function systemPrefersLight() {
   return typeof window.matchMedia === 'function' && window.matchMedia(LIGHT_QUERY).matches;
 }
 
-export function resolveTheme(pref: ThemePreference, prefersLight: boolean): ResolvedTheme {
+export function resolveTheme(pref, prefersLight) {
   return pref === 'system' ? (prefersLight ? 'light' : 'dark') : pref;
 }
 
-export function applyTheme(resolved: ResolvedTheme, pref: ThemePreference): void {
+export function applyTheme(resolved, pref) {
   const root = document.documentElement;
   root.setAttribute('data-theme', resolved);
   root.setAttribute('data-theme-preference', pref);
@@ -44,10 +42,10 @@ export function applyTheme(resolved: ResolvedTheme, pref: ThemePreference): void
 }
 
 /** Subscribes to OS appearance changes; returns an unsubscribe function. */
-export function watchSystemTheme(onChange: (prefersLight: boolean) => void): () => void {
+export function watchSystemTheme(onChange) {
   if (typeof window.matchMedia !== 'function') return () => {};
   const mql = window.matchMedia(LIGHT_QUERY);
-  const handler = (e: MediaQueryListEvent) => onChange(e.matches);
+  const handler = (e) => onChange(e.matches);
   mql.addEventListener('change', handler);
   return () => mql.removeEventListener('change', handler);
 }

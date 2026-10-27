@@ -4,13 +4,13 @@ import { useReducedMotion } from '@/components/motion/useReducedMotion';
 import { cn } from '@/lib/cn';
 import { GoldParticles } from './GoldParticles';
 
-const asset = (f: string) => `${import.meta.env.BASE_URL}hero/${f}`;
+const asset = (f) => `${import.meta.env.BASE_URL}hero/${f}`;
 /** Phones and portrait tablets get the 720×1280 vertical cut; everything else the 1920×1080 one. */
 const PORTRAIT = '(orientation: portrait) and (max-width: 1024px)';
 
 /** Data Saver (Chrome/Android) or the prefers-reduced-data media query. */
-function saveData(): boolean {
-  const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
+function saveData() {
+  const nav = navigator;
   return !!nav.connection?.saveData || !!window.matchMedia?.('(prefers-reduced-data: reduce)').matches;
 }
 
@@ -21,8 +21,8 @@ function saveData(): boolean {
  */
 export function Hero() {
   const reduced = useReducedMotion();
-  const video = useRef<HTMLVideoElement>(null);
-  const [variant, setVariant] = useState<'1920' | '720x1280' | null>(null);
+  const video = useRef(null);
+  const [variant, setVariant] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [paused, setPaused] = useState(false); // the visitor pressed pause
 
@@ -163,13 +163,11 @@ export function Hero() {
             <div
               key={child.key}
               className={reduced ? undefined : 'rise-in'}
-              style={
-                {
-                  '--rise-distance': '24px',
-                  '--rise-duration': '0.9s',
-                  '--rise-delay': `${0.15 + i * 0.14}s`,
-                } as React.CSSProperties
-              }
+              style={{
+                '--rise-distance': '24px',
+                '--rise-duration': '0.9s',
+                '--rise-delay': `${0.15 + i * 0.14}s`,
+              }}
             >
               {child}
             </div>

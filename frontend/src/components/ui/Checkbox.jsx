@@ -1,14 +1,6 @@
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useId } from 'react';
 
-interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  label: ReactNode;
-  error?: string;
-}
-
-export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
-  { label, error, id, ...rest },
-  ref,
-) {
+export const Checkbox = forwardRef(function Checkbox({ label, error, id, ...rest }, ref) {
   const autoId = useId();
   const inputId = id ?? autoId;
   return (

@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn';
 
 const labels = ['Too short', 'Weak', 'Fair', 'Strong', 'Excellent'];
 
-export function PasswordStrength({ password }: { password: string }) {
+export function PasswordStrength({ password }) {
   const score = passwordScore(password);
   return (
     <div className="flex items-center gap-3" aria-live="polite">

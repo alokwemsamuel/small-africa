@@ -1,6 +1,6 @@
-import { db, getState, type Row } from '../db';
+import { db, getState } from '../db';
 import { fail, validate, validateQuery } from '../http';
-import { route, type Ctx } from '../router';
+import { route } from '../router';
 import { changePassword, login, register, userToPublic } from '../services/auth';
 import { creditTopup, topupToPublic } from '../services/loyalty';
 import * as orders from '../services/orders';
@@ -10,14 +10,14 @@ import { now, ymd } from '../time';
 
 /* --------------------------------------------------------------- menu & site */
 
-function dishToPublic(d: Row, withOptions = true) {
+function dishToPublic(d, withOptions = true) {
   const today = ymd(now());
   const options = withOptions
     ? db
         .where('dish_options', (o) => o.dish_id === d.id)
         .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
     : [];
-  const group = (g: string) =>
+  const group = (g) =>
     options
       .filter((o) => o.option_group === g)
       .map((o) => ({
@@ -53,12 +53,12 @@ function dishToPublic(d: Row, withOptions = true) {
 }
 
 /** Uploaded photos live in the demo database as data URLs; real files are served by the API. */
-export const mediaPath = (path: string) => (path.startsWith('data:') ? path : `/media/${path}`);
+export const mediaPath = (path) => (path.startsWith('data:') ? path : `/media/${path}`);
 
 const liveDishes = () => db.where('dishes', (d) => d.deleted_at === null);
-const categorySort = (id: number) => db.byId('categories', id)?.sort_order ?? 0;
+const categorySort = (id) => db.byId('categories', id)?.sort_order ?? 0;
 
-function reviewToPublic(r: Row, withDish: boolean) {
+function reviewToPublic(r, withDish) {
   return {
     id: r.id,
     author: r.author_name,
@@ -95,7 +95,7 @@ route('GET', '/menu', () => ({
 }));
 
 route('GET', '/menu/:slug', ({ params }) => {
-  const d = /^[a-z0-9-]{1,100}$/.test(params.slug!)
+  const d = /^[a-z0-9-]{1,100}$/.test(params.slug)
     ? db.find('dishes', (x) => x.slug === params.slug && x.deleted_at === null)
     : null;
   if (!d) throw fail.notFound('We couldn’t find that dish.');
@@ -133,8 +133,8 @@ route('GET', '/menu/:slug', ({ params }) => {
 route('GET', '/site', () => {
   const pricing = db.settings('pricing');
   const loyalty = db.settings('loyalty');
-  const hhmm = (t: string | null) => (t ? t.slice(0, 5) : null);
-  const bySort = (a: Row, b: Row) => a.sort_order - b.sort_order;
+  const hhmm = (t) => (t ? t.slice(0, 5) : null);
+  const bySort = (a, b) => a.sort_order - b.sort_order;
   return {
     restaurant: db.settings('restaurant'),
     pricing: {
@@ -181,7 +181,7 @@ route('GET', '/site', () => {
         pricePerGuestKobo: p.price_per_guest_kobo,
         minGuests: p.min_guests,
         maxGuests: p.max_guests,
-        features: JSON.parse(p.features) as string[],
+        features: JSON.parse(p.features),
       })),
     loyalty: {
       tiers: loyalty.tiers ?? [],
@@ -264,7 +264,7 @@ route('POST', '/events/enquiries', ({ body, user }) => {
     { event_type: 'Event type', event_date: 'Event date', budget_naira: 'Budget' },
   );
   if (data.event_date <= ymd(now())) throw fail.field('event_date', 'Please choose a date in the future.');
-  let packageId: number | null = null;
+  let packageId = null;
   if (data.package) {
     packageId = db.find('event_packages', (p) => p.slug === data.package)?.id ?? null;
     if (!packageId) throw fail.field('package', 'Please choose a package from the list.');
@@ -290,8 +290,8 @@ route('POST', '/events/enquiries', ({ body, user }) => {
 
 /* ---------------------------------------------------------------- checkout */
 
-function validateCheckout(body: Row, forQuote: boolean): Row {
-  const rules: Record<string, string> = {
+function validateCheckout(body, forQuote) {
+  const rules = {
     fulfilment: 'required|string|in:delivery,pickup',
     zone: 'nullable|string|max:40',
     scheduled_for: 'nullable|string|regex:/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$/',
@@ -318,7 +318,7 @@ function validateCheckout(body: Row, forQuote: boolean): Row {
   data.items = body.items;
   if (!forQuote && data.fulfilment === 'delivery') {
     data.address = validate(
-      (body.address ?? {}) as Row,
+      body.address ?? {},
       {
         line1: 'required|string|max:160',
         line2: 'nullable|string|max:160',
@@ -344,8 +344,8 @@ route('POST', '/orders', ({ body, user, idempotencyKey }) => {
 });
 
 route('GET', '/orders/:reference', ({ params, query, user }) => {
-  if (!/^SA-[A-Z0-9]{6}$/i.test(params.reference!)) throw fail.notFound('We couldn’t find that order.');
-  return { order: orders.findForTracking(params.reference!, user, query.get('t')) };
+  if (!/^SA-[A-Z0-9]{6}$/i.test(params.reference)) throw fail.notFound('We couldn’t find that order.');
+  return { order: orders.findForTracking(params.reference, user, query.get('t')) };
 });
 
 route('POST', '/payments/verify', ({ body }) => {
@@ -354,7 +354,7 @@ route('POST', '/payments/verify', ({ body }) => {
 });
 
 /** The simulated Paystack popup reports the guest's choice here, then the payment is verified. */
-route('POST', '/payments/simulate', ({ body, user }: Ctx) => {
+route('POST', '/payments/simulate', ({ body, user }) => {
   const data = validate(body, {
     reference: 'required|string|max:40|regex:/^(SA|TU)-[A-Z0-9]{6}$/',
     outcome: 'required|string|in:success,failed,abandoned',
@@ -371,7 +371,7 @@ route('POST', '/payments/simulate', ({ body, user }: Ctx) => {
 });
 
 /** WalletService::verify */
-export function verifyTopup(topup: Row) {
+export function verifyTopup(topup) {
   if (topup.status !== 'paid') {
     const payment = orders.latestPayment('wallet_topup', topup.id);
     if (payment && payment.status !== 'success') {
@@ -413,18 +413,18 @@ route('POST', '/reservations', ({ body, user }) => {
   return reservations.create(data, user);
 });
 
-const reservationCode = (c: string) => {
+const reservationCode = (c) => {
   if (!/^R-[A-Z0-9]{6}$/i.test(c)) throw fail.notFound('We couldn’t find that reservation.');
   return c;
 };
 
 route('GET', '/reservations/:code', ({ params, query, user }) => ({
-  reservation: reservations.find(reservationCode(params.code!), user, query.get('t')),
+  reservation: reservations.find(reservationCode(params.code), user, query.get('t')),
 }));
 
 route('POST', '/reservations/:code/cancel', ({ params, body, user }) => ({
   reservation: reservations.cancel(
-    reservationCode(params.code!),
+    reservationCode(params.code),
     user,
     typeof body.t === 'string' ? body.t : null,
   ),
@@ -543,7 +543,7 @@ route('GET', '/account/orders', ({ user }) => ({ orders: orders.listForUser(user
 route(
   'POST',
   '/account/orders/:reference/reorder',
-  ({ params, user }) => orders.reorder(params.reference!, user.id),
+  ({ params, user }) => orders.reorder(params.reference, user.id),
   'user',
 );
 route(

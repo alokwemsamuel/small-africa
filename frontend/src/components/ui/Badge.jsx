@@ -1,23 +1,12 @@
-import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-export type Kitchen = 'nigerian' | 'polish' | 'continental';
-
-const kitchenTone: Record<Kitchen, string> = {
+const kitchenTone = {
   nigerian: 'bg-terracotta text-ivory',
   polish: 'bg-crimson text-ivory',
   continental: 'bg-palm text-ivory',
 };
 
-export function Badge({
-  kitchen,
-  children,
-  className,
-}: {
-  kitchen?: Kitchen;
-  children: ReactNode;
-  className?: string;
-}) {
+export function Badge({ kitchen, children, className }) {
   return (
     <span
       className={cn(

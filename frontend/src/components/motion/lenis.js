@@ -1,8 +1,6 @@
-import type Lenis from 'lenis';
+let instance = null;
 
-let instance: Lenis | null = null;
-
-export function setLenis(l: Lenis | null) {
+export function setLenis(l) {
   instance = l;
 }
 

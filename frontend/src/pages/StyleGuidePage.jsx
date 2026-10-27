@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -23,7 +22,7 @@ const PALETTE = [
   ['terracotta', '#B4492F', 'Nigerian kitchen'],
   ['crimson', '#A3243B', 'Polish kitchen'],
   ['palm', '#2E4A3B', 'Continental, success (light)'],
-] as const;
+];
 
 const TOKENS = [
   ['bg-surface', 'Page background', 'obsidian', 'ivory'],
@@ -37,7 +36,7 @@ const TOKENS = [
   ['text-on-accent', 'Text on gold', 'obsidian', 'obsidian'],
   ['border-input', 'Field borders (3:1)', '#6F665D', '#8E8479'],
   ['border-line', 'Dividers', 'sand 14%', 'obsidian 12%'],
-] as const;
+];
 
 const SAMPLE_DISH = {
   spiceLevel: 0,
@@ -186,7 +185,7 @@ export function StyleGuidePage() {
 }
 
 /** A fixed-theme preview: tokens resolve from the nearest [data-theme] ancestor. */
-function ThemePanel({ theme }: { theme: 'dark' | 'light' }) {
+function ThemePanel({ theme }) {
   return (
     <div data-theme={theme} className="bg-surface text-primary border-line rounded-md border p-6 sm:p-8">
       <div className="flex items-center justify-between gap-4">
@@ -221,7 +220,7 @@ function ThemePanel({ theme }: { theme: 'dark' | 'light' }) {
   );
 }
 
-function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: ReactNode }) {
+function Section({ eyebrow, title, children }) {
   return (
     <section>
       <p className="text-accent eyebrow">{eyebrow}</p>

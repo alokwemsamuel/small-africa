@@ -20,7 +20,7 @@ const DAY_GROUPS = [
 export function SiteFooter() {
   const { data } = useSite();
   const r = data?.restaurant;
-  const hours = (day: number) => {
+  const hours = (day) => {
     const h = data?.openingHours.find((o) => o.dayOfWeek === day);
     if (!h) return '';
     if (h.isClosed) return 'Closed';

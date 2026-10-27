@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
-import { adminApi, type ContactMessage, type Enquiry } from '../api';
+import { adminApi } from '../api';
 import { AdminHeader, Empty, Loading, Pager, Panel, SelectField, StatusPill } from '../ui';
 import { fmt } from '../format';
 
@@ -18,7 +18,7 @@ export function EnquiriesPage() {
         intro="Event and catering enquiries, and messages from the contact form."
       />
       <div role="tablist" aria-label="Enquiry type" className="border-line flex gap-1 border-b">
-        {(['events', 'messages'] as const).map((t) => (
+        {['events', 'messages'].map((t) => (
           <button
             key={t}
             role="tab"
@@ -48,7 +48,7 @@ function Events() {
     queryFn: ({ signal }) => adminApi.enquiries({ status, page }, signal),
     placeholderData: keepPreviousData,
   });
-  const move = async (e: Enquiry, s: Enquiry['status']) => {
+  const move = async (e, s) => {
     await adminApi.updateEnquiry(e.id, s);
     void qc.invalidateQueries({ queryKey: ['admin', 'enquiries'] });
     toast(`${e.name}: ${fmt.label(s).toLowerCase()}`);
@@ -105,7 +105,7 @@ function Events() {
                 <SelectField
                   label="Move to"
                   value={e.status}
-                  onChange={(v) => move(e, v as Enquiry['status'])}
+                  onChange={(v) => move(e, v)}
                   options={[
                     ['new', 'New'],
                     ['contacted', 'Contacted'],
@@ -134,7 +134,7 @@ function Messages() {
     queryFn: ({ signal }) => adminApi.messages({ status, page }, signal),
     placeholderData: keepPreviousData,
   });
-  const move = async (m: ContactMessage, s: ContactMessage['status']) => {
+  const move = async (m, s) => {
     await adminApi.updateMessage(m.id, s);
     void qc.invalidateQueries({ queryKey: ['admin', 'messages'] });
   };

@@ -1,14 +1,12 @@
-import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 import { useMe } from './hooks';
-import type { Role } from './types';
 
 /**
  * Client-side guard for nicer UX only. Every protected API endpoint enforces the same
  * rules on the server; hiding UI is never the security boundary.
  */
-export function RequireAuth({ roles, children }: { roles?: Role[]; children: ReactNode }) {
+export function RequireAuth({ roles, children }) {
   const { data: user, isPending } = useMe();
   const location = useLocation();
 

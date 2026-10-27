@@ -9,7 +9,7 @@ import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { mediaUrl } from '@/lib/env';
 import { formatNaira } from '@/lib/format';
-import { adminApi, can, useAdminMe, type AdminDish, type AdminDishOption, type AdminMenu } from '../api';
+import { adminApi, can, useAdminMe } from '../api';
 import {
   AdminHeader,
   CheckField,
@@ -48,10 +48,10 @@ export function MenuAdminPage() {
   });
   const [q, setQ] = useState('');
   const [kitchen, setKitchen] = useState('');
-  const [editing, setEditing] = useState<AdminDish | 'new' | null>(null);
+  const [editing, setEditing] = useState(null);
   const [kitchensOpen, setKitchensOpen] = useState(false);
   const manager = can(me, 'menu.manage');
-  const set = (m: AdminMenu) => qc.setQueryData(menuKey, m);
+  const set = (m) => qc.setQueryData(menuKey, m);
 
   const groups = useMemo(() => {
     if (!menu) return [];
@@ -71,7 +71,7 @@ export function MenuAdminPage() {
 
   if (!menu) return <Loading error={error} />;
 
-  const toggle = async (d: AdminDish, body: { sold_out_today?: boolean; available?: boolean }) => {
+  const toggle = async (d, body) => {
     try {
       set(await adminApi.dishAvailability(d.id, body));
       toast(
@@ -112,10 +112,7 @@ export function MenuAdminPage() {
           label="Kitchen"
           value={kitchen}
           onChange={setKitchen}
-          options={[
-            ['', 'All kitchens'],
-            ...menu.kitchens.map((k) => [String(k.id), k.name] as [string, string]),
-          ]}
+          options={[['', 'All kitchens'], ...menu.kitchens.map((k) => [String(k.id), k.name])]}
           className="w-52"
         />
       </div>
@@ -194,7 +191,7 @@ export function MenuAdminPage() {
   );
 }
 
-function DishThumb({ dish }: { dish: AdminDish }) {
+function DishThumb({ dish }) {
   return dish.imageUrl ? (
     <img
       src={mediaUrl(dish.imageUrl)}
@@ -213,27 +210,7 @@ function DishThumb({ dish }: { dish: AdminDish }) {
   );
 }
 
-type Form = {
-  name: string;
-  kitchen_id: string;
-  category_id: string;
-  short_description: string;
-  description: string;
-  ingredients: string;
-  price_naira: string;
-  spice_level: string;
-  is_vegetarian: boolean;
-  is_gluten_free: boolean;
-  contains_nuts: boolean;
-  contains_pork: boolean;
-  is_alcoholic: boolean;
-  is_featured: boolean;
-  is_available: boolean;
-  allergens: string[];
-  options: { group: 'portion' | 'addon'; name: string; price: string; isDefault: boolean }[];
-};
-
-function toForm(d: AdminDish | null, menu: AdminMenu): Form {
+function toForm(d, menu) {
   return {
     name: d?.name ?? '',
     kitchen_id: d ? (d.kitchenId === null ? '' : String(d.kitchenId)) : String(menu.kitchens[0]?.id ?? ''),
@@ -251,7 +228,7 @@ function toForm(d: AdminDish | null, menu: AdminMenu): Form {
     is_featured: d?.isFeatured ?? false,
     is_available: d?.isAvailable ?? true,
     allergens: d?.allergens ?? [],
-    options: (d?.options ?? []).map((o: AdminDishOption) => ({
+    options: (d?.options ?? []).map((o) => ({
       group: o.group,
       name: o.name,
       price: String(o.priceDeltaKobo / 100),
@@ -260,26 +237,16 @@ function toForm(d: AdminDish | null, menu: AdminMenu): Form {
   };
 }
 
-function DishEditor({
-  dish,
-  menu,
-  onSaved,
-  onClose,
-}: {
-  dish: AdminDish | null;
-  menu: AdminMenu;
-  onSaved: (m: AdminMenu) => void;
-  onClose: () => void;
-}) {
-  const [f, setF] = useState<Form>(() => toForm(dish, menu));
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
+function DishEditor({ dish, menu, onSaved, onClose }) {
+  const [f, setF] = useState(() => toForm(dish, menu));
+  const [errors, setErrors] = useState({});
+  const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const file = useRef<HTMLInputElement>(null);
+  const file = useRef(null);
   const [alt, setAlt] = useState(dish?.imageAlt ?? '');
   const current = dish ? (menu.dishes.find((d) => d.id === dish.id) ?? dish) : null;
-  const up = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
+  const up = (k, v) => setF((s) => ({ ...s, [k]: v }));
 
   const save = async () => {
     setBusy(true);
@@ -353,10 +320,7 @@ function DishEditor({
           label="Kitchen"
           value={f.kitchen_id}
           onChange={(v) => up('kitchen_id', v)}
-          options={[
-            ...menu.kitchens.map((k) => [String(k.id), k.name] as [string, string]),
-            ['', 'All three kitchens'],
-          ]}
+          options={[...menu.kitchens.map((k) => [String(k.id), k.name]), ['', 'All three kitchens']]}
         />
         <SelectField
           label="Section"
@@ -451,7 +415,7 @@ function DishEditor({
             {ALLERGENS.map((a) => (
               <CheckField
                 key={a}
-                label={a[0]!.toUpperCase() + a.slice(1)}
+                label={a[0].toUpperCase() + a.slice(1)}
                 checked={f.allergens.includes(a)}
                 onChange={(v) =>
                   up('allergens', v ? [...f.allergens, a] : f.allergens.filter((x) => x !== a))
@@ -477,7 +441,7 @@ function DishEditor({
                   onChange={(v) =>
                     up(
                       'options',
-                      f.options.map((x, j) => (j === i ? { ...x, group: v as 'portion' | 'addon' } : x)),
+                      f.options.map((x, j) => (j === i ? { ...x, group: v } : x)),
                     )
                   }
                   options={[
@@ -636,18 +600,10 @@ function DishEditor({
   );
 }
 
-function KitchensEditor({
-  menu,
-  onSaved,
-  onClose,
-}: {
-  menu: AdminMenu;
-  onSaved: (m: AdminMenu) => void;
-  onClose: () => void;
-}) {
+function KitchensEditor({ menu, onSaved, onClose }) {
   const [newCategory, setNewCategory] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const run = async (fn: () => Promise<AdminMenu>) => {
+  const [error, setError] = useState(null);
+  const run = async (fn) => {
     setError(null);
     try {
       onSaved(await fn());
@@ -706,13 +662,7 @@ function KitchensEditor({
   );
 }
 
-function KitchenForm({
-  kitchen,
-  onSave,
-}: {
-  kitchen: AdminMenu['kitchens'][number];
-  onSave: (b: { name: string; tagline: string; description: string }) => void;
-}) {
+function KitchenForm({ kitchen, onSave }) {
   const [k, setK] = useState({
     name: kitchen.name,
     tagline: kitchen.tagline,
@@ -752,15 +702,7 @@ function KitchenForm({
   );
 }
 
-function CategoryRow({
-  name,
-  sort,
-  onSave,
-}: {
-  name: string;
-  sort: number;
-  onSave: (name: string, sort: number) => void;
-}) {
+function CategoryRow({ name, sort, onSave }) {
   const [n, setN] = useState(name);
   const [s, setS] = useState(String(sort));
   return (

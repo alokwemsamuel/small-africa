@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const KEY = 'sa-cookie-notice';
 
-function dismissed(): boolean {
+function dismissed() {
   try {
     return window.localStorage.getItem(KEY) === '1';
   } catch {

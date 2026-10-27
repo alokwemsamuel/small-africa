@@ -1,15 +1,15 @@
-import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useId, useState } from 'react';
 import { cn } from '@/lib/cn';
 
-interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  error?: string;
-  hint?: ReactNode;
-  /** Adds a show/hide toggle for password fields. */
-  revealable?: boolean;
-}
-
-export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
+/**
+ * Labelled input with hint and error text wired up for screen readers. Other props go to the <input>.
+ * @param {object} props
+ * @param {string} props.label
+ * @param {string} [props.error]
+ * @param {import('react').ReactNode} [props.hint]
+ * @param {boolean} [props.revealable] adds a show/hide toggle for password fields
+ */
+export const TextField = forwardRef(function TextField(
   { label, error, hint, revealable, className, type = 'text', id, ...rest },
   ref,
 ) {

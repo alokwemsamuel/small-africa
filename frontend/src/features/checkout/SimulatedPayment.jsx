@@ -5,19 +5,9 @@ import { formatNaira } from '@/lib/format';
  * Stand-in for the Paystack popup when the backend uses the simulated gateway (local
  * development and the client demo). Clearly labelled: no real money moves.
  */
-export function SimulatedPayment({
-  amountKobo,
-  email,
-  reference,
-  onResult,
-}: {
-  amountKobo: number;
-  email: string;
-  reference: string;
-  onResult: (outcome: 'success' | 'failed' | 'abandoned') => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const payBtn = useRef<HTMLButtonElement>(null);
+export function SimulatedPayment({ amountKobo, email, reference, onResult }) {
+  const dialog = useRef(null);
+  const payBtn = useRef(null);
   useEffect(() => {
     dialog.current?.showModal();
     payBtn.current?.focus();

@@ -22,7 +22,6 @@ const schema = z.object({
   message: z.string().trim().min(10, { error: 'Tell us a little more (at least 10 characters).' }).max(3000),
   website: z.string(), // honeypot
 });
-type Values = z.infer<typeof schema>;
 
 export function ContactPage() {
   useSeo({
@@ -108,7 +107,7 @@ export function ContactPage() {
 }
 
 /** Click-to-load map: no request to Google until the visitor asks (privacy and speed). */
-function MapEmbed({ query }: { query: string }) {
+function MapEmbed({ query }) {
   const [show, setShow] = useState(false);
   const src = `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
   return (
@@ -144,9 +143,9 @@ function MapEmbed({ query }: { query: string }) {
 }
 
 function ContactForm() {
-  const [done, setDone] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const { register, handleSubmit, setError, formState } = useForm<Values>({
+  const [done, setDone] = useState(null);
+  const [formError, setFormError] = useState(null);
+  const { register, handleSubmit, setError, formState } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { name: '', email: '', phone: '', subject: '', message: '', website: '' },
   });
@@ -154,7 +153,7 @@ function ContactForm() {
   const onSubmit = handleSubmit(async (v) => {
     setFormError(null);
     try {
-      const r = await api<{ message: string }>('/contact', {
+      const r = await api('/contact', {
         method: 'POST',
         body: { ...v, phone: v.phone || null },
       });

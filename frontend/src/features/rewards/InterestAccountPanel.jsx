@@ -8,24 +8,24 @@ import { useMe } from '@/features/auth/hooks';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
-import { useLoyalty, useLoyaltyHistory, useRedeem, type LoyaltySummary, type Reward } from './api';
+import { useLoyalty, useLoyaltyHistory, useRedeem } from './api';
 import { MembershipCard } from './MembershipCard';
 import { TopUp } from './TopUp';
 
 const WEEKDAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
-const longDate = (iso: string) =>
+const longDate = (iso) =>
   new Date(iso.replace(' ', 'T')).toLocaleDateString('en-NG', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-const shortDate = (iso: string) =>
+const shortDate = (iso) =>
   new Date(iso.replace(' ', 'T')).toLocaleDateString('en-NG', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
-const pct = (bp: number) => `${bp / 100}%`;
+const pct = (bp) => `${bp / 100}%`;
 
 export function InterestAccountPanel() {
   const { data: user } = useMe();
@@ -144,7 +144,7 @@ export function InterestAccountPanel() {
   );
 }
 
-function Card({ title, id, children }: { title: string; id: string; children: React.ReactNode }) {
+function Card({ title, id, children }) {
   return (
     <section
       aria-labelledby={`ia-${id}`}
@@ -158,7 +158,7 @@ function Card({ title, id, children }: { title: string; id: string; children: Re
   );
 }
 
-function TierProgress({ account }: { account: LoyaltySummary }) {
+function TierProgress({ account }) {
   const next = account.tier.next;
   return (
     <section
@@ -207,7 +207,7 @@ function TierProgress({ account }: { account: LoyaltySummary }) {
   );
 }
 
-function Interest({ account }: { account: LoyaltySummary }) {
+function Interest({ account }) {
   const i = account.wallet.interest;
   const eligible = i.lowestThisMonthKobo >= i.minBalanceKobo;
   return (
@@ -231,12 +231,12 @@ function Interest({ account }: { account: LoyaltySummary }) {
   );
 }
 
-function RewardsMenu({ account }: { account: LoyaltySummary }) {
+function RewardsMenu({ account }) {
   const redeem = useRedeem();
-  const [confirming, setConfirming] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(null);
+  const [error, setError] = useState(null);
 
-  const go = async (r: Reward) => {
+  const go = async (r) => {
     setError(null);
     try {
       const res = await redeem.mutateAsync(r.slug);
@@ -296,7 +296,7 @@ function RewardsMenu({ account }: { account: LoyaltySummary }) {
   );
 }
 
-function StampCard({ account }: { account: LoyaltySummary }) {
+function StampCard({ account }) {
   const { stamps, size, rewards, next } = account.stampCard;
   return (
     <div>
@@ -336,7 +336,7 @@ function StampCard({ account }: { account: LoyaltySummary }) {
   );
 }
 
-function Streak({ account }: { account: LoyaltySummary }) {
+function Streak({ account }) {
   const { count, target, bonusPoints } = account.streak;
   const left = Math.max(0, target - count);
   return (
@@ -353,7 +353,7 @@ function Streak({ account }: { account: LoyaltySummary }) {
   );
 }
 
-function Referral({ account }: { account: LoyaltySummary }) {
+function Referral({ account }) {
   const { code, link, creditKobo, rewarded, pending } = account.referral;
   if (!code || !link) return <p className="text-secondary">Your referral code will appear here.</p>;
   const message = `Join me at Small Africa: Nigerian, Polish and Continental cooking in Lagos. Sign up with my code ${code} and we both get ${formatNaira(creditKobo)} dining credit after your first order: ${link}`;
@@ -396,7 +396,7 @@ function Referral({ account }: { account: LoyaltySummary }) {
   );
 }
 
-function CopyCode({ code }: { code: string }) {
+function CopyCode({ code }) {
   return (
     <button
       type="button"
@@ -415,8 +415,8 @@ function CopyCode({ code }: { code: string }) {
 }
 
 function History() {
-  const [kind, setKind] = useState<'wallet' | 'points'>('wallet');
-  const [pages, setPages] = useState<(number | null)[]>([null]);
+  const [kind, setKind] = useState('wallet');
+  const [pages, setPages] = useState([null]);
   return (
     <section
       aria-labelledby="ia-history"
@@ -427,7 +427,7 @@ function History() {
           Statement
         </h2>
         <div role="group" aria-label="Statement type" className="border-line flex rounded-full border p-1">
-          {(['wallet', 'points'] as const).map((k) => (
+          {['wallet', 'points'].map((k) => (
             <button
               key={k}
               type="button"
@@ -478,17 +478,9 @@ function History() {
   );
 }
 
-function HistoryPage({
-  kind,
-  before,
-  onMore,
-}: {
-  kind: 'wallet' | 'points';
-  before: number | null;
-  onMore?: (next: number) => void;
-}) {
+function HistoryPage({ kind, before, onMore }) {
   const { data } = useLoyaltyHistory(kind, before);
-  const fmt = (n: number) => (kind === 'wallet' ? formatNaira(n) : n.toLocaleString('en-NG'));
+  const fmt = (n) => (kind === 'wallet' ? formatNaira(n) : n.toLocaleString('en-NG'));
   if (!data) {
     return (
       <tbody>
@@ -528,7 +520,7 @@ function HistoryPage({
       {onMore && data.nextBefore && (
         <tr>
           <td colSpan={4} className="pt-4">
-            <Button size="sm" variant="ghost" onClick={() => onMore(data.nextBefore!)}>
+            <Button size="sm" variant="ghost" onClick={() => onMore(data.nextBefore)}>
               Show older entries
             </Button>
           </td>

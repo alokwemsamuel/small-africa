@@ -149,7 +149,7 @@ export function CustomerPage() {
   );
 }
 
-function Stat({ label, value, detail }: { label: string; value: string; detail?: string }) {
+function Stat({ label, value, detail }) {
   return (
     <div>
       <dt className="text-muted text-xs">{label}</dt>
@@ -159,12 +159,12 @@ function Stat({ label, value, detail }: { label: string; value: string; detail?:
   );
 }
 
-function RecordVisit({ id }: { id: number }) {
+function RecordVisit({ id }) {
   const qc = useQueryClient();
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   return (
     <Panel title="Record a dine-in bill">
       <form
@@ -218,14 +218,14 @@ function RecordVisit({ id }: { id: number }) {
   );
 }
 
-function Adjust({ id }: { id: number }) {
+function Adjust({ id }) {
   const qc = useQueryClient();
-  const [kind, setKind] = useState<'wallet' | 'points'>('wallet');
-  const [direction, setDirection] = useState<'credit' | 'debit'>('credit');
+  const [kind, setKind] = useState('wallet');
+  const [direction, setDirection] = useState('credit');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [confirm, setConfirm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const label = `${direction === 'credit' ? 'Add' : 'Remove'} ${kind === 'wallet' ? formatNaira(Number(amount) * 100) + ' dining credit' : `${fmt.number(Number(amount))} points`}`;
   return (
     <Panel title="Manual adjustment (Super Admin)">
@@ -238,7 +238,7 @@ function Adjust({ id }: { id: number }) {
           <SelectField
             label="What"
             value={kind}
-            onChange={(v) => setKind(v as 'wallet' | 'points')}
+            onChange={(v) => setKind(v)}
             options={[
               ['wallet', 'Dining credit (₦)'],
               ['points', 'Points'],
@@ -248,7 +248,7 @@ function Adjust({ id }: { id: number }) {
           <SelectField
             label="Direction"
             value={direction}
-            onChange={(v) => setDirection(v as 'credit' | 'debit')}
+            onChange={(v) => setDirection(v)}
             options={[
               ['credit', 'Add'],
               ['debit', 'Remove'],
@@ -317,20 +317,20 @@ function Adjust({ id }: { id: number }) {
   );
 }
 
-function Statement({ id }: { id: number }) {
-  const [kind, setKind] = useState<'wallet' | 'points'>('wallet');
-  const [before, setBefore] = useState<number | null>(null);
+function Statement({ id }) {
+  const [kind, setKind] = useState('wallet');
+  const [before, setBefore] = useState(null);
   const { data, error } = useQuery({
     queryKey: ['admin', 'customer-history', id, kind, before],
     queryFn: ({ signal }) => adminApi.customerHistory(id, kind, before, signal),
   });
-  const show = (n: number) => (kind === 'wallet' ? formatNaira(n) : fmt.number(n));
+  const show = (n) => (kind === 'wallet' ? formatNaira(n) : fmt.number(n));
   return (
     <Panel
       title="Statement"
       actions={
         <div role="group" aria-label="Statement type" className="border-line flex rounded-full border p-1">
-          {(['wallet', 'points'] as const).map((k) => (
+          {['wallet', 'points'].map((k) => (
             <button
               key={k}
               type="button"

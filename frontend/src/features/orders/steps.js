@@ -1,9 +1,5 @@
-import type { Order, OrderStatus } from '@/features/checkout/api';
-
 /** The customer-facing progress steps for an order, by fulfilment type. */
-export function steps(
-  order: Pick<Order, 'fulfilment'>,
-): { status: OrderStatus; label: string; hint: string }[] {
+export function steps(order) {
   return [
     { status: 'received', label: 'Order received', hint: 'Payment confirmed. The kitchen has your ticket.' },
     { status: 'preparing', label: 'Preparing', hint: 'Cooked to order by our chefs.' },
@@ -16,12 +12,12 @@ export function steps(
     ...(order.fulfilment === 'delivery'
       ? [
           {
-            status: 'out_for_delivery' as const,
+            status: 'out_for_delivery',
             label: 'Out for delivery',
             hint: 'Your rider is on the way.',
           },
-          { status: 'delivered' as const, label: 'Delivered', hint: 'Enjoy your meal.' },
+          { status: 'delivered', label: 'Delivered', hint: 'Enjoy your meal.' },
         ]
-      : [{ status: 'completed' as const, label: 'Collected', hint: 'Enjoy your meal.' }]),
+      : [{ status: 'completed', label: 'Collected', hint: 'Enjoy your meal.' }]),
   ];
 }

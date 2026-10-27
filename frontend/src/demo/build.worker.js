@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { buildState, type Snapshot } from './build';
+import { buildState } from './build';
 import snapshot from './snapshot.json';
 
 /**
@@ -7,7 +7,7 @@ import snapshot from './snapshot.json';
  * month of orders is the heaviest part of starting the demo), then hands it to the page.
  */
 self.onmessage = async () => {
-  const state = await buildState(snapshot as unknown as Snapshot, undefined, { consume: true });
+  const state = await buildState(snapshot, undefined, { consume: true });
   // As JSON: parsing a string on the page is much faster than structured-cloning this object.
   self.postMessage(JSON.stringify(state));
 };

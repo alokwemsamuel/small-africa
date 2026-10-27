@@ -4,16 +4,16 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Alert } from '@/components/ui/Alert';
 import { ButtonLink } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
-import { checkoutApi, type OrderStatus } from '@/features/checkout/api';
+import { checkoutApi } from '@/features/checkout/api';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
 import { useSeo } from '@/lib/seo';
 import { steps } from './steps';
 
-const FINISHED: OrderStatus[] = ['delivered', 'completed', 'cancelled'];
+const FINISHED = ['delivered', 'completed', 'cancelled'];
 
-const lagosTime = (iso: string) =>
+const lagosTime = (iso) =>
   new Date(iso.replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? '' : '+01:00')).toLocaleString(
     'en-NG',
     {

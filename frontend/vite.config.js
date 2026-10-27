@@ -2,14 +2,14 @@
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
 /**
  * GitHub Pages serves 404.html for any unknown path, so deep links (/small-africa/admin/orders)
  * need help: 404.html turns the path into a query string and redirects to the app, and a
  * script in index.html puts the real URL back before React Router starts. Demo build only.
  */
-function githubPagesSpa(base: string): Plugin {
+function githubPagesSpa(base) {
   const segments = base.split('/').filter(Boolean).length;
   return {
     name: 'github-pages-spa',
@@ -47,7 +47,20 @@ export default defineConfig(({ mode }) => {
   return {
     base: mode === 'demo' ? '/small-africa/' : '/',
     plugins: [react(), tailwindcss(), ...(mode === 'demo' ? [githubPagesSpa('/small-africa/')] : [])],
-    resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+    resolve: {
+      alias: [
+        // Outside the demo build, the demo API is an empty stub: no demo code or data is shipped.
+        ...(mode === 'demo' || mode === 'test'
+          ? []
+          : [
+              {
+                find: /^@\/demo$/,
+                replacement: fileURLToPath(new URL('./src/demo/disabled.js', import.meta.url)),
+              },
+            ]),
+        { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+      ],
+    },
     server: {
       port: 5173,
       strictPort: true,
@@ -77,7 +90,7 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: ['./src/test/setup.ts'],
+      setupFiles: ['./src/test/setup.js'],
       // Only theme.css is loaded (as ?raw) so the contrast test can read the tokens.
       css: { include: [/theme\.css/] },
       restoreMocks: true,

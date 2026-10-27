@@ -31,7 +31,7 @@ describe('cart store', () => {
 
   it('caps quantity and removes lines set to zero', () => {
     cart.add(jollof, 50);
-    const key = cart.snapshot()[0]!.key;
+    const key = cart.snapshot()[0].key;
     expect(cart.snapshot()[0]?.quantity).toBe(20);
     cart.setQuantity(key, 0);
     expect(cart.snapshot()).toHaveLength(0);

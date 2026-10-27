@@ -10,7 +10,6 @@ import { TextField } from '@/components/ui/TextField';
 import { useChangePassword, useMe, useResendVerification, useUpdateProfile } from '@/features/auth/hooks';
 import { passwordProblems } from '@/features/auth/schemas';
 import { ThemeSegmented } from '@/features/theme/ThemeSwitcher';
-import type { User } from '@/features/auth/types';
 import { ApiError } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { cn } from '@/lib/cn';
@@ -61,14 +60,13 @@ const TABS = [
   ['addresses', 'Addresses'],
   ['reviews', 'Reviews'],
   ['settings', 'Settings'],
-] as const;
-type Tab = (typeof TABS)[number][0];
+];
 
 function AccountTabs() {
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
-  const tab: Tab = TABS.some(([t]) => t === requested) ? (requested as Tab) : 'rewards';
-  const select = (t: Tab) =>
+  const tab = TABS.some(([t]) => t === requested) ? requested : 'rewards';
+  const select = (t) =>
     setParams(
       (p) => {
         p.set('tab', t);
@@ -78,10 +76,10 @@ function AccountTabs() {
       { replace: true },
     );
   // Roving arrow-key focus, per the WAI-ARIA tabs pattern.
-  const onKey = (e: React.KeyboardEvent, i: number) => {
+  const onKey = (e, i) => {
     const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
     if (!d) return;
-    const next = TABS[(i + d + TABS.length) % TABS.length]![0];
+    const next = TABS[(i + d + TABS.length) % TABS.length][0];
     select(next);
     document.getElementById(`tab-${next}`)?.focus();
   };
@@ -204,12 +202,11 @@ const profileSchema = z.object({
   birthday: z.string(),
   marketing_opt_in: z.boolean(),
 });
-type ProfileValues = z.infer<typeof profileSchema>;
 
-function ProfileForm({ user }: { user: User }) {
+function ProfileForm({ user }) {
   const update = useUpdateProfile();
-  const [status, setStatus] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
-  const { register, handleSubmit, setError, formState } = useForm<ProfileValues>({
+  const [status, setStatus] = useState(null);
+  const { register, handleSubmit, setError, formState } = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       first_name: user.firstName,
@@ -222,7 +219,7 @@ function ProfileForm({ user }: { user: User }) {
 
   const onSubmit = handleSubmit(async (v) => {
     setStatus(null);
-    const body: Record<string, unknown> = {
+    const body = {
       first_name: v.first_name,
       last_name: v.last_name,
       phone: v.phone || null,
@@ -295,12 +292,11 @@ const passwordSchema = z
     const p = passwordProblems(v.new_password);
     if (p.length) ctx.addIssue({ code: 'custom', path: ['new_password'], message: p.join(' ') });
   });
-type PasswordValues = z.infer<typeof passwordSchema>;
 
 function PasswordForm() {
   const change = useChangePassword();
-  const [status, setStatus] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
-  const { register, handleSubmit, setError, reset, watch, formState } = useForm<PasswordValues>({
+  const [status, setStatus] = useState(null);
+  const { register, handleSubmit, setError, reset, watch, formState } = useForm({
     resolver: zodResolver(passwordSchema),
     defaultValues: { current_password: '', new_password: '' },
   });

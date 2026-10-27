@@ -8,34 +8,26 @@ import { usePaymentPopup } from '@/features/checkout/usePaymentPopup';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatNaira } from '@/lib/format';
-import { bonusFor, loyaltyApi, loyaltyKey, type LoyaltySummary, type Topup } from './api';
+import { bonusFor, loyaltyApi, loyaltyKey } from './api';
 
 /** Wallet top-up: presets or a custom amount, bonus preview, then Paystack (or the demo popup). */
-export function TopUp({
-  account,
-  email,
-  verified,
-}: {
-  account: LoyaltySummary;
-  email: string;
-  verified: boolean;
-}) {
+export function TopUp({ account, email, verified }) {
   const qc = useQueryClient();
   const { topup } = account.wallet;
-  const [amount, setAmount] = useState<number>(topup.presetsKobo[2] ?? topup.presetsKobo[0] ?? 0);
+  const [amount, setAmount] = useState(topup.presetsKobo[2] ?? topup.presetsKobo[0] ?? 0);
   const [custom, setCustom] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const [params, setParams] = useSearchParams();
   const payment = usePaymentPopup();
-  const idem = useRef<{ amount: number; key: string } | null>(null);
+  const idem = useRef(null);
 
   const kobo = custom ? Math.round(Number(custom.replace(/[^\d]/g, '')) * 100) : amount;
   const valid = kobo >= topup.minKobo && kobo <= topup.maxKobo;
   const bonus = valid ? bonusFor(kobo, topup.bonusBands) : 0;
   const nextBand = [...topup.bonusBands].sort((a, b) => a.minKobo - b.minKobo).find((b) => b.minKobo > kobo);
 
-  const finish = (t: Topup) => {
+  const finish = (t) => {
     void qc.invalidateQueries({ queryKey: loyaltyKey });
     void qc.invalidateQueries({ queryKey: ['account', 'notifications'] });
     if (t.status === 'paid') {

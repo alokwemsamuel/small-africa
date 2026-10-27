@@ -1,6 +1,6 @@
-import { db, getState, type Row } from '../db';
+import { db, getState } from '../db';
 import { fail, validate, validateQuery } from '../http';
-import { route, type AuthedCtx } from '../router';
+import { route } from '../router';
 import { audit } from '../services/audit';
 import { can, permissionsFor } from '../services/auth';
 import * as loyalty from '../services/loyalty';
@@ -19,12 +19,12 @@ import { mediaPath } from './public';
 
 const PER_PAGE = 25;
 
-function paging(ctx: AuthedCtx) {
+function paging(ctx) {
   const page = Math.max(1, Number(ctx.query.get('page') ?? 1) || 1);
   return { page, offset: (page - 1) * PER_PAGE };
 }
 
-function paged<T>(all: T[], page: number) {
+function paged(all, page) {
   return {
     items: all.slice((page - 1) * PER_PAGE, page * PER_PAGE),
     page,
@@ -33,22 +33,21 @@ function paged<T>(all: T[], page: number) {
   };
 }
 
-const q = (ctx: AuthedCtx, key: string) => {
+const q = (ctx, key) => {
   const v = ctx.query.get(key);
   return v !== null && v.trim() !== '' ? v.trim() : null;
 };
 
 /** Case-insensitive LIKE '%text%'. */
-const like = (text: string) => (value: unknown) =>
+const like = (text) => (value) =>
   value !== null && value !== undefined && String(value).toLowerCase().includes(text.toLowerCase());
 
-const fullName = (u: Row | null) => (u ? `${u.first_name} ${u.last_name}` : null);
-const isCustomer = (u: Row) => u.role === 'customer';
-const accountOf = (userId: number) => db.find('loyalty_accounts', (a) => a.user_id === userId);
+const fullName = (u) => (u ? `${u.first_name} ${u.last_name}` : null);
+const isCustomer = (u) => u.role === 'customer';
+const accountOf = (userId) => db.find('loyalty_accounts', (a) => a.user_id === userId);
 
 /** Newest first, with NULLs last (MySQL ORDER BY … DESC). */
-const desc = (a: string | null, b: string | null) =>
-  a === b ? 0 : a === null ? 1 : b === null ? -1 : b.localeCompare(a);
+const desc = (a, b) => (a === b ? 0 : a === null ? 1 : b === null ? -1 : b.localeCompare(a));
 
 /* ------------------------------------------------------------- me & dashboard */
 
@@ -66,9 +65,9 @@ route(
   'staff',
 );
 
-const paidOrder = (o: Row) => o.payment_status === 'paid' && o.status !== 'cancelled';
-const orderItems = (o: Row) => db.where('order_items', (i) => i.order_id === o.id);
-const billKobo = (o: Row) => o.total_kobo + o.wallet_applied_kobo;
+const paidOrder = (o) => o.payment_status === 'paid' && o.status !== 'cancelled';
+const orderItems = (o) => db.where('order_items', (i) => i.order_id === o.id);
+const billKobo = (o) => o.total_kobo + o.wallet_applied_kobo;
 
 route(
   'GET',
@@ -81,7 +80,7 @@ route(
     const paid = db.where('orders', paidOrder);
     const reservations = db.all('reservations');
 
-    const kpi = (start: Date, end: Date) => {
+    const kpi = (start, end) => {
       const [s, e] = [sql(start), sql(end)];
       const inRange = paid.filter((o) => o.placed_at >= s && o.placed_at < e);
       const revenue = inRange.reduce((sum, o) => sum + billKobo(o), 0);
@@ -110,8 +109,8 @@ route(
         reservations: reservations.filter((r) => r.service_date === key && r.status !== 'cancelled').length,
       });
     }
-    const dishes = new Map<string, { name: string; quantity: number; revenueKobo: number }>();
-    const kitchens = new Map<string, number>();
+    const dishes = new Map();
+    const kitchens = new Map();
     for (const o of since) {
       for (const i of orderItems(o)) {
         const d = dishes.get(i.dish_name) ?? { name: i.dish_name, quantity: 0, revenueKobo: 0 };
@@ -155,7 +154,7 @@ route(
   'dashboard.view',
 );
 
-function liveRow(o: Row) {
+function liveRow(o) {
   return {
     reference: o.reference,
     status: o.status,
@@ -170,12 +169,12 @@ function liveRow(o: Row) {
 
 /* -------------------------------------------------------------------- orders */
 
-const POSITION_MOVES: Record<string, string[]> = {
+const POSITION_MOVES = {
   kitchen: ['preparing', 'ready'],
   front_desk: ['preparing', 'ready', 'out_for_delivery', 'delivered', 'completed'],
 };
 
-function allowedMoves(user: Row, order: Row): string[] {
+function allowedMoves(user, order) {
   let moves = (TRANSITIONS[order.status] ?? []).filter(
     (m) =>
       !(
@@ -189,13 +188,13 @@ function allowedMoves(user: Row, order: Row): string[] {
   return moves;
 }
 
-function findOrder(reference: string): Row {
+function findOrder(reference) {
   const o = db.find('orders', (x) => x.reference === reference.toUpperCase());
   if (!o) throw fail.notFound('We couldn’t find that order.');
   return o;
 }
 
-function adminOrder(o: Row, user: Row) {
+function adminOrder(o, user) {
   return {
     ...orderToPublic(o, true),
     customer: {
@@ -268,7 +267,7 @@ route(
 route(
   'GET',
   '/admin/orders/:reference',
-  ({ params, user }) => ({ order: adminOrder(findOrder(params.reference!), user) }),
+  ({ params, user }) => ({ order: adminOrder(findOrder(params.reference), user) }),
   'orders.view',
 );
 
@@ -276,7 +275,7 @@ route(
   'POST',
   '/admin/orders/:reference/status',
   ({ params, body, user }) => {
-    const o = findOrder(params.reference!);
+    const o = findOrder(params.reference);
     const data = validate(body, {
       status: 'required|string|in:preparing,ready,out_for_delivery,delivered,completed,cancelled',
       note: 'nullable|string|max:255',
@@ -294,7 +293,7 @@ route(
   'POST',
   '/admin/orders/:reference/refund-flag',
   ({ params, body, user }) => {
-    const o = findOrder(params.reference!);
+    const o = findOrder(params.reference);
     const data = validate(body, { flag: 'required|bool', reason: 'required|string|min:5|max:255' });
     o.refund_flag = data.flag ? 1 : 0;
     db.insert('order_status_history', {
@@ -313,7 +312,7 @@ route(
 
 /* -------------------------------------------------------------- reservations */
 
-function reservationToAdmin(r: Row) {
+function reservationToAdmin(r) {
   const area = db.byId('seating_areas', r.seating_area_id);
   return {
     code: r.code,
@@ -348,8 +347,8 @@ route(
       status: 'nullable|string|max:80',
       q: 'nullable|string|max:80',
     });
-    const from: string = v.from ?? ymd(now());
-    const to: string = v.to ?? ymd(addDays(parse(from), 6));
+    const from = v.from ?? ymd(now());
+    const to = v.to ?? ymd(addDays(parse(from), 6));
     if (Math.abs(parse(to).getTime() - parse(from).getTime()) / 86_400_000 > 62) {
       throw fail.badRequest('Choose a range of two months or less.');
     }
@@ -392,12 +391,12 @@ route(
       },
       { table_label: 'Table' },
     );
-    return { reservation: reservationToAdmin(staffUpdate(params.code!, data, user.id)) };
+    return { reservation: reservationToAdmin(staffUpdate(params.code, data, user.id)) };
   },
   'reservations.manage',
 );
 
-function capacityFor(date: string) {
+function capacityFor(date) {
   const overrides = db.where('capacity_overrides', (o) => o.service_date === date);
   const slots = activeSlots();
   return {
@@ -555,13 +554,13 @@ function adminMenu() {
   };
 }
 
-function findDish(id: string | undefined): Row {
+function findDish(id) {
   const d = db.find('dishes', (x) => x.id === Number(id) && x.deleted_at === null);
   if (!d) throw fail.notFound('We couldn’t find that dish.');
   return d;
 }
 
-function validateDish(body: Row, creating: boolean): Row {
+function validateDish(body, creating) {
   const req = creating ? 'required' : 'nullable';
   const data = validate(
     body,
@@ -590,7 +589,7 @@ function validateDish(body: Row, creating: boolean): Row {
   if (data.kitchen_id != null && !db.byId('kitchens', data.kitchen_id))
     throw fail.field('kitchen_id', 'Choose a kitchen.');
   if ('allergens' in body) {
-    const list = Array.isArray(body.allergens) ? (body.allergens as string[]) : [];
+    const list = Array.isArray(body.allergens) ? body.allergens : [];
     const bad = list.filter((a) => !ALLERGENS.includes(a));
     if (bad.length) throw fail.field('allergens', `Unknown allergen: ${bad.join(', ')}`);
     data.allergens = list.length ? [...new Set(list)].join(',') : null;
@@ -599,7 +598,7 @@ function validateDish(body: Row, creating: boolean): Row {
     const options = body.options;
     if (!Array.isArray(options) || options.length > 20)
       throw fail.field('options', 'Up to 20 portions and add-ons per dish.');
-    data.options = (options as Row[]).map((o, i) => ({
+    data.options = options.map((o, i) => ({
       ...validate(
         o ?? {},
         {
@@ -612,7 +611,7 @@ function validateDish(body: Row, creating: boolean): Row {
       ),
       sort_order: i,
     }));
-    const portions = (data.options as Row[]).filter((o) => o.group === 'portion');
+    const portions = data.options.filter((o) => o.group === 'portion');
     if (portions.length && portions.filter((o) => o.is_default).length !== 1) {
       throw fail.field('options', 'Mark exactly one portion as the default.');
     }
@@ -620,8 +619,8 @@ function validateDish(body: Row, creating: boolean): Row {
   return data;
 }
 
-function dishColumns(data: Row): Row {
-  const cols: Row = {};
+function dishColumns(data) {
+  const cols = {};
   for (const k of [
     'name',
     'kitchen_id',
@@ -652,7 +651,7 @@ function dishColumns(data: Row): Row {
   return cols;
 }
 
-function saveOptions(dishId: number, options: Row[]): void {
+function saveOptions(dishId, options) {
   db.delete('dish_options', (o) => o.dish_id === dishId);
   for (const o of options) {
     db.insert('dish_options', {
@@ -666,7 +665,7 @@ function saveOptions(dishId: number, options: Row[]): void {
   }
 }
 
-const slugify = (text: string) =>
+const slugify = (text) =>
   text
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
@@ -699,7 +698,7 @@ route(
     const before = dish.price_kobo;
     Object.assign(dish, dishColumns(data));
     if ('options' in data) saveOptions(dish.id, data.options);
-    const meta: Row = { fields: Object.keys(data).filter((k) => k !== 'options') };
+    const meta = { fields: Object.keys(data).filter((k) => k !== 'options') };
     if (data.price_naira != null) meta.price = { from: before, to: data.price_naira * 100 };
     audit(user.id, 'menu.dish_updated', 'dish', dish.id, meta);
     return adminMenu();
@@ -738,12 +737,12 @@ route(
 );
 
 /** Re-encodes an uploaded photo to WebP in the browser (the API does this with GD). */
-async function toWebpDataUrl(file: File): Promise<string> {
+async function toWebpDataUrl(file) {
   if (file.size > 5 * 1024 * 1024) throw fail.field('image', 'That image is too large (5 MB maximum).');
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
     throw fail.field('image', 'Please upload a JPEG, PNG or WebP photo.');
   }
-  let bitmap: ImageBitmap;
+  let bitmap;
   try {
     bitmap = await createImageBitmap(file);
   } catch {
@@ -789,7 +788,7 @@ route(
   'menu.manage',
 );
 
-function saveCategory({ params, body, user }: AuthedCtx) {
+function saveCategory({ params, body, user }) {
   const data = validate(body, { name: 'required|string|max:60', sort_order: 'nullable|int|min:0|max:999' });
   if (params.id) {
     const c = db.byId('categories', params.id);
@@ -830,7 +829,7 @@ route('GET', '/admin/menu', () => adminMenu(), 'menu.availability');
 
 /* ----------------------------------------------------------------- customers */
 
-function findCustomer(id: string | undefined): Row {
+function findCustomer(id) {
   const u = db.find('users', (x) => x.id === Number(id) && x.role === 'customer');
   if (!u) throw fail.notFound('We couldn’t find that customer.');
   return u;
@@ -850,7 +849,7 @@ route(
     const tier = q(ctx, 'tier');
     if (tier && ['bronze', 'silver', 'gold', 'black_diamond'].includes(tier))
       rows = rows.filter(({ a }) => a.tier === tier);
-    const sorts: Record<string, (x: { u: Row; a: Row }, y: { u: Row; a: Row }) => number> = {
+    const sorts = {
       spend: (x, y) => y.a.spend_12m_kobo - x.a.spend_12m_kobo,
       wallet: (x, y) => y.a.wallet_balance_kobo - x.a.wallet_balance_kobo,
       points: (x, y) => y.a.points_balance - x.a.points_balance,
@@ -986,7 +985,7 @@ route(
 
 const TIER_KEYS = ['bronze', 'silver', 'gold', 'black_diamond'];
 
-const SETTING_INTS: Record<string, [number, number, string]> = {
+const SETTING_INTS = {
   earn_points_per_1000_naira: [0, 100, 'Points per ₦1,000'],
   redeem_points_per_1000_naira: [10, 10000, 'Points for ₦1,000 credit'],
   min_points_to_redeem: [1, 100000, 'Minimum points to redeem'],
@@ -1005,19 +1004,19 @@ const SETTING_INTS: Record<string, [number, number, string]> = {
   winback_after_days: [7, 365, 'Win-back after'],
   winback_offer_percent: [0, 50, 'Win-back discount'],
 };
-const SETTING_MULTIPLIERS: Record<string, [number, number, string]> = {
+const SETTING_MULTIPLIERS = {
   featured_dish_points_multiplier: [1, 5, 'Featured dish multiplier'],
   birthday_points_multiplier: [1, 5, 'Birthday week multiplier'],
 };
 
-const isNum = (v: unknown) =>
+const isNum = (v) =>
   (typeof v === 'number' && Number.isFinite(v)) ||
   (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v)));
 
 /** Port of App\Loyalty\LoyaltySettingsValidator. */
-function validateLoyaltySettings(input: Row, categories: string[]): Row {
-  const errors: Record<string, string> = {};
-  const out: Row = {};
+function validateLoyaltySettings(input, categories) {
+  const errors = {};
+  const out = {};
   for (const [key, [min, max, label]] of Object.entries(SETTING_INTS)) {
     const v = input[key];
     if (!(Number.isInteger(v) || (typeof v === 'string' && /^\d+$/.test(v)))) {
@@ -1054,7 +1053,7 @@ function validateLoyaltySettings(input: Row, categories: string[]): Row {
   if (!Array.isArray(bands) || bands.length > 5) errors.topup_bonus_tiers = 'Up to five bonus levels.';
   else {
     out.topup_bonus_tiers = [];
-    for (const b of bands as Row[]) {
+    for (const b of bands) {
       if (
         !isNum(b?.min_naira) ||
         !isNum(b?.bonus_bp) ||
@@ -1070,15 +1069,15 @@ function validateLoyaltySettings(input: Row, categories: string[]): Row {
         bonus_bp: Math.trunc(Number(b.bonus_bp)),
       });
     }
-    out.topup_bonus_tiers.sort((a: Row, b: Row) => b.min_naira - a.min_naira);
+    out.topup_bonus_tiers.sort((a, b) => b.min_naira - a.min_naira);
   }
   const tiers = input.tiers ?? [];
-  if (!Array.isArray(tiers) || tiers.map((t: Row) => t?.key).join() !== TIER_KEYS.join()) {
+  if (!Array.isArray(tiers) || tiers.map((t) => t?.key).join() !== TIER_KEYS.join()) {
     errors.tiers = 'All four tiers are required, in order.';
   } else {
     out.tiers = [];
     let last = -1;
-    for (const [i, t] of (tiers as Row[]).entries()) {
+    for (const [i, t] of tiers.entries()) {
       const name = String(t.name ?? '').trim();
       const minSpend = i === 0 ? 0 : t.min_spend_naira;
       const perks = t.perks ?? [];
@@ -1092,7 +1091,7 @@ function validateLoyaltySettings(input: Row, categories: string[]): Row {
         Number(t.multiplier) > 5 ||
         !Array.isArray(perks) ||
         perks.length > 8 ||
-        perks.some((p: unknown) => typeof p !== 'string' || !p.trim() || p.length > 80)
+        perks.some((p) => typeof p !== 'string' || !p.trim() || p.length > 80)
       ) {
         errors.tiers =
           'Each tier needs a name, a higher spend than the one before, a multiplier from 1× to 5× and up to 8 short perks.';
@@ -1104,7 +1103,7 @@ function validateLoyaltySettings(input: Row, categories: string[]): Row {
         name,
         min_spend_naira: last,
         multiplier: Math.round(Number(t.multiplier) * 100) / 100,
-        perks: perks.map((p: string) => p.trim()),
+        perks: perks.map((p) => p.trim()),
       });
     }
   }
@@ -1112,7 +1111,7 @@ function validateLoyaltySettings(input: Row, categories: string[]): Row {
   if (!Array.isArray(stamps) || stamps.length > 10) errors.stamp_rewards = 'Up to ten stamp rewards.';
   else {
     out.stamp_rewards = [];
-    for (const s of stamps as Row[]) {
+    for (const s of stamps) {
       const reward = String(s?.reward ?? '').trim();
       if (
         !isNum(s?.stamp) ||
@@ -1127,7 +1126,7 @@ function validateLoyaltySettings(input: Row, categories: string[]): Row {
       }
       out.stamp_rewards.push({ stamp: Math.trunc(Number(s.stamp)), reward, category: s.category });
     }
-    out.stamp_rewards.sort((a: Row, b: Row) => a.stamp - b.stamp);
+    out.stamp_rewards.sort((a, b) => a.stamp - b.stamp);
   }
   const free = input.free_delivery_tiers ?? [];
   if (!Array.isArray(free) || free.some((k) => !TIER_KEYS.includes(k)))
@@ -1194,7 +1193,7 @@ route(
   'loyalty.manage',
 );
 
-function saveReward({ params, body, user }: AuthedCtx) {
+function saveReward({ params, body, user }) {
   const creating = !params.id;
   const req = creating ? 'required' : 'nullable';
   const data = validate(
@@ -1213,7 +1212,7 @@ function saveReward({ params, body, user }: AuthedCtx) {
     },
     { points_cost: 'Points', credit_naira: 'Credit' },
   );
-  const cols: Row = {};
+  const cols = {};
   for (const k of [
     'name',
     'description',
@@ -1229,7 +1228,7 @@ function saveReward({ params, body, user }: AuthedCtx) {
   const type = cols.reward_type ?? (creating ? null : db.byId('rewards_catalog', params.id)?.reward_type);
   if (type === 'credit' && creating && !cols.credit_kobo)
     throw fail.field('credit_naira', 'Enter the dining credit this reward gives.');
-  let id: number;
+  let id;
   if (creating) {
     const slug = slugify(data.name);
     if (db.find('rewards_catalog', (r) => r.slug === slug))
@@ -1256,8 +1255,8 @@ route(
     const d30 = sql(addDays(at, -30));
     const d90 = sql(addDays(at, -90));
     const customers = db.where('users', isCustomer);
-    const accounts = customers.map((u) => accountOf(u.id)).filter((a): a is Row => !!a);
-    const activity = new Map<number, number>();
+    const accounts = customers.map((u) => accountOf(u.id)).filter((a) => !!a);
+    const activity = new Map();
     for (const o of db.where(
       'orders',
       (x) => x.user_id !== null && x.payment_status === 'paid' && x.placed_at >= d90,
@@ -1268,12 +1267,12 @@ route(
       activity.set(v.user_id, (activity.get(v.user_id) ?? 0) + 1);
     const buyers = activity.size;
     const repeaters = [...activity.values()].filter((n) => n >= 2).length;
-    const flows = new Map<string, number>();
+    const flows = new Map();
     for (const l of db.where('wallet_ledger', (x) => x.created_at >= d30)) {
       const k = `${l.entry_type}:${l.direction}`;
       flows.set(k, (flows.get(k) ?? 0) + l.amount_kobo);
     }
-    const sum = (keys: string[]) => keys.reduce((s, k) => s + (flows.get(k) ?? 0), 0);
+    const sum = (keys) => keys.reduce((s, k) => s + (flows.get(k) ?? 0), 0);
     const points = db.where('points_ledger', (x) => x.created_at >= d30);
     return {
       members: customers.filter((u) => !!u.is_active).length,
@@ -1395,7 +1394,7 @@ route(
 
 /* ------------------------------------------------------------------- content */
 
-function adminReview(r: Row) {
+function adminReview(r) {
   return {
     id: r.id,
     author: r.author_name,
@@ -1413,7 +1412,7 @@ function adminReview(r: Row) {
 }
 
 /** New/pending items first, then newest. */
-const firstThenNewest = (flag: (r: Row) => boolean) => (a: Row, b: Row) =>
+const firstThenNewest = (flag) => (a, b) =>
   Number(flag(b)) - Number(flag(a)) || b.created_at.localeCompare(a.created_at);
 
 route(
@@ -1442,7 +1441,7 @@ route(
       status: 'nullable|string|in:pending,approved,hidden',
       reply: 'nullable|string|max:1000',
     });
-    const set: Row = {};
+    const set = {};
     if (data.status) set.status = data.status;
     if ('reply' in data) {
       set.admin_reply = data.reply;
@@ -1500,7 +1499,7 @@ function couponsPayload() {
 
 route('GET', '/admin/coupons', () => couponsPayload(), 'coupons.manage');
 
-function saveCoupon({ params, body, user }: AuthedCtx) {
+function saveCoupon({ params, body, user }) {
   const creating = !params.id;
   const req = creating ? 'required' : 'nullable';
   const data = validate(
@@ -1528,7 +1527,7 @@ function saveCoupon({ params, body, user }: AuthedCtx) {
   if (data.starts_at && data.ends_at && data.starts_at > data.ends_at) {
     throw fail.field('ends_at', 'The end date must be after the start date.');
   }
-  const cols: Row = {};
+  const cols = {};
   for (const k of ['code', 'description', 'discount_type', 'kitchen_id', 'usage_limit', 'per_user_limit'])
     if (k in data) cols[k] = data[k];
   if ('discount_value' in data) {
@@ -1542,7 +1541,7 @@ function saveCoupon({ params, body, user }: AuthedCtx) {
   if ('starts_at' in data) cols.starts_at = data.starts_at ? `${data.starts_at} 00:00:00` : null;
   if ('ends_at' in data) cols.ends_at = data.ends_at ? `${data.ends_at} 23:59:59` : null;
   if ('valid_weekdays' in body) {
-    const days = Array.isArray(body.valid_weekdays) ? (body.valid_weekdays as unknown[]).map(Number) : [];
+    const days = Array.isArray(body.valid_weekdays) ? body.valid_weekdays.map(Number) : [];
     if (days.some((d) => !(d >= 0 && d <= 6))) throw fail.field('valid_weekdays', 'Choose days of the week.');
     cols.valid_weekdays = days.length ? [...new Set(days)].join(',') : null;
   }
@@ -1550,7 +1549,7 @@ function saveCoupon({ params, body, user }: AuthedCtx) {
   if (cols.code && db.find('coupons', (c) => c.code === cols.code && c.id !== Number(params.id ?? 0))) {
     throw fail.field('code', 'That code is already in use.');
   }
-  let id: number;
+  let id;
   if (creating) id = db.insert('coupons', cols).id;
   else {
     const c = db.byId('coupons', params.id);
@@ -1690,13 +1689,13 @@ function staffPayload() {
   };
 }
 
-const checkPosition = (role: string, position: string | null) => {
+const checkPosition = (role, position) => {
   if (role === 'staff' && !['kitchen', 'front_desk'].includes(position ?? '')) {
     throw fail.field('staff_position', 'Choose kitchen or front desk.');
   }
 };
 
-function findStaff(id: string | undefined): Row {
+function findStaff(id) {
   const u = db.find('users', (x) => x.id === Number(id) && ROLE_ORDER.includes(x.role));
   if (!u) throw fail.notFound();
   return u;
@@ -1807,7 +1806,7 @@ route(
 
 /* ------------------------------------------------------------------ settings */
 
-const SETTING_GROUPS: Record<string, Record<string, string>> = {
+const SETTING_GROUPS = {
   restaurant: {
     name: 'required|string|max:80',
     tagline: 'required|string|max:120',
@@ -1841,7 +1840,7 @@ const SETTING_GROUPS: Record<string, Record<string, string>> = {
 };
 
 function settingsPayload() {
-  const hhmm = (t: string | null) => (t ? t.slice(0, 5) : null);
+  const hhmm = (t) => (t ? t.slice(0, 5) : null);
   return {
     groups: Object.fromEntries(Object.keys(SETTING_GROUPS).map((g) => [g, db.settings(g)])),
     hours: db
@@ -1892,8 +1891,8 @@ route(
   ({ body, user }) => {
     const days = body.hours;
     if (!Array.isArray(days) || days.length !== 7) throw fail.field('hours', 'Send all seven days.');
-    const rows = new Map<number, Row>();
-    for (const d of days as Row[]) {
+    const rows = new Map();
+    for (const d of days) {
       const c = validate(
         d ?? {},
         {
@@ -1926,7 +1925,7 @@ route(
   'settings.manage',
 );
 
-function saveZone({ params, body, user }: AuthedCtx) {
+function saveZone({ params, body, user }) {
   const creating = !params.id;
   const req = creating ? 'required' : 'nullable';
   const data = validate(
@@ -1940,13 +1939,13 @@ function saveZone({ params, body, user }: AuthedCtx) {
     },
     { fee_naira: 'Delivery fee', min_order_naira: 'Minimum order', eta_minutes: 'Delivery time' },
   );
-  const cols: Row = {};
+  const cols = {};
   if (data.name != null) cols.name = data.name;
   if (data.fee_naira != null) cols.fee_kobo = data.fee_naira * 100;
   if (data.min_order_naira != null) cols.min_order_kobo = data.min_order_naira * 100;
   if (data.eta_minutes != null) cols.eta_minutes = data.eta_minutes;
   if (data.is_active != null) cols.is_active = data.is_active ? 1 : 0;
-  let id: number;
+  let id;
   if (creating) {
     const slug = slugify(data.name);
     if (db.find('delivery_zones', (z) => z.slug === slug))
@@ -1994,13 +1993,13 @@ route(
   'PUT',
   '/admin/settings/:group',
   ({ params, body, user }) => {
-    const rules = SETTING_GROUPS[params.group!];
+    const rules = SETTING_GROUPS[params.group];
     if (!rules) throw fail.notFound();
     const clean = validate(body, rules);
-    const before = db.settings(params.group!);
-    db.saveSettings(params.group!, { ...before, ...clean });
+    const before = db.settings(params.group);
+    db.saveSettings(params.group, { ...before, ...clean });
     const changed = Object.keys(clean).filter((k) => JSON.stringify(before[k]) !== JSON.stringify(clean[k]));
-    audit(user.id, 'settings.updated', 'settings', params.group!, {
+    audit(user.id, 'settings.updated', 'settings', params.group, {
       before: Object.fromEntries(changed.map((k) => [k, before[k]])),
       after: Object.fromEntries(changed.map((k) => [k, clean[k]])),
     });

@@ -1,23 +1,22 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { useTheme } from './context';
-import type { ThemePreference } from './theme';
 
-const OPTIONS: { value: ThemePreference; label: string }[] = [
+const OPTIONS = [
   { value: 'dark', label: 'Dark' },
   { value: 'light', label: 'Light' },
   { value: 'system', label: 'System' },
 ];
 
-export function ThemeIcon({ value, className }: { value: ThemePreference; className?: string }) {
+export function ThemeIcon({ value, className }) {
   const common = {
     className: cn('size-[18px]', className),
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: 'currentColor',
     strokeWidth: 1.6,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
     'aria-hidden': true,
   };
   if (value === 'dark')
@@ -42,20 +41,19 @@ export function ThemeIcon({ value, className }: { value: ThemePreference; classN
 }
 
 /** Icon button with a small Dark / Light / System menu (site header, admin top bar). */
-export function ThemeMenu({ className }: { className?: string }) {
+export function ThemeMenu({ className }) {
   const { preference, resolved, setPreference } = useTheme();
   const [open, setOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
+  const itemRefs = useRef([]);
   const menuId = useId();
 
   useEffect(() => {
     if (!open) return;
     itemRefs.current[OPTIONS.findIndex((o) => o.value === preference)]?.focus();
-    const onDown = (e: PointerEvent) => {
-      if (!menuRef.current?.contains(e.target as Node) && !buttonRef.current?.contains(e.target as Node))
-        setOpen(false);
+    const onDown = (e) => {
+      if (!menuRef.current?.contains(e.target) && !buttonRef.current?.contains(e.target)) setOpen(false);
     };
     document.addEventListener('pointerdown', onDown);
     return () => document.removeEventListener('pointerdown', onDown);
@@ -66,10 +64,10 @@ export function ThemeMenu({ className }: { className?: string }) {
     if (refocus) buttonRef.current?.focus();
   };
 
-  const onMenuKey = (e: KeyboardEvent) => {
+  const onMenuKey = (e) => {
     const i = itemRefs.current.findIndex((el) => el === document.activeElement);
-    const move = (n: number) => itemRefs.current[(n + OPTIONS.length) % OPTIONS.length]?.focus();
-    const actions: Record<string, () => void> = {
+    const move = (n) => itemRefs.current[(n + OPTIONS.length) % OPTIONS.length]?.focus();
+    const actions = {
       ArrowDown: () => move(i + 1),
       ArrowUp: () => move(i - 1),
       Home: () => move(0),
@@ -80,11 +78,11 @@ export function ThemeMenu({ className }: { className?: string }) {
       close(false);
     } else if (actions[e.key]) {
       e.preventDefault();
-      actions[e.key]!();
+      actions[e.key]();
     }
   };
 
-  const current = OPTIONS.find((o) => o.value === preference)!;
+  const current = OPTIONS.find((o) => o.value === preference);
   return (
     <div className={cn('relative', className)}>
       <button
@@ -147,13 +145,7 @@ export function ThemeMenu({ className }: { className?: string }) {
 }
 
 /** Inline three-way control (mobile menu, account page, admin settings, style guide). */
-export function ThemeSegmented({
-  className,
-  legend = 'Appearance',
-}: {
-  className?: string;
-  legend?: string;
-}) {
+export function ThemeSegmented({ className, legend = 'Appearance' }) {
   const { preference, setPreference } = useTheme();
   const name = useId();
   return (

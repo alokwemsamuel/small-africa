@@ -19,9 +19,8 @@ import { useSeo } from '@/lib/seo';
 import { KITCHEN_LABEL } from './actions';
 import { DishCard } from './DishCard';
 import { useDish } from './hooks';
-import type { DishDetail } from './types';
 
-const ALLERGEN_LABEL: Record<string, string> = {
+const ALLERGEN_LABEL = {
   gluten: 'Gluten',
   dairy: 'Milk',
   egg: 'Egg',
@@ -59,10 +58,10 @@ export function DishDetailPage() {
   return <DishView dish={dish} />;
 }
 
-function DishView({ dish }: { dish: DishDetail }) {
+function DishView({ dish }) {
   const defaultPortion = dish.options.portion.find((p) => p.isDefault) ?? dish.options.portion[0];
-  const [portionId, setPortionId] = useState<number | null>(defaultPortion?.id ?? null);
-  const [addonIds, setAddonIds] = useState<number[]>([]);
+  const [portionId, setPortionId] = useState(defaultPortion?.id ?? null);
+  const [addonIds, setAddonIds] = useState([]);
   const [qty, setQty] = useState(1);
 
   useEffect(() => {

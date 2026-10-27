@@ -4,7 +4,7 @@ import { adminApi } from '../api';
 import { AdminHeader, CheckField, Empty, Loading, Pager, Panel, SearchBox, SelectField } from '../ui';
 import { fmt, tdClass, thClass } from '../format';
 
-const AREAS: [string, string][] = [
+const AREAS = [
   ['', 'Everything'],
   ['order', 'Orders'],
   ['reservation', 'Reservations'],
