@@ -24,7 +24,8 @@ import { fmt, tdClass, thClass } from '../format';
 
 const STATUS_FILTERS = [
   ['received,preparing,ready,out_for_delivery', 'Active'],
-  ['', 'All'],
+  // 'all' is kept in the address; an empty value would fall back to the 'Active' default.
+  ['all', 'All'],
   ['received', 'Received'],
   ['preparing', 'Preparing'],
   ['ready', 'Ready'],
@@ -61,7 +62,7 @@ export function OrdersPage() {
     );
 
   const filters = {
-    status,
+    status: status === 'all' ? null : status,
     q: params.get('q'),
     date: params.get('date'),
     fulfilment: params.get('fulfilment'),

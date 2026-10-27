@@ -232,6 +232,23 @@ describe('Admin panel', () => {
     );
     expect(await within(dialog).findByRole('button', { name: 'Mark ready' })).toBeInTheDocument();
   });
+
+  it('the orders list can show every status, not only active orders', async () => {
+    const empty = () => ({ body: { items: [], page: 1, pages: 1, total: 0 } });
+    const { calls } = setup(
+      kitchenMe,
+      'staff',
+      'kitchen',
+      {
+        'GET /admin/orders?status=received%2Cpreparing%2Cready%2Cout_for_delivery&page=1': empty,
+        'GET /admin/orders?page=1': empty,
+      },
+      '/admin/orders',
+    );
+    await userEvent.setup().selectOptions(await screen.findByLabelText('Status'), 'All');
+    await waitFor(() => expect(calls.some((c) => c.path === '/admin/orders?page=1')).toBe(true));
+    expect(screen.getByLabelText('Status')).toHaveValue('all');
+  });
 });
 
 it('chooses clean axis ticks, whole numbers for counts', () => {
