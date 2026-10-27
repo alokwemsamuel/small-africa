@@ -36,7 +36,7 @@
 **Under the hood**
 - Strict security headers and CSP, CSRF protection, rate limiting, 2FA, append-only ledgers (see [SECURITY.md](docs/SECURITY.md))
 - Nigeria Data Protection Act 2023: privacy policy, cookie notice, marketing consent
-- 310 automated tests (186 frontend, 124 backend)
+- 310 automated tests (186 frontend, 124 backend), plus a Playwright check that no page scrolls sideways on phones from 320px to 430px (it runs before every deploy)
 
 ## Tech stack
 
@@ -138,6 +138,7 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    npm run dev                   # http://localhost:5173 (proxies /api to XAMPP)
    npm test                      # Vitest
    npm run lint                  # ESLint
+   npm run build:demo && npm run test:e2e   # Playwright: no page may be wider than a 320–430px phone (dark and light; first time: npx playwright install chromium)
    npm run build                 # production build + pre-built public pages (npm run build:demo for the GitHub Pages demo)
    ```
    Optional asset rebuilds (design/tools): `npm run photos` (Unsplash photos → AVIF/WebP), `npm run hero` (hero poster + loop video; needs the dev server and ffmpeg), `npm run brand`, `npm run logo`.

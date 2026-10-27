@@ -36,7 +36,9 @@ export function NotificationBell() {
   }, [open]);
 
   return (
-    <div ref={wrap} className="relative">
+    // On phones the panel is anchored to the full-width header (so it can span the screen with a
+    // small margin); from sm up it hangs under the bell.
+    <div ref={wrap} className="sm:relative">
       <button
         ref={button}
         type="button"
@@ -68,7 +70,7 @@ export function NotificationBell() {
           id={panelId}
           role="region"
           aria-label="Notifications"
-          className="border-line bg-surface-raised absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-md border shadow-xl"
+          className="border-line bg-surface-raised absolute inset-x-4 top-full z-50 mt-2 rounded-md border shadow-xl sm:inset-x-auto sm:right-0 sm:w-88"
         >
           <div className="border-line flex items-center justify-between border-b px-4 py-3">
             <p className="font-semibold">Notifications</p>

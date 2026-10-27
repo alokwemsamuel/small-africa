@@ -13,7 +13,10 @@ import { WhatsAppButton } from '@/components/layout/WhatsAppButton';
 
 export function AppLayout() {
   return (
-    <div className="flex min-h-dvh flex-col">
+    // overflow-x: clip is a last-resort guard against a sideways-scrolling page. Unlike hidden, it
+    // doesn't make this a scroll container, so the sticky header and smooth scrolling still work.
+    // relative: so absolutely positioned strays (e.g. sr-only controls inside wide tables) are clipped too.
+    <div data-overflow-guard className="relative flex min-h-dvh flex-col overflow-x-clip">
       <a
         href="#main"
         className="bg-accent-fill text-on-accent sr-only z-50 rounded-full px-5 py-3 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"

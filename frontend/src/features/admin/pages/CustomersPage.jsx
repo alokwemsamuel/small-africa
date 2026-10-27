@@ -77,7 +77,7 @@ export function CustomersPage() {
         ) : data.items.length === 0 ? (
           <Empty>No customers match.</Empty>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[48rem]">
               <thead>
                 <tr>

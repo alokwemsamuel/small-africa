@@ -22,8 +22,8 @@ export function CartPage() {
             <ButtonLink to="/menu">Browse the menu</ButtonLink>
           </div>
         ) : (
-          <div className="grid gap-10 lg:grid-cols-[1.6fr_1fr]">
-            <ul className="flex flex-col">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <ul className="flex min-w-0 flex-col">
               {items.map((l) => (
                 <li key={l.key} className="border-line flex gap-4 border-b py-5">
                   <Photo
@@ -33,7 +33,7 @@ export function CartPage() {
                     fallbackKitchen={l.kitchen}
                     className="aspect-square w-20 shrink-0 rounded-sm sm:w-24"
                   />
-                  <div className="flex flex-1 flex-col gap-1">
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <Link to={`/menu/${l.slug}`} className="hover:text-accent font-serif text-xl">
                       {l.name}
                     </Link>
@@ -43,7 +43,7 @@ export function CartPage() {
                       </p>
                     )}
                     {l.containsPork && <p className="text-accent text-xs font-semibold">Contains pork</p>}
-                    <div className="mt-2 flex items-center gap-4">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
                       <div
                         className="border-line flex items-center rounded-full border"
                         role="group"
@@ -80,7 +80,7 @@ export function CartPage() {
                 </li>
               ))}
             </ul>
-            <aside className="border-line bg-surface-raised flex h-fit flex-col gap-4 rounded-md border p-6">
+            <aside className="border-line bg-surface-raised flex h-fit min-w-0 flex-col gap-4 rounded-md border p-6">
               <h2 className="text-2xl">Summary</h2>
               <div className="flex justify-between">
                 <span className="text-secondary">

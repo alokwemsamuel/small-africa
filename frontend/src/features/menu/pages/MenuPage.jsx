@@ -66,7 +66,7 @@ export function MenuPage() {
           className="border-line bg-surface-raised flex flex-col gap-5 rounded-md border p-4 sm:p-6"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div role="group" aria-label="Kitchen" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+            <div role="group" aria-label="Kitchen" className="flex min-w-0 flex-wrap gap-1">
               {KITCHEN_TABS.map((k) => (
                 <button
                   key={k.value}
@@ -74,7 +74,7 @@ export function MenuPage() {
                   aria-pressed={filters.kitchen === k.value}
                   onClick={() => update({ kitchen: k.value })}
                   className={cn(
-                    'min-h-10 shrink-0 rounded-full px-4 text-sm whitespace-nowrap transition-colors',
+                    'min-h-10 rounded-full px-4 text-sm whitespace-nowrap transition-colors',
                     filters.kitchen === k.value
                       ? 'bg-accent-fill text-on-accent font-semibold'
                       : 'text-secondary hover:text-primary hover:bg-line',
@@ -84,23 +84,23 @@ export function MenuPage() {
                 </button>
               ))}
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <label className="relative flex-1 sm:w-72 sm:flex-none">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row">
+              <label className="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
                 <span className="sr-only">Search dishes</span>
                 <input
                   type="search"
                   value={filters.q}
                   onChange={(e) => update({ q: e.target.value })}
                   placeholder="Search: jollof, pierogi, steak…"
-                  className="border-input bg-surface-inset text-primary placeholder:text-muted focus:border-accent min-h-11 w-full rounded-full border px-5 text-sm focus:outline-none"
+                  className="border-input bg-surface-inset text-primary placeholder:text-muted focus:border-accent min-h-11 w-full min-w-0 rounded-full border px-5 text-sm focus:outline-none"
                 />
               </label>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex min-w-0 items-center gap-2 text-sm">
                 <span className="text-muted shrink-0">Sort</span>
                 <select
                   value={filters.sort}
                   onChange={(e) => update({ sort: e.target.value })}
-                  className="border-input bg-surface-inset text-primary focus:border-accent min-h-11 flex-1 rounded-full border px-4 focus:outline-none"
+                  className="border-input bg-surface-inset text-primary focus:border-accent min-h-11 min-w-0 flex-1 rounded-full border px-4 focus:outline-none"
                 >
                   <option value="recommended">Chef’s picks</option>
                   <option value="popular">Most popular</option>
@@ -112,7 +112,7 @@ export function MenuPage() {
           </div>
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div role="group" aria-label="Course" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+            <div role="group" aria-label="Course" className="flex min-w-0 flex-wrap gap-2">
               <CategoryChip
                 label="Everything"
                 active={filters.category === 'all'}
@@ -127,7 +127,7 @@ export function MenuPage() {
                 />
               ))}
             </div>
-            <fieldset className="flex flex-wrap items-center gap-2">
+            <fieldset className="flex min-w-0 flex-wrap items-center gap-2">
               <legend className="sr-only">Dietary preferences</legend>
               {DIETARY.map((d) => (
                 <label
@@ -157,7 +157,7 @@ export function MenuPage() {
                   onChange={(e) =>
                     update({ maxSpice: e.target.value === '' ? null : Number(e.target.value) })
                   }
-                  className="border-input bg-surface-inset text-primary focus:border-accent min-h-10 rounded-full border px-3 focus:outline-none"
+                  className="border-input bg-surface-inset text-primary focus:border-accent min-h-10 max-w-full rounded-full border px-3 focus:outline-none"
                 >
                   <option value="">Any</option>
                   <option value="0">Not spicy</option>
@@ -220,10 +220,13 @@ export function MenuPage() {
         )}
         {/* Keeps the heading order (h1 → h2 → dish h3s) for screen-reader navigation. */}
         <h2 className="sr-only">Dishes</h2>
-        <ul className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {results.map((d) => (
             // Off-screen cards skip layout until they are scrolled near (54 dishes on one page).
-            <li key={d.id} className="flex [contain-intrinsic-size:auto_520px] [content-visibility:auto]">
+            <li
+              key={d.id}
+              className="flex [contain-intrinsic-block-size:auto_520px] [content-visibility:auto]"
+            >
               <DishCard dish={d} className="w-full" />
             </li>
           ))}
@@ -240,7 +243,7 @@ function CategoryChip({ label, active, onClick }) {
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'min-h-10 shrink-0 rounded-full border px-4 text-sm whitespace-nowrap transition-colors',
+        'min-h-10 rounded-full border px-4 text-sm whitespace-nowrap transition-colors',
         active ? 'border-accent text-accent font-semibold' : 'border-line text-secondary hover:text-primary',
       )}
     >

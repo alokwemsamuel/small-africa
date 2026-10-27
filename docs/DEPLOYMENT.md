@@ -34,6 +34,10 @@ The demo is deployed automatically by GitHub Actions
 `main` lints, tests, builds the demo and publishes it to
 **https://alokwemsamuel.github.io/small-africa/**.
 
+Before publishing, the workflow also runs a Playwright test that opens every public, member and admin
+page at phone widths from 320px to 430px, in dark and light, and fails (so nothing is deployed) if any
+page is wider than the screen.
+
 **One-time setup** (on github.com, in the `small-africa` repository):
 
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**

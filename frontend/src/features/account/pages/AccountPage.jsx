@@ -94,7 +94,7 @@ function AccountTabs() {
       <div
         role="tablist"
         aria-label="Account sections"
-        className="border-line mt-10 flex gap-1 overflow-x-auto border-b"
+        className="border-line relative mt-10 flex gap-1 overflow-x-auto border-b"
       >
         {TABS.map(([t, label], i) => (
           <button

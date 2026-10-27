@@ -58,7 +58,7 @@ export function StaffPage() {
       </ul>
       {err && <Alert tone="error">{err}</Alert>}
       <Panel>
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[52rem]">
             <thead>
               <tr>

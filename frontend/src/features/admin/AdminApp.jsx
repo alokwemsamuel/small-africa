@@ -140,7 +140,10 @@ function AdminShell({ me, children }) {
   );
 
   return (
-    <div className="bg-surface min-h-dvh lg:grid lg:grid-cols-[15rem_1fr]">
+    <div
+      data-overflow-guard
+      className="bg-surface relative min-h-dvh overflow-x-clip lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]"
+    >
       <a
         href="#admin-main"
         className="bg-accent-fill text-on-accent sr-only z-50 rounded-full px-5 py-3 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"

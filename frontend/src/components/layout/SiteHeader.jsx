@@ -27,9 +27,9 @@ export function SiteHeader() {
 
   return (
     <header className="border-accent/15 bg-overlay sticky top-0 z-40 border-b backdrop-blur-md">
-      <div className="container-luxe flex h-18 items-center justify-between gap-6 py-3">
-        <Link to="/" className="shrink-0" aria-label="Small Africa home">
-          <Logo className="h-11 w-auto sm:h-12" />
+      <div className="container-luxe flex h-18 items-center justify-between gap-3 py-3 sm:gap-6">
+        <Link to="/" className="min-w-0 shrink" aria-label="Small Africa home">
+          <Logo className="h-11 w-auto max-w-full object-contain object-left sm:h-12" />
         </Link>
 
         <nav aria-label="Main" className="hidden lg:block">

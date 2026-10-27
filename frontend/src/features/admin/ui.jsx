@@ -24,7 +24,8 @@ export function Panel({ title, actions, children, className }) {
   return (
     <section
       aria-labelledby={title ? id : undefined}
-      className={cn('border-line bg-surface-raised rounded-md border p-5 sm:p-6', className)}
+      // min-w-0: inside a grid or flex parent, a wide table (which scrolls on its own) must not stretch the page.
+      className={cn('border-line bg-surface-raised min-w-0 rounded-md border p-5 sm:p-6', className)}
     >
       {(title || actions) && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

@@ -47,7 +47,7 @@ export function RewardsManagerPage() {
       <div
         role="tablist"
         aria-label="Interest Account sections"
-        className="border-line flex gap-1 overflow-x-auto border-b"
+        className="border-line relative flex gap-1 overflow-x-auto border-b"
       >
         {TABS.map(([t, label]) => (
           <button
@@ -147,7 +147,7 @@ function Overview() {
         </Panel>
       </div>
       <Panel title="Top members (12-month spend)">
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[36rem]">
             <thead>
               <tr>
@@ -761,7 +761,7 @@ function Ledger() {
       ) : data.items.length === 0 ? (
         <Empty>No entries.</Empty>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[52rem]">
             <thead>
               <tr>
@@ -899,7 +899,7 @@ function InterestRuns() {
         {data.interestRuns.length === 0 ? (
           <Empty>No interest has been paid yet.</Empty>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[36rem]">
               <thead>
                 <tr>

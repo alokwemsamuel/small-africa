@@ -224,8 +224,12 @@ export function CheckoutPage() {
   return (
     <>
       <PageHeader eyebrow="Checkout" title="Almost at the table" />
-      <form onSubmit={pay} noValidate className="container-luxe grid gap-10 pb-24 lg:grid-cols-[1.4fr_1fr]">
-        <div className="flex flex-col gap-8">
+      <form
+        onSubmit={pay}
+        noValidate
+        className="container-luxe grid grid-cols-1 gap-10 pb-24 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]"
+      >
+        <div className="flex min-w-0 flex-col gap-8">
           <Section n={1} title="Delivery or pickup">
             <div role="radiogroup" aria-label="Delivery or pickup" className="grid gap-3 sm:grid-cols-2">
               {['delivery', 'pickup'].map((f) => (
@@ -431,7 +435,7 @@ export function CheckoutPage() {
           </Section>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <div className="border-line bg-surface-raised flex flex-col gap-5 rounded-md border p-6">
             <h2 className="text-3xl">Your order</h2>
             <ul className="flex flex-col gap-3 text-sm">
@@ -476,7 +480,7 @@ export function CheckoutPage() {
                   placeholder="e.g. WELCOME10"
                   aria-invalid={couponError ? true : undefined}
                   aria-describedby={couponError ? 'coupon-error' : undefined}
-                  className="border-input bg-surface-inset text-primary focus:border-accent min-h-11 flex-1 rounded-sm border px-4 uppercase placeholder:normal-case focus:outline-none"
+                  className="border-input bg-surface-inset text-primary focus:border-accent min-h-11 min-w-0 flex-1 rounded-sm border px-4 uppercase placeholder:normal-case focus:outline-none"
                 />
                 {coupon ? (
                   <Button

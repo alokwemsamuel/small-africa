@@ -68,7 +68,7 @@ export function AuditPage() {
         ) : data.items.length === 0 ? (
           <Empty>No entries.</Empty>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[52rem]">
               <thead>
                 <tr>

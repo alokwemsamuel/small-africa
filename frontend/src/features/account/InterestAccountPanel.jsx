@@ -446,7 +446,7 @@ function History() {
           ))}
         </div>
       </div>
-      <div className="mt-6 overflow-x-auto">
+      <div className="relative mt-6 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="text-muted eyebrow">
             <tr className="border-line border-b">

@@ -45,3 +45,5 @@ design/video/build/
 # Generated at build time by frontend/scripts/sitemap.mjs
 frontend/public/sitemap.xml
 frontend/public/robots.txt
+frontend/playwright-report/
+frontend/test-results/

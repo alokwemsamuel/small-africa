@@ -74,7 +74,7 @@ export function StyleGuidePage() {
           <ThemePanel theme="dark" />
           <ThemePanel theme="light" />
         </div>
-        <div className="mt-10 overflow-x-auto">
+        <div className="relative mt-10 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <caption className="text-muted mb-3 text-left">
               Semantic tokens: use these, never raw palette colours.

@@ -131,7 +131,7 @@ export function OrdersPage() {
         ) : list.data.items.length === 0 ? (
           <Empty>No orders match these filters.</Empty>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[44rem]">
               <thead>
                 <tr>

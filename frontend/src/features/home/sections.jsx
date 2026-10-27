@@ -58,7 +58,7 @@ export function SignatureDishes() {
       <ul
         id="signature-track"
         ref={track}
-        className="container-luxe mt-12 flex snap-x snap-mandatory [scrollbar-width:thin] gap-6 overflow-x-auto pb-6"
+        className="container-luxe relative mt-12 flex snap-x snap-mandatory [scrollbar-width:thin] gap-6 overflow-x-auto pb-6"
         aria-label="Signature dishes"
       >
         {featured.map((d, i) => (

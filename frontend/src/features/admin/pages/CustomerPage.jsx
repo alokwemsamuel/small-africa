@@ -355,7 +355,7 @@ function Statement({ id }) {
       ) : data.entries.length === 0 ? (
         <Empty>Nothing yet.</Empty>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[36rem]">
             <thead>
               <tr>

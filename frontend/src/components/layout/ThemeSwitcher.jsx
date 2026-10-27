@@ -151,12 +151,12 @@ export function ThemeSegmented({ className, legend = 'Appearance' }) {
   return (
     <fieldset className={className}>
       <legend className="eyebrow text-muted mb-3">{legend}</legend>
-      <div className="border-line bg-surface-inset inline-flex rounded-full border p-1">
+      <div className="border-line bg-surface-inset inline-flex max-w-full rounded-full border p-1">
         {OPTIONS.map((o) => (
           <label
             key={o.value}
             className={cn(
-              'relative flex min-h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-sm transition-colors',
+              'relative flex min-h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full px-2.5 text-sm transition-colors sm:px-4',
               'has-[:focus-visible]:outline-focus has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2',
               preference === o.value ? 'bg-accent-fill text-on-accent' : 'text-secondary hover:text-primary',
             )}
@@ -169,7 +169,8 @@ export function ThemeSegmented({ className, legend = 'Appearance' }) {
               onChange={() => setPreference(o.value)}
               className="sr-only"
             />
-            <ThemeIcon value={o.value} className="size-4" />
+            {/* Icons are left out on the narrowest phones so all three options fit. */}
+            <ThemeIcon value={o.value} className="size-4 max-[379px]:hidden" />
             {o.label}
           </label>
         ))}

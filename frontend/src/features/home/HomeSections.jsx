@@ -16,7 +16,9 @@ import {
  * long, and laying all of it out at once kept phones busy while the page was starting up.
  */
 function Deferred({ children }) {
-  return <div className="[contain-intrinsic-size:auto_900px] [content-visibility:auto]">{children}</div>;
+  return (
+    <div className="[contain-intrinsic-block-size:auto_900px] [content-visibility:auto]">{children}</div>
+  );
 }
 
 /** Everything below the hero: a separate chunk, rendered after the hero has painted. */
@@ -28,7 +30,7 @@ export function HomeSections() {
       </Deferred>
       {/* Deferred on smaller screens only: its pinned horizontal scroll (1024px and up) can't
           sit inside containment. */}
-      <div className="max-lg:[contain-intrinsic-size:auto_1800px] max-lg:[content-visibility:auto]">
+      <div className="max-lg:[contain-intrinsic-block-size:auto_1800px] max-lg:[content-visibility:auto]">
         <ThreeKitchens />
       </div>
       <Deferred>

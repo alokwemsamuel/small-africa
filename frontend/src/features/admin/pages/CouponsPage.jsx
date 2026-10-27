@@ -56,7 +56,7 @@ export function CouponsPage() {
         {list.length === 0 ? (
           <Empty>No coupons yet.</Empty>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[48rem]">
               <thead>
                 <tr>
