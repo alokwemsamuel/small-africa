@@ -85,7 +85,7 @@ Every API response carries:
 | `Strict-Transport-Security` | 1 year, including subdomains (production / HTTPS) |
 | `Cache-Control` | `no-store` (no personal data in shared caches) |
 
-The website (SPA) itself gets its own CSP from the web server, allowing only our own scripts plus Paystack checkout. There is **no inline script**: the appearance bootstrap that prevents a flash of the wrong theme is an external file (`/theme-init.js`), so `script-src` never needs `unsafe-inline`. `localStorage` holds only the appearance preference (`sa-theme`), never authentication data. See `docs/DEPLOYMENT.md` *(Phase 8)*.
+The website (SPA) itself gets its own CSP from the web server, allowing only our own scripts plus Paystack checkout. There is **no inline script**: the appearance bootstrap that prevents a flash of the wrong theme is an external file (`/theme-init.js`), so `script-src` never needs `unsafe-inline`. `localStorage` holds only the appearance preference (`sa-theme`), never authentication data. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 **CORS** is restricted to an explicit allow-list of origins (`CORS_ALLOWED_ORIGINS`); credentials are never shared with other sites. `X-Forwarded-For` is only trusted from configured proxy IPs.
 
@@ -96,11 +96,13 @@ The website (SPA) itself gets its own CSP from the web server, allowing only our
 ```
 default-src 'self'; script-src 'self' https://js.paystack.co; style-src 'self' https://paystack.com;
 img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.paystack.co;
-frame-src https://checkout.paystack.com https://www.google.com; object-src 'none';
+frame-src https://checkout.paystack.com https://www.google.com; media-src 'self'; object-src 'none';
 base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
 ```
 
 - **No inline scripts.** Fonts and every photo are self-hosted, so the site makes no third-party requests except Paystack at checkout.
+- **No inline styles in HTML.** The public pages are pre-built as HTML (`frontend/scripts/prerender.mjs`), and `style-src` has no `'unsafe-inline'`, so a `style="…"` attribute in them would be blocked. Fixed decorative styles are CSS classes instead, and the build stops with an error if a pre-built page contains one. Fonts are never inlined as `data:` URLs (`font-src 'self'`).
+- **Pre-built page data.** Each pre-built page carries the public data it was built from (menu, site details) in a `<script type="application/json">` block, which the CSP allows because it is data, not code. `<` is escaped so the data can never close the tag. Only public API responses are included, never anything about a signed-in user.
 - The Google map on the Contact page loads **only after the visitor clicks “Show map”** (privacy by default).
 - Public read endpoints (`/api/menu`, `/api/site`) are cacheable only privately (`Cache-Control: private, max-age=60`); everything else is `no-store`.
 

@@ -20,9 +20,13 @@ npm run build:demo        # dist/ for https://<user>.github.io/small-africa/
 `VITE_DEMO_MODE=true` (in `.env.demo`) swaps the API client for the in-browser API in
 `frontend/src/lib/demo/`. The production build (`npm run build`) contains none of this code.
 
-GitHub Pages has no server-side routing, so the demo build also writes a `404.html` that sends
-deep links (for example `/small-africa/admin/orders`) back to the app, which restores the URL
-before it starts (see `githubPagesSpa` in `vite.config.js`).
+The public pages (home, menu, every dish, reservations, about, gallery, events, contact, FAQ,
+legal and rewards) are **pre-built as HTML** from the demo data (`scripts/prerender.mjs`), so
+they appear straight away and React then attaches to them. GitHub Pages serves `/menu` from
+`menu.html` on its own. Every other address (for example `/small-africa/admin/orders`) gets
+`404.html`, which is the app shell: the app starts there and draws the page for that address.
+
+It is deployed by GitHub Actions on every push to `main`; see [DEPLOYMENT.md](DEPLOYMENT.md#2-github-pages-demo).
 
 ## How it works
 
@@ -65,17 +69,34 @@ muted and inline on all six, with the 720×1280 portrait cut on phones and the p
 the 1920 cut on laptop and desktop. The same pages were also checked in the real **WebKit**
 engine (Safari's) with iPhone SE, iPhone 15 and iPad profiles: the hero video plays there too.
 
-**Lighthouse** (built demo, gzip as on GitHub Pages):
+**Lighthouse** (Phase 8, built demo served like GitHub Pages: HTTP/2 and gzip; Lighthouse's
+default mobile test, which simulates a mid-range phone on a slow 4G connection):
 
-| Page | Desktop: perf / a11y / best practices / SEO | Mobile: perf / a11y / best practices / SEO |
+| Page | Mobile: perf / a11y / best practices / SEO | Desktop |
 |---|---|---|
-| Home | 100 / 100 / 100 / 100 | 78 / 100 / 100 / 100 |
-| Menu | 100 / 100 / 96 / 100 | 71 / 100 / 96 / 100 |
-| Reservations | 99 / 100 / 96 / 100 | 83 / 100 / 96 / 100 |
+| Home | 95 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Menu | 96 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Dish page (Smoky Party Jollof) | 95 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Reservations | 93 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| About | 94 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Gallery | 93 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Events | 91 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Contact | 95 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| FAQ | 98 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Privacy | 97 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Terms | 96 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Rewards | 98 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| Rewards Terms | 95 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
 
-The production build's home page scores 82–85 on mobile. "Best practices 96" is the 404 that
-GitHub Pages returns for a deep link before the redirect; it cannot be avoided on Pages.
-Mobile performance is below 90 because Lighthouse simulates a slow phone on a slow 4G link and
-everything waits for the app's JavaScript (about 120 KB gzipped, mostly React) to run. Real
-first paint is about 2.5 s on that simulated phone. The way to 90+ on mobile is to prerender the
-public pages to static HTML at build time; that fits best with the production hosting in Phase 8.
+Mobile performance varies by a few points from run to run. What got it from 71–83 to 90+:
+
+- **Pre-built pages.** The public pages arrive as finished HTML, so the phone paints them before
+  the app's JavaScript has run.
+- **Nothing hidden until the app starts.** The cookie notice is part of the pre-built page
+  (hidden before the first paint for visitors who already closed it), and scroll reveals leave
+  content that is already on screen alone.
+- **Less layout work.** Long pages (the home page and the 54-dish menu) let the browser skip
+  laying out sections that are off screen until they're scrolled near (`content-visibility`).
+- **Fewer bytes before the first paint.** Only the logo for the current theme downloads, the
+  logo files are a third smaller, the script font is preloaded only on the home page, and the
+  hero video starts once the page has loaded (its poster is the same first frame).

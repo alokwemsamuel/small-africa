@@ -2,7 +2,41 @@
 
 **Three kitchens. One table.** A fine-dining restaurant and lounge platform for Lagos, serving Nigerian, Polish and Continental cuisine. It covers online ordering, reservations, the *Small Africa Interest Account* loyalty programme, and a full admin panel.
 
-> 🚧 In development. Phases 1–7 are complete. See *Build progress* below.
+**Live demo:** <https://alokwemsamuel.github.io/small-africa/> — the whole site and admin panel running in your browser on invented data (sign-ins below).
+
+![The home page with the video hero](docs/screenshots/home.jpg)
+
+| Menu (Polish kitchen) | Checkout with Paystack (simulated in the demo) |
+|---|---|
+| ![Menu filtered to the Polish kitchen](docs/screenshots/menu.jpg) | ![Paying with the simulated Paystack popup](docs/screenshots/checkout.jpg) |
+| **The Interest Account** | **Admin dashboard** |
+| ![A Gold member's Interest Account](docs/screenshots/interest-account.jpg) | ![The admin dashboard with revenue and orders charts](docs/screenshots/admin-dashboard.jpg) |
+
+<p>
+  <img src="docs/screenshots/mobile-home.jpg" alt="Home page on a phone" width="240" />
+  <img src="docs/screenshots/mobile-dish.jpg" alt="A dish page on a phone" width="240" />
+</p>
+
+## Features
+
+**For guests**
+- Cinematic video hero, dark and light themes, fast on phones (public pages are pre-built HTML)
+- Menu of 54 dishes across three kitchens, filters (kitchen, dietary, *No pork*), a page per dish
+- Online ordering: delivery to seven Lagos zones or pickup, order now or schedule, coupons, VAT included
+- Paystack payments (card, bank transfer, USSD) verified on the server; live order tracking
+- Reservations with live availability by seating area; event and private-dining enquiries
+- **The Interest Account:** dining credit with top-up bonuses and 2% monthly interest (capped), points, four tiers, stamp card, streaks, birthday, anniversary and referral rewards, notification centre
+
+**For the team**
+- Role-based admin panel (Super Admin, Manager, front desk, kitchen) with dashboard and charts
+- Orders and kitchen tickets, reservations and capacity, menu manager with photo uploads
+- Customers and dine-in bills, Interest Account and rewards manager, reviews, coupons, enquiries
+- Staff and roles, settings, and an audit log of every change
+
+**Under the hood**
+- Strict security headers and CSP, CSRF protection, rate limiting, 2FA, append-only ledgers (see [SECURITY.md](docs/SECURITY.md))
+- Nigeria Data Protection Act 2023: privacy policy, cookie notice, marketing consent
+- 310 automated tests (186 frontend, 124 backend)
 
 ## Tech stack
 
@@ -25,9 +59,10 @@ frontend/          the website and admin panel (React + Vite)
   jsconfig.json    lets VS Code understand the @/ import alias (@/ = src/)
   vite.config.js   dev proxy to the PHP API, demo build for GitHub Pages, test setup
   public/          favicons, brand files, hero video and posters, photos, robots.txt, sitemap
-  scripts/         sitemap generator (runs before each build)
+  scripts/         sitemap generator, and prerender.mjs (pre-builds the public pages as HTML)
   src/
-    main.jsx       entry point (starts the in-browser API in the demo build)
+    main.jsx       entry point (starts the in-browser API in the demo build; attaches to pre-built pages)
+    entry-server.jsx  renders public pages to HTML for scripts/prerender.mjs
     app/           App.jsx, router.jsx, layouts/ (site and sign-in layouts), theme/ (dark/light/system)
     components/    shared React components
       ui/          buttons, fields, badges, photos, toasts… (no business logic)
@@ -56,8 +91,11 @@ backend/           PHP API (Slim 4)
   storage/         uploads, logs, sessions (outside the web root, git-ignored)
   tests/           PHPUnit unit and integration tests
 design/            logo, brand guide, social templates, menu card, video sources (git-ignored), tools/
-docs/              security, security checklist, go-live checklist, demo mode; deployment and guides in Phase 8
-presentation/      walkthrough video (offline backup); pitch deck in Phase 8
+docs/              deployment, demo mode, security, security checklist, go-live checklist,
+                   screenshots/ (used in this README),
+                   presentation guide, marketing plan
+presentation/      client pitch deck (.pptx and .pdf) and the walkthrough video (offline backup)
+.github/workflows/ builds the demo and publishes it to GitHub Pages on every push to main
 ```
 
 **Rules:** a feature never imports another feature's files. Anything used by two or more features goes in `components/`, `hooks/` or `lib/`. Components are `PascalCase.jsx`, hooks `useSomething.js`, everything else `camelCase.js`, folders `kebab-case`. Import shared code with the `@/` alias (`@/lib/format`); use `./` only inside the same folder.
@@ -100,11 +138,11 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    npm run dev                   # http://localhost:5173 (proxies /api to XAMPP)
    npm test                      # Vitest
    npm run lint                  # ESLint
-   npm run build                 # production build (npm run build:demo for the GitHub Pages demo)
+   npm run build                 # production build + pre-built public pages (npm run build:demo for the GitHub Pages demo)
    ```
    Optional asset rebuilds (design/tools): `npm run photos` (Unsplash photos → AVIF/WebP), `npm run hero` (hero poster + loop video; needs the dev server and ffmpeg), `npm run brand`, `npm run logo`.
 
-5. **Scheduled jobs** (Interest Account): in production a daily cron job runs `php bin/loyalty.php daily` at about 00:10 Lagos time (set up in the deployment guide). Locally, run it by hand when you want to; every step is safe to repeat.
+5. **Scheduled jobs** (Interest Account): in production a daily cron job runs `php bin/loyalty.php daily` at about 00:10 Lagos time (see [DEPLOYMENT.md](docs/DEPLOYMENT.md#6-the-daily-interest-account-job-cron)). Locally, run it by hand when you want to; every step is safe to repeat.
    - Also: `php bin/loyalty.php interest 2026-09` (pay one month) and `php bin/loyalty.php reconcile` (check every balance against its ledger).
 
 In development, emails are written to `backend/storage/mail/` as `.html` files rather than sent.
@@ -119,7 +157,13 @@ In development, emails are written to `backend/storage/mail/` as `.html` files r
 | Staff (kitchen) | kitchen@smallafrica.demo | SmallAfrica@Kitchen2026 |
 | Staff (front desk) | frontdesk@smallafrica.demo | SmallAfrica@Desk2026 |
 
-These exist for demos and testing only. Remove or change them before going live.
+They work on the live demo too. These exist for demos and testing only: remove or change them before going live.
+
+## Deployment
+
+- **GitHub Pages demo:** automatic on every push to `main` ([workflow](.github/workflows/deploy-demo.yml)).
+- **Production (PHP host):** step by step in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), with environment variables, Paystack live keys, the daily cron job, email and backups.
+- Before taking real orders: [docs/GO-LIVE-CHECKLIST.md](docs/GO-LIVE-CHECKLIST.md).
 
 ## Build progress
 
@@ -130,6 +174,6 @@ These exist for demos and testing only. Remove or change them before going live.
 - [x] **Phase 5 — Interest Account**: dining wallet with Paystack top-ups and bonus, monthly interest job, points, tiers, stamp card, streaks, birthday/anniversary/referral rewards, win-back and favourite-kitchen offers, notification centre, append-only ledgers
 - [x] **Phase 6 — Admin panel**: role-based panel (Super Admin, Manager, front desk, kitchen) with dashboard and charts, orders and kitchen tickets, reservations and capacity, menu manager with secure photo uploads, customers and dine-in bills, Interest Account & Rewards manager, reviews, coupons, enquiries, staff, settings and audit log
 - [x] **Phase 7 — Demo mode, testing & hardening**: the whole site and admin running in the browser for GitHub Pages (busy, always-current demo data; simulated Paystack; reset), deep-link support on Pages, faster first load (animation libraries off the critical path), cross-device and WebKit checks, Lighthouse, security checklist, and an offline walkthrough video in `presentation/`
-- [ ] Phase 8 — Deploy & deliver
+- [x] **Phase 8 — Deploy & deliver**: public pages pre-built as HTML (mobile Lighthouse 90+), GitHub Actions deploy of the demo to GitHub Pages, deployment guide, presentation guide, marketing plan and the client pitch deck
 
-See [docs/DEMO.md](docs/DEMO.md) for the demo build, [docs/SECURITY.md](docs/SECURITY.md) and [docs/SECURITY-CHECKLIST.md](docs/SECURITY-CHECKLIST.md) for the security model and [CREDITS.md](CREDITS.md) for asset licences.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) to deploy, [docs/DEMO.md](docs/DEMO.md) for the demo build, [docs/PRESENTATION_GUIDE.md](docs/PRESENTATION_GUIDE.md) and [docs/MARKETING_PLAN.md](docs/MARKETING_PLAN.md) for the client presentation and launch, [docs/SECURITY.md](docs/SECURITY.md) and [docs/SECURITY-CHECKLIST.md](docs/SECURITY-CHECKLIST.md) for the security model and [CREDITS.md](CREDITS.md) for asset licences.

@@ -1,6 +1,6 @@
 # Go-live checklist
 
-Everything that must be confirmed or switched before Small Africa takes real orders. Items marked **Client** need a decision or information from the restaurant; the rest are technical steps covered in the deployment guide (Phase 8).
+Everything that must be confirmed or switched before Small Africa takes real orders. Items marked **Client** need a decision or information from the restaurant; the rest are technical steps covered in the [deployment guide](DEPLOYMENT.md).
 
 ## Client decisions and reviews
 
@@ -22,7 +22,7 @@ Everything that must be confirmed or switched before Small Africa takes real ord
 ## Scheduled jobs
 
 - [ ] **Daily cron job** for the Interest Account (interest on the 1st, tier review, points expiry, birthdays, anniversaries, referrals, win-back offers, unpaid-order expiry):
-  `10 0 * * * php /path/to/backend/bin/loyalty.php daily` (server time zone Africa/Lagos). Set up in the Phase 8 deployment guide.
+  `10 0 * * * php /path/to/backend/bin/loyalty.php daily` (server time zone Africa/Lagos). Set-up steps in [DEPLOYMENT.md](DEPLOYMENT.md#6-the-daily-interest-account-job-cron).
 - [ ] `php bin/loyalty.php reconcile` returns “All balances match their ledgers” after go-live and weekly afterwards.
 
 ## Accounts and data
@@ -38,6 +38,7 @@ Everything that must be confirmed or switched before Small Africa takes real ord
 ## Security and quality
 
 - [ ] HTTPS on the domain; `APP_HTTPS=true`, `SESSION_SECURE=true`.
+- [ ] Frontend built with `VITE_SITE_URL=https://<domain>` and `PRERENDER_API_URL=https://<domain>/api`, so the pre-built pages carry the real menu and the right links ([DEPLOYMENT.md](DEPLOYMENT.md#3-production-on-a-php-host)).
 - [ ] `composer audit` and `npm audit` clean; all tests pass.
 - [ ] Lighthouse 90+ on mobile for Home, Menu and Checkout.
 - [ ] Privacy Policy, Terms and Rewards Terms dates updated.
