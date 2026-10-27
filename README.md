@@ -2,27 +2,73 @@
 
 **Three kitchens. One table.** A fine-dining restaurant and lounge platform for Lagos, serving Nigerian, Polish and Continental cuisine. It covers online ordering, reservations, the *Small Africa Interest Account* loyalty programme, and a full admin panel.
 
-> 🚧 In development. Phases 1–3 are complete. See *Build progress* below.
+> 🚧 In development. Phases 1–7 are complete. See *Build progress* below.
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18, Vite, TypeScript, Tailwind CSS 4, React Router, TanStack Query, React Hook Form + Zod |
+| Frontend | React 18 with JavaScript (JSX), Vite, Tailwind CSS 4, React Router, TanStack Query, React Hook Form + Zod |
 | Backend | PHP 8.1+ (Slim 4), PDO, MySQL 8 / MariaDB 10.4+ |
 | Payments | Paystack (test mode in development) |
 | Email | PHPMailer over SMTP (`log` driver in development) |
 | Testing | PHPUnit, Vitest + Testing Library |
 
-## Repository layout
+## Project structure
+
+The code is JavaScript (`.js`, `.jsx`) and PHP: no TypeScript. Project rules for future work are in [CLAUDE.md](CLAUDE.md).
 
 ```
-frontend/      React app (Vite)
-backend/       PHP API: public/index.php front controller, src/, migrations/, seeds/, tests/
-design/        Logo, brand guide, social templates, menu card, Figma notes, asset build scripts
-docs/          Security, deployment, presentation and marketing guides
-presentation/  Client pitch deck (Phase 8)
+CLAUDE.md          project rules (languages, structure, checks before each commit)
+frontend/          the website and admin panel (React + Vite)
+  index.html       page shell; public/theme-init.js applies the theme before first paint
+  jsconfig.json    lets VS Code understand the @/ import alias (@/ = src/)
+  vite.config.js   dev proxy to the PHP API, demo build for GitHub Pages, test setup
+  public/          favicons, brand files, hero video and posters, photos, robots.txt, sitemap
+  scripts/         sitemap generator (runs before each build)
+  src/
+    main.jsx       entry point (starts the in-browser API in the demo build)
+    app/           App.jsx, router.jsx, layouts/ (site and sign-in layouts), theme/ (dark/light/system)
+    components/    shared React components
+      ui/          buttons, fields, badges, photos, toasts… (no business logic)
+      layout/      header, footer, navigation, theme switcher, cookie notice, demo ribbon, 404 page
+      motion/      page transitions, scroll reveals, smooth scrolling
+      menu/        DishCard and its add-to-order action (used by the menu and home page)
+      rewards/     MembershipCard (used by the account and the admin)
+      payment/     the simulated Paystack popup
+    hooks/         shared data hooks: useAuth, useMenu, useCart, useAccount, useInterestAccount, usePaymentPopup
+    lib/           API client, response shapes (apiSchemas), formatters (₦, dates), Lagos time,
+                   checkout API, Paystack loader, photos, roles, sign-in form rules, demo/ (in-browser API)
+    features/      one folder per area; each has pages/ and its own pieces and tests
+      home/  menu/  cart-checkout/  orders/  reservations/  account/  rewards/
+      auth/  events/  content/ (about, gallery, contact, FAQ, legal, style guide)
+      admin/       admin panel: AdminApp, pages/, charts, shared admin UI and API
+    styles/        index.css (Tailwind setup) and theme.css (colour tokens for both themes)
+    test/          test setup and helpers
+backend/           PHP API (Slim 4)
+  public/          index.php and .htaccess: the only web-facing folder
+  src/             App.php (routes), Http/ (controllers, middleware, errors), Services/,
+                   Repositories/, Loyalty/ (Interest Account), Payments/, Security/, Mail/,
+                   Media/, Audit/, Support/, Seeds/
+  migrations/      database schema, in order
+  seeds/           seed data (the menu)
+  bin/             command-line tools: migrate, seed, generate-key, loyalty (daily/interest/reconcile), export-demo
+  storage/         uploads, logs, sessions (outside the web root, git-ignored)
+  tests/           PHPUnit unit and integration tests
+design/            logo, brand guide, social templates, menu card, video sources (git-ignored), tools/
+docs/              security, security checklist, go-live checklist, demo mode; deployment and guides in Phase 8
+presentation/      walkthrough video (offline backup); pitch deck in Phase 8
 ```
+
+**Rules:** a feature never imports another feature's files. Anything used by two or more features goes in `components/`, `hooks/` or `lib/`. Components are `PascalCase.jsx`, hooks `useSomething.js`, everything else `camelCase.js`, folders `kebab-case`. Import shared code with the `@/` alias (`@/lib/format`); use `./` only inside the same folder.
+
+### Adding a page or feature
+
+1. Create `frontend/src/features/<name>/pages/<Name>Page.jsx` (a new folder for a new area).
+2. Put its API calls in `features/<name>/api.js`, or in `hooks/` / `lib/` if another feature will use them too. Validate forms with Zod.
+3. Add the route in `src/app/router.jsx` (lazy-loaded like the others) and, if needed, a link in `components/layout/nav.js` or `features/admin/nav.js`.
+4. Add a test next to it (`<name>.test.jsx`). Use `mockApi` and `renderRoutes` from `@/test/utils`.
+5. Run `npm run lint`, `npm test` and `npm run build` before committing.
 
 ## Local setup (Windows + XAMPP)
 
@@ -52,7 +98,9 @@ Prerequisites: XAMPP (Apache + MariaDB, PHP 8.1+), Composer, Node.js 20+.
    cd frontend
    npm install
    npm run dev                   # http://localhost:5173 (proxies /api to XAMPP)
-   npm test
+   npm test                      # Vitest
+   npm run lint                  # ESLint
+   npm run build                 # production build (npm run build:demo for the GitHub Pages demo)
    ```
    Optional asset rebuilds (design/tools): `npm run photos` (Unsplash photos → AVIF/WebP), `npm run hero` (hero poster + loop video; needs the dev server and ffmpeg), `npm run brand`, `npm run logo`.
 

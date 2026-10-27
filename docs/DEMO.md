@@ -18,15 +18,15 @@ npm run build:demo        # dist/ for https://<user>.github.io/small-africa/
 ```
 
 `VITE_DEMO_MODE=true` (in `.env.demo`) swaps the API client for the in-browser API in
-`frontend/src/demo/`. The production build (`npm run build`) contains none of this code.
+`frontend/src/lib/demo/`. The production build (`npm run build`) contains none of this code.
 
 GitHub Pages has no server-side routing, so the demo build also writes a `404.html` that sends
 deep links (for example `/small-africa/admin/orders`) back to the app, which restores the URL
-before it starts (see `githubPagesSpa` in `vite.config.ts`).
+before it starts (see `githubPagesSpa` in `vite.config.js`).
 
 ## How it works
 
-- **Data.** `frontend/src/demo/snapshot.json` is an export of the seeded database: the menu,
+- **Data.** `frontend/src/lib/demo/snapshot.json` is an export of the seeded database: the menu,
   settings, the 30 demo members and their whole Interest Account history, reviews, coupons and
   enquiries. It never contains password hashes, 2FA secrets, sessions or tokens.
 - **Always current.** When the demo opens, member history is moved forward by whole months so
@@ -34,7 +34,7 @@ before it starts (see `githubPagesSpa` in `vite.config.ts`).
   PHP seeder: orders every day (more on Fridays and weekends, lunch and dinner peaks), all three
   kitchens, Jollof and Pierogi the favourites, orders still in the kitchen, and bookings around
   today. The database is built in a Web Worker so the page stays responsive.
-- **The API.** `frontend/src/demo/routes/` ports every endpoint of the PHP API with the same
+- **The API.** `frontend/src/lib/demo/routes/` ports every endpoint of the PHP API with the same
   rules, response shapes and error messages: pricing and coupons, payment attempts, the Interest
   Account ledgers, reservations against capacity, and admin permissions per role.
 - **Storage.** Changes are kept in the browser's localStorage. Each new day starts from fresh
@@ -47,7 +47,7 @@ After changing the menu, seeds or schema:
 ```bash
 cd backend
 composer fresh                 # migrate + seed with demo data (local only)
-php bin/export-demo.php        # writes frontend/src/demo/snapshot.json
+php bin/export-demo.php        # writes frontend/src/lib/demo/snapshot.json
 ```
 
 ## Demo sign-ins
