@@ -12,7 +12,12 @@ final class UserRepository
         'first_name', 'last_name', 'phone', 'password_hash', 'email_verified_at', 'birthday', 'favourite_kitchen_id',
         'marketing_opt_in', 'theme_preference', 'totp_secret_enc', 'totp_enabled_at', 'totp_last_used_step', 'failed_logins',
         'locked_until', 'last_login_at', 'is_active', 'role', 'staff_position',
+        // Finishing the welcome step after a social sign-up.
+        'email', 'referred_by_user_id', 'onboarded_at', 'terms_accepted_at',
     ];
+
+    /** Stands in for an email address a provider (Facebook) didn't give us, until the customer adds one. */
+    public const PLACEHOLDER_EMAIL_DOMAIN = 'noemail.smallafrica.invalid';
 
     public function __construct(private Database $db)
     {
@@ -95,6 +100,11 @@ final class UserRepository
             'marketingOptIn' => (bool) $u['marketing_opt_in'],
             'themePreference' => $u['theme_preference'] ?? null,
             'twoFactorEnabled' => $u['totp_enabled_at'] !== null,
+            // Set after a social sign-up until the welcome step (phone, terms) is finished.
+            'welcome' => ($u['signup_provider'] ?? null) !== null && ($u['onboarded_at'] ?? null) === null
+                ? ['provider' => $u['signup_provider'], 'needsEmail' => str_ends_with((string) $u['email'], '@' . self::PLACEHOLDER_EMAIL_DOMAIN)]
+                : null,
+            'hasPassword' => $u['password_hash'] !== null,
             'createdAt' => $u['created_at'],
         ];
     }

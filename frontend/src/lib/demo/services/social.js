@@ -2,7 +2,7 @@ import { db, getState } from '@/lib/demo/db';
 import { fail } from '@/lib/demo/http';
 import { sql } from '@/lib/demo/time';
 import { audit } from './audit';
-import { STAFF_ROLES, userToPublic } from './auth';
+import { hashPassword, passwordProblems, STAFF_ROLES, userToPublic } from './auth';
 
 /**
  * Simulated "Continue with Google / Apple / Facebook" for the demo. Nothing leaves the browser and
@@ -129,4 +129,87 @@ export function completeWelcome(user, data) {
   user.onboarded_at = sql();
   audit(user.id, 'auth.welcome_completed', 'user', user.id);
   return userToPublic(user);
+}
+
+/* ------------------------------------------------------------ connected accounts */
+
+const assertCustomer = (user) => {
+  if (STAFF_ROLES.includes(user.role)) {
+    throw fail.forbidden('Staff accounts sign in with email, password and two-step verification.');
+  }
+};
+
+/** "Connected accounts" in Settings: what is connected, whether there is a password, what could be connected. */
+export function listIdentities(user) {
+  assertCustomer(user);
+  return {
+    identities: db
+      .where('user_identities', (i) => i.user_id === user.id)
+      .map((i) => ({
+        provider: i.provider,
+        email: i.email,
+        connectedAt: i.created_at,
+        lastUsedAt: i.last_used_at,
+      })),
+    hasPassword: !!getState().passwords[user.id],
+    available: PROVIDER_IDS,
+  };
+}
+
+/** Connects the simulated provider account to the signed-in customer. */
+export function connectIdentity(user, provider) {
+  assertCustomer(user);
+  const person = DEMO_PEOPLE[provider];
+  if (!person) throw fail.badRequest('Unknown sign-in provider.');
+  const existing = db.find(
+    'user_identities',
+    (i) => i.provider === provider && i.provider_user_id === subjectOf(provider),
+  );
+  if (existing && existing.user_id !== user.id) {
+    throw fail.conflict('That account is already connected to another Small Africa customer.', 'in_use');
+  }
+  if (db.find('user_identities', (i) => i.user_id === user.id && i.provider === provider)) return;
+  db.insert('user_identities', {
+    user_id: user.id,
+    provider,
+    provider_user_id: subjectOf(provider),
+    email: person.email,
+    created_at: sql(),
+    last_used_at: sql(),
+  });
+  audit(user.id, 'auth.social_connected', 'user', user.id, { provider });
+}
+
+/** Disconnects a provider, unless it is the only way to sign in. */
+export function disconnectIdentity(user, provider) {
+  assertCustomer(user);
+  const row = db.find('user_identities', (i) => i.user_id === user.id && i.provider === provider);
+  if (!row) throw fail.notFound('That account isn’t connected.');
+  const methods =
+    db.where('user_identities', (i) => i.user_id === user.id).length +
+    (getState().passwords[user.id] ? 1 : 0);
+  if (methods <= 1) {
+    throw fail.conflict(
+      'This is your only way to sign in. Set a password first, then you can disconnect it.',
+      'last_sign_in_method',
+    );
+  }
+  db.delete('user_identities', (i) => i === row);
+  audit(user.id, 'auth.social_disconnected', 'user', user.id, { provider });
+}
+
+/** A first password for someone who signed up with a provider. */
+export async function setFirstPassword(user, next) {
+  assertCustomer(user);
+  if (getState().passwords[user.id]) {
+    throw fail.conflict('You already have a password. Use “Change password” instead.', 'has_password');
+  }
+  const problems = passwordProblems(next, [
+    user.first_name,
+    user.last_name,
+    String(user.email).split('@')[0] ?? '',
+  ]);
+  if (problems.length) throw fail.field('new_password', problems.join(' '));
+  getState().passwords[user.id] = await hashPassword(next);
+  audit(user.id, 'auth.password_set', 'user', user.id);
 }

@@ -30,6 +30,14 @@ const sections = [
           hash), and optionally your birthday and favourite kitchen.
         </li>
         <li>
+          <strong>If you sign in with Google, Apple or Facebook:</strong> the provider tells us your name,
+          your email address (Apple may give a private relay address instead) and whether that address is
+          confirmed, plus a unique number that identifies you at that provider. We do <em>not</em> receive
+          your provider password, your contacts or friends, or your posts, and we don’t keep your profile
+          picture. If you sign up this way we then ask for your phone number, and optionally your birthday
+          (day and month only).
+        </li>
+        <li>
           <strong>Orders and reservations:</strong> what you order, delivery address, date, time, party size,
           seating preference, special occasions and notes you give us (for example dietary needs or
           allergies).
@@ -59,7 +67,8 @@ const sections = [
       <ul>
         <li>
           <strong>To provide what you ask for</strong> (performance of a contract): taking orders and
-          payments, delivering food, holding tables, running your account and Interest Account.
+          payments, delivering food, holding tables, running your account and Interest Account, and letting
+          you sign in with Google, Apple or Facebook if you choose to.
         </li>
         <li>
           <strong>To keep you safe</strong> (legitimate interests and legal obligation): fraud prevention,
@@ -88,6 +97,11 @@ const sections = [
         <ul>
           <li>
             <strong>Paystack</strong>, to process card and bank payments.
+          </li>
+          <li>
+            <strong>Google, Apple or Facebook</strong>, only if you choose to sign in with them. They learn
+            that you signed in to Small Africa, under their own privacy policies. You can disconnect any of
+            them from <em>Settings</em> in your account at any time (once you have another way to sign in).
           </li>
           <li>
             <strong>Our email provider</strong>, to send confirmations, receipts and (if you opt in)
@@ -168,8 +182,10 @@ const sections = [
       <>
         <p>
           We use <strong>one essential cookie</strong> (<code>sa_session</code>) to keep you signed in and
-          protect forms against forgery. It can’t be switched off without breaking the site, so it doesn’t
-          need consent.
+          protect forms against forgery. While you sign in with Google, Apple or Facebook we also set a
+          temporary, encrypted cookie (<code>sa_oauth</code>) that lasts at most ten minutes and is deleted as
+          soon as you are back. Neither can be switched off without breaking the site, so they don’t need
+          consent.
         </p>
         <p>
           Your browser’s local storage remembers your appearance setting (dark, light or system), your order
@@ -206,7 +222,7 @@ export function PrivacyPage() {
     <LegalLayout
       title="Privacy Policy"
       description="How Small Africa collects, uses and protects your personal data under the Nigeria Data Protection Act 2023."
-      updated="25 October 2026"
+      updated="28 October 2026"
       intro="We keep this simple: we collect only what we need to feed you well, we protect it carefully, and you stay in control."
       sections={sections}
     />

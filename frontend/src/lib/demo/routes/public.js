@@ -2,7 +2,15 @@ import { db, getState } from '@/lib/demo/db';
 import { fail, validate, validateQuery } from '@/lib/demo/http';
 import { route } from '@/lib/demo/router';
 import { changePassword, login, register, userToPublic } from '@/lib/demo/services/auth';
-import { completeWelcome, PROVIDER_IDS, socialSignIn } from '@/lib/demo/services/social';
+import {
+  completeWelcome,
+  connectIdentity,
+  disconnectIdentity,
+  listIdentities,
+  PROVIDER_IDS,
+  setFirstPassword,
+  socialSignIn,
+} from '@/lib/demo/services/social';
 import { creditTopup, topupToPublic } from '@/lib/demo/services/loyalty';
 import * as orders from '@/lib/demo/services/orders';
 import { quote } from '@/lib/demo/services/pricing';
@@ -566,6 +574,44 @@ route(
     );
     await changePassword(user, data.current_password, data.new_password);
     return { message: 'Password updated. Other devices have been signed out.' };
+  },
+  'user',
+);
+
+route('GET', '/account/identities', ({ user }) => listIdentities(user), 'user');
+
+route(
+  'POST',
+  '/account/identities/demo',
+  ({ body, user }) => {
+    const data = validate(body, { provider: 'required|string|in:google,apple,facebook' });
+    connectIdentity(user, data.provider);
+    return { ok: true };
+  },
+  'user',
+);
+
+route(
+  'DELETE',
+  '/account/identities/:provider',
+  ({ params, user }) => {
+    disconnectIdentity(user, params.provider);
+    return { ok: true };
+  },
+  'user',
+);
+
+route(
+  'POST',
+  '/account/password/set',
+  async ({ body, user }) => {
+    const data = validate(
+      body,
+      { new_password: 'required|string|max:128' },
+      { new_password: 'New password' },
+    );
+    await setFirstPassword(user, data.new_password);
+    return { message: 'Your password is set. You can now sign in with your email and password too.' };
   },
   'user',
 );

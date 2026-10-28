@@ -1,19 +1,12 @@
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuthProviders } from '@/hooks/useAuth';
 import { cn } from '@/lib/cn';
+import { DemoConsent } from '@/lib/demoConsent';
 import { redirectTo } from '@/lib/redirect';
 import { oauthStartUrl, PROVIDERS } from '@/lib/socialProviders';
 import { ProviderIcon } from './ProviderIcon';
-
-// The demo (GitHub Pages) has no server to sign in through, so its buttons open a simulated consent
-// screen instead. That screen lives in the demo bundle: `@/lib/demo` is an empty stub in every
-// other build, and this branch is removed from them at build time.
-const DemoConsent =
-  import.meta.env.VITE_DEMO_MODE === 'true'
-    ? lazy(() => import('@/lib/demo').then((m) => ({ default: m.SocialConsent })))
-    : null;
 
 // Each provider's button follows its own brand guidelines. Apple's is white with a black logo on
 // the dark theme and black with a white logo on the light one (tokens in styles/theme.css).

@@ -147,6 +147,9 @@ export async function register(data) {
 }
 
 export async function changePassword(user, current, next) {
+  if (!getState().passwords[user.id]) {
+    throw fail.field('current_password', 'Your account has no password yet. Set one instead.');
+  }
   if (getState().passwords[user.id] !== (await hashPassword(current))) {
     throw fail.field('current_password', 'Your current password is incorrect.');
   }

@@ -44,7 +44,8 @@ final class PublicApiTest extends IntegrationTestCase
         self::assertNotEmpty($body['dish']['related']);
 
         [, $jollof] = $this->request('GET', '/api/menu/smoky-party-jollof');
-        self::assertSame('Proper party jollof', $jollof['dish']['reviews'][0]['title']);
+        // Two seeders each add a jollof review, so which one is newest depends on today's date.
+        self::assertContains($jollof['dish']['reviews'][0]['title'], ['Proper party jollof', 'The real party jollof']);
         self::assertSame('nigerian', $jollof['dish']['related'][0]['kitchen']);
     }
 

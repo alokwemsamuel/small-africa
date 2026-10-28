@@ -108,3 +108,33 @@ export function useChangePassword() {
     mutationFn: (body) => api('/account/password', { method: 'POST', body }),
   });
 }
+
+/** Google, Apple and Facebook accounts connected to this customer ("Connected accounts" in Settings). */
+export function useIdentities() {
+  return useQuery({
+    queryKey: ['account', 'identities'],
+    queryFn: ({ signal }) => api('/account/identities', { signal }),
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
+export function useDisconnectIdentity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (provider) => api(`/account/identities/${provider}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['account', 'identities'] }),
+  });
+}
+
+/** A first password for someone who signed up with a provider. */
+export function useSetPassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (new_password) => api('/account/password/set', { method: 'POST', body: { new_password } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: meKey });
+      qc.invalidateQueries({ queryKey: ['account', 'identities'] });
+    },
+  });
+}

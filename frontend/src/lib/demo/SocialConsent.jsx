@@ -9,9 +9,9 @@ import { DEMO_PEOPLE } from './services/social';
  * The demo's stand-in for the Google / Apple / Facebook consent screen: clearly a simulation,
  * with no real login. Part of the demo bundle only (it is imported through `@/lib/demo`, which
  * is an empty stub in every other build).
- * @param {{ provider: 'google' | 'apple' | 'facebook', onCancel: () => void, onDone: (user: object) => void }} props
+ * @param {{ provider: 'google' | 'apple' | 'facebook', mode?: 'sign-in' | 'connect', onCancel: () => void, onDone: (user?: object) => void }} props
  */
-export function SocialConsent({ provider, onCancel, onDone }) {
+export function SocialConsent({ provider, mode = 'sign-in', onCancel, onDone }) {
   const dialog = useRef(null);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -29,6 +29,11 @@ export function SocialConsent({ provider, onCancel, onDone }) {
     setBusy(true);
     setError(null);
     try {
+      if (mode === 'connect') {
+        await api('/account/identities/demo', { method: 'POST', body: { provider } });
+        onDone();
+        return;
+      }
       const r = await api('/auth/social/demo', { method: 'POST', body: { provider } });
       qc.setQueryData(['auth', 'me'], r.user);
       onDone(r.user);
@@ -50,7 +55,9 @@ export function SocialConsent({ provider, onCancel, onDone }) {
     >
       <p className="text-accent eyebrow">Demo · simulated sign-in</p>
       <h2 id="demo-consent-title" className="mt-3 font-serif text-3xl leading-tight">
-        Demo: Continue as {person.firstName} {person.lastName} with {name}?
+        {mode === 'connect'
+          ? `Demo: Connect ${person.firstName} ${person.lastName}’s ${name} account?`
+          : `Demo: Continue as ${person.firstName} ${person.lastName} with ${name}?`}
       </h2>
       <div className="border-line bg-surface-inset mt-5 flex items-center gap-3 rounded-md border p-3">
         <span

@@ -81,15 +81,7 @@ final class AuthService
             ]);
             $this->db->insert('loyalty_accounts', ['user_id' => $id]);
             if ($referrer) {
-                // Rewarded only after the friend's first completed order (Interest Account rules).
-                $this->db->insert('referrals', [
-                    'referrer_user_id' => $referrer['id'],
-                    'referred_user_id' => $id,
-                    'signup_ip' => $ip,
-                    // Anti-abuse: a keyed hash of the browser's random device id, never the id itself.
-                    'device_hash' => !empty($data['device_id']) ? hash('sha256', $this->crypto->mac('referral-device', (string) $data['device_id'])) : null,
-                    'referred_phone' => $data['phone'] ?? null,
-                ]);
+                $this->recordReferral((int) $referrer['id'], $id, $data['device_id'] ?? null, $ip, $data['phone'] ?? null);
             }
             return $id;
         });
@@ -99,6 +91,29 @@ final class AuthService
         $this->audit->record($userId, 'auth.register', 'user', $userId);
         $this->establishSession($user);
         return UserRepository::toPublic($user);
+    }
+
+    /**
+     * Notes that a friend joined with someone's referral code. Rewarded only after the friend's
+     * first completed order (Interest Account rules); the same anti-abuse signals (IP, device,
+     * phone) are kept whether they signed up with an email or with Google, Apple or Facebook.
+     */
+    public function recordReferral(int $referrerId, int $friendId, ?string $deviceId, string $ip, ?string $phone): void
+    {
+        $this->db->insert('referrals', [
+            'referrer_user_id' => $referrerId,
+            'referred_user_id' => $friendId,
+            'signup_ip' => $ip,
+            // A keyed hash of the browser's random device id, never the id itself.
+            'device_hash' => !empty($deviceId) ? hash('sha256', $this->crypto->mac('referral-device', $deviceId)) : null,
+            'referred_phone' => $phone,
+        ]);
+    }
+
+    /** Signs a customer in with the session cookie, exactly as a password sign-in does (session id rotated). */
+    public function signInAs(array $user): void
+    {
+        $this->establishSession($user);
     }
 
     /** @return array{user?: array<string, mixed>, twoFactorRequired?: bool} */
@@ -263,6 +278,10 @@ final class AuthService
     public function changePassword(array $user, string $current, string $new): void
     {
         $this->limiter->hit("change-password:uid:{$user['id']}", 5, 900);
+        if ($user['password_hash'] === null) {
+            // Signed up with Google, Apple or Facebook: there is no password to change yet.
+            throw ValidationError::field('current_password', 'Your account has no password yet. Set one instead.');
+        }
         if (!PasswordPolicy::verify($current, $user['password_hash'])) {
             throw ValidationError::field('current_password', 'Your current password is incorrect.');
         }
@@ -390,7 +409,7 @@ final class AuthService
     }
 
     /** @param array<string, mixed> $user */
-    private function sendVerification(array $user): void
+    public function sendVerification(array $user): void
     {
         $token = Crypto::token();
         $this->db->insert('email_verifications', [
@@ -416,7 +435,7 @@ final class AuthService
         }
     }
 
-    private function newReferralCode(string $firstName): string
+    public function newReferralCode(string $firstName): string
     {
         $base = strtoupper(preg_replace('/[^A-Za-z]/', '', $firstName)) ?: 'GUEST';
         $base = substr($base, 0, 8);

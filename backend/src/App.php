@@ -8,6 +8,13 @@ use App\Audit\AuditLogger;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountDataController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\IdentitiesController;
+use App\Http\Controllers\OAuthController;
+use App\Social\IdTokenVerifier;
+use App\Social\JwksFetcher;
+use App\Social\OAuthCookie;
+use App\Social\ProviderRegistry;
+use App\Social\SocialAuthService;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\ContentController;
@@ -110,7 +117,18 @@ final class App
             $c->get(RateLimiter::class), $c->get(Mailer::class), $c->get(EmailTemplates::class), $c->get(AuditLogger::class),
             $c->get(Crypto::class), $c->get(Clock::class), $c->get(Logger::class),
         ));
-        $c->set(AuthController::class, fn (Container $c) => new AuthController($c->get(AuthService::class), $c->get(Csrf::class)));
+        $c->set(IdTokenVerifier::class, fn (Container $c) => new IdTokenVerifier(new JwksFetcher($root . '/storage/cache'), $c->get(Clock::class)));
+        $c->set(ProviderRegistry::class, fn (Container $c) => ProviderRegistry::fromConfig($config, $c->get(IdTokenVerifier::class)));
+        $c->set(OAuthCookie::class, fn (Container $c) => new OAuthCookie($c->get(Crypto::class), $c->get(Clock::class), $config->bool('APP_HTTPS', $config->isProduction())));
+        $c->set(SocialAuthService::class, fn (Container $c) => new SocialAuthService(
+            $c->get(Database::class), $c->get(UserRepository::class), $c->get(AuthService::class), $c->get(AuditLogger::class), $c->get(Clock::class),
+        ));
+        $c->set(OAuthController::class, fn (Container $c) => new OAuthController(
+            $c->get(ProviderRegistry::class), $c->get(SocialAuthService::class), $c->get(OAuthCookie::class), $c->get(UserRepository::class),
+            $c->get(RateLimiter::class), $config, $c->get(Logger::class),
+        ));
+        $c->set(IdentitiesController::class, fn (Container $c) => new IdentitiesController($c->get(SocialAuthService::class), $c->get(ProviderRegistry::class)));
+        $c->set(AuthController::class, fn (Container $c) => new AuthController($c->get(AuthService::class), $c->get(Csrf::class), $c->get(SocialAuthService::class)));
         $c->set(AccountController::class, fn (Container $c) => new AccountController($c->get(UserRepository::class), $c->get(AuthService::class), $c->get(AuditLogger::class)));
         $c->set(Settings::class, fn (Container $c) => new Settings($c->get(Database::class)));
         $c->set(HttpClient::class, fn () => new HttpClient());
@@ -212,7 +230,9 @@ final class App
 
         // Slim runs middleware last-added-first: Cors and SecurityHeaders wrap everything,
         // including error responses.
-        $app->add(new VerifyCsrf($c->get(Csrf::class), $origins, ['/api/payments/paystack/webhook']));
+        // Apple answers sign-in with a cross-site form POST, which can't carry the CSRF header: the
+        // sealed state cookie and the signed ID token protect that route instead (OAuthController).
+        $app->add(new VerifyCsrf($c->get(Csrf::class), $origins, ['/api/payments/paystack/webhook', '/api/auth/oauth/apple/callback']));
         $app->add(new StartSession($c->get(Session::class), $c->get(AuthService::class)));
         $app->add(new RequestContext($config->list('TRUSTED_PROXIES'), $c->get(AuditLogger::class)));
         $app->addBodyParsingMiddleware();
@@ -262,6 +282,12 @@ final class App
                 $auth->post('/reset-password', [AuthController::class, 'resetPassword']);
                 $auth->post('/verify-email', [AuthController::class, 'verifyEmail']);
                 $auth->post('/resend-verification', [AuthController::class, 'resendVerification'])->add(RequireRole::signedIn());
+                $auth->post('/welcome', [AuthController::class, 'welcome'])->add(RequireRole::signedIn());
+                // Sign in with Google, Apple or Facebook (browser redirects; see OAuthController).
+                $auth->get('/providers', [OAuthController::class, 'providers']);
+                $auth->get('/oauth/{provider:google|apple|facebook}/start', [OAuthController::class, 'start']);
+                $auth->get('/oauth/{provider:google|apple|facebook}/callback', [OAuthController::class, 'callback']);
+                $auth->post('/oauth/apple/callback', [OAuthController::class, 'callback'])->setArgument('provider', 'apple');
             });
 
             // Admin panel: every route checks its own permission on the server (see Permissions::MAP).
@@ -337,6 +363,9 @@ final class App
             $api->group('/account', function (RouteCollectorProxy $account): void {
                 $account->patch('/profile', [AccountController::class, 'updateProfile']);
                 $account->post('/password', [AccountController::class, 'changePassword']);
+                $account->post('/password/set', [IdentitiesController::class, 'setPassword']);
+                $account->get('/identities', [IdentitiesController::class, 'index']);
+                $account->delete('/identities/{provider:google|apple|facebook}', [IdentitiesController::class, 'disconnect']);
                 $account->get('/orders', [OrderController::class, 'mine']);
                 $account->post('/orders/{reference}/reorder', [OrderController::class, 'reorder']);
                 $account->get('/reservations', [ReservationController::class, 'mine']);

@@ -37,8 +37,9 @@ export function CookieNotice() {
       className="cookie-notice border-line bg-surface-raised fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-md border p-5 shadow-2xl shadow-black/30 sm:bottom-6 sm:left-6 sm:mx-0"
     >
       <p className="text-secondary text-sm leading-relaxed">
-        We use one essential cookie to keep you signed in and secure, and store your basket and appearance
-        settings on this device. No advertising or tracking cookies.{' '}
+        We use one essential cookie to keep you signed in and secure (plus a temporary one while you sign in
+        with Google, Apple or Facebook), and store your basket and appearance settings on this device. No
+        advertising or tracking cookies.{' '}
         <Link to="/privacy#cookies" className="text-accent underline">
           How we use cookies
         </Link>

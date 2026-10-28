@@ -142,3 +142,46 @@ test.describe('the demo ribbon and the other providers', () => {
     }
   });
 });
+
+test.describe('connected accounts in Settings', () => {
+  test.use({ viewport: { width: 360, height: 800 }, isMobile: true, hasTouch: true });
+
+  test('set a password, connect Apple, then disconnect Google', async ({ page, context }) => {
+    await context.addInitScript(() => localStorage.setItem('sa-cookie-notice', '1'));
+    await page.goto('register');
+    await waitForApp(page);
+    await page.getByRole('button', { name: 'Continue with Google' }).tap();
+    await page.getByRole('dialog').getByRole('button', { name: 'Continue' }).tap();
+    await expect(page).toHaveURL(/\/welcome$/);
+    await page.getByLabel('Phone').fill('0803 555 0199');
+    await page.getByRole('checkbox', { name: /I agree/ }).check();
+    await page.getByRole('button', { name: 'Finish and start earning' }).tap();
+    await expect(page.getByRole('heading', { level: 1, name: /Hello, Ada/ })).toBeVisible();
+
+    await page.goto('account?tab=settings');
+    await waitForApp(page);
+    const connected = page.getByRole('region', { name: 'Connected accounts' });
+    await expect(connected.getByText('Connected · ada.okafor@example.com')).toBeVisible();
+    // No password yet: the Password section offers to set one, and Google can't be removed.
+    await expect(page.getByRole('button', { name: 'Set password' })).toBeVisible();
+    await connected.getByRole('button', { name: 'Disconnect Google' }).tap();
+    await expect(connected.getByText(/only way to sign in/)).toBeVisible();
+
+    await page.getByLabel('New password').fill('Jollof&Pierogi-2026');
+    await page.getByRole('button', { name: 'Set password' }).tap();
+    await expect(page.getByRole('button', { name: 'Update password' })).toBeVisible();
+
+    await connected.getByRole('button', { name: 'Connect Apple' }).tap();
+    const consent = page.getByRole('dialog', { name: /Demo: Connect Kasia Nowak.s Apple account\?/ });
+    await expect(consent).toBeVisible();
+    await consent.getByRole('button', { name: 'Continue' }).tap();
+    await expect(connected.getByText(/Connected · kasia.nowak@example.com/)).toBeVisible();
+
+    await connected.getByRole('button', { name: 'Disconnect Google' }).tap();
+    await expect(connected.getByRole('button', { name: 'Connect Google' })).toBeVisible();
+    const width = await page.evaluate(() =>
+      Math.max(document.documentElement.scrollWidth, window.innerWidth),
+    );
+    expect(width).toBeLessThanOrEqual(360);
+  });
+});

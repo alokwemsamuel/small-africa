@@ -7,13 +7,21 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { TextField } from '@/components/ui/TextField';
-import { useChangePassword, useMe, useResendVerification, useUpdateProfile } from '@/hooks/useAuth';
+import {
+  useChangePassword,
+  useMe,
+  useResendVerification,
+  useSetPassword,
+  useUpdateProfile,
+} from '@/hooks/useAuth';
 import { passwordProblems } from '@/lib/authSchemas';
 import { ThemeSegmented } from '@/components/layout/ThemeSwitcher';
 import { ApiError } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { cn } from '@/lib/cn';
 import { initials } from '@/lib/format';
+import { isStaff } from '@/lib/roles';
+import { ConnectedAccounts } from '@/features/account/ConnectedAccounts';
 import { InterestAccountPanel } from '@/features/account/InterestAccountPanel';
 import {
   AddressesPanel,
@@ -158,9 +166,12 @@ function SettingsPanel() {
           <h2 id="password-h" className="text-3xl">
             Password
           </h2>
-          <PasswordForm />
+          {/* Signed up with Google, Apple or Facebook: there is no password to change yet. */}
+          {user.hasPassword === false ? <SetPasswordForm /> : <PasswordForm />}
         </section>
       </div>
+
+      {!isStaff(user) && <ConnectedAccounts />}
 
       <section
         aria-labelledby="prefs-h"
@@ -297,6 +308,56 @@ const passwordSchema = z
     const p = passwordProblems(v.new_password);
     if (p.length) ctx.addIssue({ code: 'custom', path: ['new_password'], message: p.join(' ') });
   });
+
+const setPasswordSchema = z.object({ new_password: z.string() }).superRefine((v, ctx) => {
+  const p = passwordProblems(v.new_password);
+  if (p.length) ctx.addIssue({ code: 'custom', path: ['new_password'], message: p.join(' ') });
+});
+
+/** For customers who signed up with a provider: a first password, so they can also sign in with their email. */
+function SetPasswordForm() {
+  const setPassword = useSetPassword();
+  const [status, setStatus] = useState(null);
+  const { register, handleSubmit, setError, reset, watch, formState } = useForm({
+    resolver: zodResolver(setPasswordSchema),
+    defaultValues: { new_password: '' },
+  });
+
+  const onSubmit = handleSubmit(async (v) => {
+    setStatus(null);
+    try {
+      await setPassword.mutateAsync(v.new_password);
+      reset();
+    } catch (e) {
+      const msg = applyServerErrors(e, setError, ['new_password']);
+      if (msg) setStatus({ tone: 'error', text: msg });
+    }
+  });
+
+  return (
+    <form onSubmit={onSubmit} noValidate className="mt-6 flex flex-col gap-5">
+      <p className="text-secondary text-sm">
+        You signed up with a social account, so you don’t have a password yet. Add one to also sign in with
+        your email, and to be able to disconnect your connected accounts later.
+      </p>
+      {status && <Alert tone={status.tone}>{status.text}</Alert>}
+      <div className="flex flex-col gap-3">
+        <TextField
+          label="New password"
+          type="password"
+          autoComplete="new-password"
+          revealable
+          error={formState.errors.new_password?.message}
+          {...register('new_password')}
+        />
+        <PasswordStrength password={watch('new_password')} />
+      </div>
+      <Button type="submit" variant="secondary" loading={formState.isSubmitting} className="self-start">
+        Set password
+      </Button>
+    </form>
+  );
+}
 
 function PasswordForm() {
   const change = useChangePassword();

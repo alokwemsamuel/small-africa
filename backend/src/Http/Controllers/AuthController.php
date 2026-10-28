@@ -9,13 +9,14 @@ use App\Repositories\UserRepository;
 use App\Security\Csrf;
 use App\Security\PasswordPolicy;
 use App\Services\AuthService;
+use App\Social\SocialAuthService;
 use App\Support\Validator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 final class AuthController
 {
-    public function __construct(private AuthService $auth, private Csrf $csrf)
+    public function __construct(private AuthService $auth, private Csrf $csrf, private SocialAuthService $social)
     {
     }
 
@@ -49,6 +50,22 @@ final class AuthController
         }
         $user = $this->auth->register($data, Json::ip($request));
         return Json::send($response, ['user' => $user, 'csrfToken' => $this->csrf->token()], 201);
+    }
+
+    /** The "almost there" step after a first sign-up with Google, Apple or Facebook. */
+    public function welcome(Request $request, Response $response): Response
+    {
+        $data = Validator::validate(Json::body($request), [
+            'email' => 'nullable|email',
+            'phone' => 'required|phone',
+            'birthday_day' => 'nullable|int|min:1|max:31',
+            'birthday_month' => 'nullable|int|min:1|max:12',
+            'referral_code' => 'nullable|string|max:20',
+            'device_id' => 'nullable|string|max:64|regex:/^[A-Za-z0-9-]{16,64}$/',
+            'accept_terms' => 'required|bool',
+        ], ['accept_terms' => 'Accepting the terms']);
+        $user = $this->social->completeWelcome(Json::user($request), $data, Json::ip($request));
+        return Json::send($response, ['user' => $user, 'csrfToken' => $this->csrf->token()]);
     }
 
     public function login(Request $request, Response $response): Response
