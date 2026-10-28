@@ -16,6 +16,8 @@
   <img src="docs/screenshots/mobile-home.jpg" alt="Home page on a phone" width="240" />
   <img src="docs/screenshots/mobile-dish.jpg" alt="A dish page on a phone" width="240" />
   <img src="docs/screenshots/mobile-menu-360.jpg" alt="The full-screen phone menu" width="240" />
+  <img src="docs/screenshots/social-signup-360.jpg" alt="Sign up with Google, Apple or Facebook" width="240" />
+  <img src="docs/screenshots/social-welcome-360.jpg" alt="The Almost there step after a social sign-up" width="240" />
 </p>
 
 ## Features
@@ -26,6 +28,7 @@
 - Online ordering: delivery to seven Lagos zones or pickup, order now or schedule, coupons, VAT included
 - Paystack payments (card, bank transfer, USSD) verified on the server; live order tracking
 - Reservations with live availability by seating area; event and private-dining enquiries
+- Sign up and sign in with Google, Apple or Facebook (each switches on when its keys are set; see [docs/SOCIAL-LOGIN-SETUP.md](docs/SOCIAL-LOGIN-SETUP.md)), with connected accounts in Settings
 - **The Interest Account:** dining credit with top-up bonuses and 2% monthly interest (capped), points, four tiers, stamp card, streaks, birthday, anniversary and referral rewards, notification centre
 
 **For the team**
@@ -37,7 +40,7 @@
 **Under the hood**
 - Strict security headers and CSP, CSRF protection, rate limiting, 2FA, append-only ledgers (see [SECURITY.md](docs/SECURITY.md))
 - Nigeria Data Protection Act 2023: privacy policy, cookie notice, marketing consent
-- 321 automated tests (197 frontend, 124 backend), plus 70 Playwright browser tests that run before every deploy: no page scrolls sideways on phones from 320px to 430px, and the phone menu works (full screen, focus, Back button, scroll lock, both themes)
+- 424 automated tests (234 frontend, 190 backend), plus 90 Playwright browser tests that run before every deploy: no page scrolls sideways on phones from 320px to 430px, the phone menu works (full screen, focus, Back button, scroll lock, both themes), and the simulated Google/Apple/Facebook sign-in works end to end
 
 ## Tech stack
 
@@ -85,7 +88,7 @@ backend/           PHP API (Slim 4)
   public/          index.php and .htaccess: the only web-facing folder
   src/             App.php (routes), Http/ (controllers, middleware, errors), Services/,
                    Repositories/, Loyalty/ (Interest Account), Payments/, Security/, Mail/,
-                   Media/, Audit/, Support/, Seeds/
+                   Social/ (Google, Apple, Facebook sign-in), Media/, Audit/, Support/, Seeds/
   migrations/      database schema, in order
   seeds/           seed data (the menu)
   bin/             command-line tools: migrate, seed, generate-key, loyalty (daily/interest/reconcile), export-demo
@@ -178,4 +181,4 @@ They work on the live demo too. These exist for demos and testing only: remove o
 - [x] **Phase 7 — Demo mode, testing & hardening**: the whole site and admin running in the browser for GitHub Pages (busy, always-current demo data; simulated Paystack; reset), deep-link support on Pages, faster first load (animation libraries off the critical path), cross-device and WebKit checks, Lighthouse, security checklist, and an offline walkthrough video in `presentation/`
 - [x] **Phase 8 — Deploy & deliver**: public pages pre-built as HTML (mobile Lighthouse 90+), GitHub Actions deploy of the demo to GitHub Pages, deployment guide, presentation guide, marketing plan and the client pitch deck
 
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) to deploy, [docs/DEMO.md](docs/DEMO.md) for the demo build, [docs/PRESENTATION_GUIDE.md](docs/PRESENTATION_GUIDE.md) and [docs/MARKETING_PLAN.md](docs/MARKETING_PLAN.md) for the client presentation and launch, [docs/SECURITY.md](docs/SECURITY.md) and [docs/SECURITY-CHECKLIST.md](docs/SECURITY-CHECKLIST.md) for the security model and [CREDITS.md](CREDITS.md) for asset licences.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) to deploy, [docs/SOCIAL-LOGIN-SETUP.md](docs/SOCIAL-LOGIN-SETUP.md) for Google, Apple and Facebook sign-in, [docs/DEMO.md](docs/DEMO.md) for the demo build, [docs/PRESENTATION_GUIDE.md](docs/PRESENTATION_GUIDE.md) and [docs/MARKETING_PLAN.md](docs/MARKETING_PLAN.md) for the client presentation and launch, [docs/SECURITY.md](docs/SECURITY.md) and [docs/SECURITY-CHECKLIST.md](docs/SECURITY-CHECKLIST.md) for the security model and [CREDITS.md](CREDITS.md) for asset licences.

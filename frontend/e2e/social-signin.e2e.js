@@ -9,6 +9,17 @@ import { waitForApp } from './helpers';
 const PHONES = [320, 360, 430];
 const THEMES = ['dark', 'light'];
 
+/**
+ * The app has attached; and on the sign-up and sign-in pages, the provider buttons have appeared. They
+ * only show once the demo's in-browser database is up, which can take a while on a busy machine.
+ */
+const appReady = async (page) => {
+  await waitForApp(page);
+  if (/\/(register|login)/.test(page.url())) {
+    await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible({ timeout: 30_000 });
+  }
+};
+
 const noSideways = async (page, width) => {
   const w = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, window.innerWidth));
   expect(w).toBeLessThanOrEqual(width);
@@ -30,7 +41,7 @@ for (const theme of THEMES) {
         page,
       }) => {
         await page.goto('register');
-        await waitForApp(page);
+        await appReady(page);
         const names = ['Continue with Google', 'Continue with Apple', 'Continue with Facebook'];
         const buttons = page
           .getByRole('group', { name: 'Continue with a social account' })
@@ -57,7 +68,7 @@ for (const theme of THEMES) {
 
       test('sign-in page: the same buttons above the password form', async ({ page }) => {
         await page.goto('login');
-        await waitForApp(page);
+        await appReady(page);
         await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Continue with Apple' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Continue with Facebook' })).toBeVisible();
@@ -68,7 +79,7 @@ for (const theme of THEMES) {
 
       test('a simulated Google sign-up: consent screen, welcome step, account', async ({ page }) => {
         await page.goto('register?ref=GUEST2026');
-        await waitForApp(page);
+        await appReady(page);
         await page.getByRole('button', { name: 'Continue with Google' }).tap();
 
         // The simulated consent screen: labelled as a demo, with a way out.
@@ -95,7 +106,7 @@ for (const theme of THEMES) {
         // Needs a phone number and the terms.
         await page.getByRole('button', { name: 'Finish and start earning' }).tap();
         await expect(page.getByText('Enter your phone number.')).toBeVisible();
-        await page.getByLabel('Phone').fill('0803 555 0199');
+        await page.getByLabel('Phone', { exact: true }).fill('0803 555 0199');
         await page.getByRole('combobox', { name: 'Birthday: day' }).selectOption('14');
         await page.getByRole('combobox', { name: 'Birthday: month' }).selectOption('7');
         await page.getByRole('checkbox').check();
@@ -120,14 +131,14 @@ test.describe('the demo ribbon and the other providers', () => {
   test('the demo ribbon is still there, and Apple and Facebook sign in too', async ({ page, context }) => {
     await context.addInitScript(() => localStorage.setItem('sa-cookie-notice', '1'));
     await page.goto('login');
-    await waitForApp(page);
+    await appReady(page);
     await expect(page.getByText(/Demo/).first()).toBeVisible();
     for (const [provider, name] of [
       ['Apple', 'Kasia Nowak'],
       ['Facebook', 'Tunde Bello'],
     ]) {
       await page.goto('login');
-      await waitForApp(page);
+      await appReady(page);
       await page.getByRole('button', { name: `Continue with ${provider}` }).tap();
       await expect(
         page.getByRole('dialog', { name: `Demo: Continue as ${name} with ${provider}?` }),
@@ -149,17 +160,24 @@ test.describe('connected accounts in Settings', () => {
   test('set a password, connect Apple, then disconnect Google', async ({ page, context }) => {
     await context.addInitScript(() => localStorage.setItem('sa-cookie-notice', '1'));
     await page.goto('register');
-    await waitForApp(page);
+    await appReady(page);
     await page.getByRole('button', { name: 'Continue with Google' }).tap();
     await page.getByRole('dialog').getByRole('button', { name: 'Continue' }).tap();
     await expect(page).toHaveURL(/\/welcome$/);
-    await page.getByLabel('Phone').fill('0803 555 0199');
-    await page.getByRole('checkbox', { name: /I agree/ }).check();
+    // The old sign-up page (it has "Phone (optional)") is still showing for a moment after the address changes.
+    await expect(page.getByRole('heading', { level: 1, name: 'Welcome to the table' })).toBeVisible();
+    await page.getByLabel('Phone', { exact: true }).fill('0803 555 0199');
+    const terms = page.getByRole('checkbox', { name: /I agree/ });
+    await terms.check();
+    await expect(terms).toBeChecked();
     await page.getByRole('button', { name: 'Finish and start earning' }).tap();
-    await expect(page.getByRole('heading', { level: 1, name: /Hello, Ada/ })).toBeVisible();
+    // The account page is a lazily loaded chunk: allow for a busy machine.
+    await expect(page.getByRole('heading', { level: 1, name: /Hello, Ada/ })).toBeVisible({
+      timeout: 20_000,
+    });
 
     await page.goto('account?tab=settings');
-    await waitForApp(page);
+    await appReady(page);
     const connected = page.getByRole('region', { name: 'Connected accounts' });
     await expect(connected.getByText('Connected · ada.okafor@example.com')).toBeVisible();
     // No password yet: the Password section offers to set one, and Google can't be removed.

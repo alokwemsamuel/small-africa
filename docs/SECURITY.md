@@ -106,6 +106,19 @@ base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-re
 - The Google map on the Contact page loads **only after the visitor clicks “Show map”** (privacy by default).
 - Public read endpoints (`/api/menu`, `/api/site`) are cacheable only privately (`Cache-Control: private, max-age=60`); everything else is `no-store`.
 
+## 5c. Sign in with Google, Apple and Facebook
+
+Setup: [SOCIAL-LOGIN-SETUP.md](SOCIAL-LOGIN-SETUP.md). The protocol and cryptography come from maintained libraries (`league/oauth2-client` with the Google, Facebook and Apple providers, `firebase/php-jwt`); nothing is hand-rolled.
+
+- **Authorization code flow with `state`, `nonce` and PKCE (S256).** The code is exchanged on the server; the browser is never trusted to say who someone is. (The league library has no PKCE option: it must be switched on by overriding `getPkceMethod()`. A first version silently sent none; the offline provider tests now assert the challenge in every authorization URL and the verifier in every token request.)
+- **ID tokens (Google, Apple)** are verified against the provider's published keys: RS256 only (so "none" and key-confusion tokens fail), `iss`, `aud` (our client id), expiry (60 s leeway) and the `nonce` of this sign-in, with one fresh key download if a key id is unknown. Facebook has no ID token; its profile is read from the Graph API with the access token we obtained.
+- **Where the attempt is kept.** In a sealed (AES-GCM with `APP_KEY`, so unreadable and unalterable), `HttpOnly`, ten-minute `sa_oauth` cookie scoped to the sign-in routes and cleared at the callback, rather than the session: the session cookie is `SameSite=Lax` and Apple answers with a cross-site `form_post`. Over HTTPS the cookie is `SameSite=None; Secure`.
+- **CSRF.** Apple's callback is the one POST exempt from the CSRF header check (`/api/auth/oauth/apple/callback`): a cross-site POST can't carry it. It is protected by the sealed state instead (a callback without the matching cookie and state is refused before anything else happens). Every other state-changing call still needs the token; this is tested.
+- **No CSP or CORS changes were needed.** Sign-in is made of top-level redirects, not requests from the page. Provider avatars are not displayed or stored (the site's `img-src` stays `'self' data: blob:`).
+- **Accounts.** A person is identified by the provider's own id (`user_identities`), never by email. A provider email can be linked to an existing account **only if the provider confirms it** (Google and Apple do; Facebook never says, so it never links). Otherwise the customer signs in with their password first and connects the provider in Settings. **Staff and admin accounts can't use or connect social sign-in** (they keep password plus two-step sign-in); the last way to sign in can't be disconnected.
+- **Abuse.** Start and callback are rate-limited per address; failures redirect to the login page with a friendly `?error=social_...` code and are logged server-side (`Social sign-in did not complete`), never shown in detail to the browser. The post-sign-in `return` address must be a path on this site (open redirects are refused). Sign-ins, links, disconnects and the welcome step are in the audit log.
+- **Apple's name** (sent once, unsigned, by the browser) is cleaned and shortened and only fills in a new account's first and last name; identity and email come from the signed token alone.
+
 ## 6. Abuse protection (rate limiting)
 
 Database-backed fixed-window limits (shared across all server workers):

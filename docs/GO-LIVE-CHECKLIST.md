@@ -19,6 +19,21 @@ Everything that must be confirmed or switched before Small Africa takes real ord
 - [ ] Webhook URL set in the Paystack dashboard: `https://<domain>/api/payments/paystack/webhook`.
 - [ ] One small real payment and refund made end to end.
 
+## Sign in with Google, Apple and Facebook
+
+Step by step in [SOCIAL-LOGIN-SETUP.md](SOCIAL-LOGIN-SETUP.md). Each provider is optional: a provider without keys is simply hidden.
+
+- [ ] **Client: decide which providers to offer.** Google and Facebook are free; **Apple costs US$99 a year** (Apple Developer Program) and enrolment takes a few days. Leave a provider's keys empty to keep it off.
+- [ ] **Client: create the developer accounts in the business's name** (a business email, logins in the business's password manager, the developer added as a team member), not on a developer's personal account.
+- [ ] **Google:** OAuth consent screen published (*In production*), redirect URI `https://<domain>/api/auth/oauth/google/callback`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `backend/.env`.
+- [ ] **Facebook:** app set to **Live**, privacy policy, terms and data-deletion URLs filled in, redirect URI `https://<domain>/api/auth/oauth/facebook/callback`, `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET` in `backend/.env`.
+- [ ] **Apple:** Services ID with the domain and return URL `https://<domain>/api/auth/oauth/apple/callback`, domain verified, key downloaded (**one chance: keep the `.p8` file safe**), the four `APPLE_*` values in `backend/.env` with the `.p8` file outside the web root (`chmod 600`). Sending domain registered for "Hide My Email" relay addresses.
+- [ ] `OAUTH_REDIRECT_BASE=https://<domain>/api`, `APP_HTTPS=true`, `FRONTEND_URL=https://<domain>` (Apple sign-in needs the HTTPS cookie).
+- [ ] Each provider tested from a private browser window: sign up and finish "Almost there", sign out and sign in, connect and disconnect from Settings. A staff member is refused with a clear message.
+- [ ] `backend/storage/cache` is writable (the providers' public keys are kept there for an hour).
+- [ ] Privacy Policy reviewed by the lawyer together with the Rewards Terms: it now describes the data received from Google, Apple and Facebook and the temporary `sa_oauth` cookie.
+- [ ] **Client decision, welcome points:** a new member gets a Bronze card but no points until their first order, the same as email sign-up. A welcome bonus (for example 100 points on finishing "Almost there") can be added if the restaurant wants one, but it is a loyalty-economics decision.
+
 ## Scheduled jobs
 
 - [ ] **Daily cron job** for the Interest Account (interest on the 1st, tier review, points expiry, birthdays, anniversaries, referrals, win-back offers, unpaid-order expiry):

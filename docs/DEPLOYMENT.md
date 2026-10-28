@@ -105,7 +105,7 @@ php bin/generate-key.php        # paste the APP_KEY line into .env, and keep a s
 nano .env                       # fill in the production settings below
 php bin/migrate.php
 php bin/seed.php                # menu, settings and the starting staff accounts. Never use --demo here.
-chmod -R 750 storage
+chmod -R 750 storage            # includes storage/cache, where sign-in providers' public keys are kept for an hour
 ```
 
 **3. The `/api` folder.** In `public_html/api/` create these two files.
@@ -191,6 +191,7 @@ the frontend** after big menu changes (or once a week).
 | `PAYSTACK_PUBLIC_KEY` | `pk_live_…` | |
 | `PAYSTACK_SECRET_KEY` | `sk_live_…` | Secret: only ever in this file |
 | `DEMO_TOOLS` | `false` | |
+| `OAUTH_REDIRECT_BASE`, `GOOGLE_*`, `FACEBOOK_*`, `APPLE_*` | see [SOCIAL-LOGIN-SETUP.md](SOCIAL-LOGIN-SETUP.md) | Optional: sign in with Google, Apple and Facebook. A provider with any value missing is switched off and its button hidden. Keep the Apple `.p8` key outside the web folder. |
 
 Frontend build settings (`frontend/.env.production`, never committed):
 
