@@ -2,6 +2,7 @@ import { db, getState } from '@/lib/demo/db';
 import { fail, validate, validateQuery } from '@/lib/demo/http';
 import { route } from '@/lib/demo/router';
 import { changePassword, login, register, userToPublic } from '@/lib/demo/services/auth';
+import { completeWelcome, PROVIDER_IDS, socialSignIn } from '@/lib/demo/services/social';
 import { creditTopup, topupToPublic } from '@/lib/demo/services/loyalty';
 import * as orders from '@/lib/demo/services/orders';
 import { quote } from '@/lib/demo/services/pricing';
@@ -463,6 +464,36 @@ route('POST', '/auth/login', async ({ body }) => {
   const data = validate(body, { email: 'required|email', password: 'required|string|max:128' });
   return { user: await login(data.email, data.password), ...CSRF };
 });
+
+/* Simulated social sign-in (the real API redirects to Google, Apple or Facebook; see services/social.js). */
+route('GET', '/auth/providers', () => ({ providers: PROVIDER_IDS }));
+
+route('POST', '/auth/social/demo', ({ body }) => {
+  const data = validate(body, { provider: 'required|string|in:google,apple,facebook' });
+  return { ...socialSignIn(data.provider), ...CSRF };
+});
+
+route(
+  'POST',
+  '/auth/welcome',
+  ({ body, user }) => {
+    const data = validate(
+      body,
+      {
+        email: 'nullable|email',
+        phone: 'required|phone',
+        birthday_day: 'nullable|int|min:1|max:31',
+        birthday_month: 'nullable|int|min:1|max:12',
+        referral_code: 'nullable|string|max:20',
+        device_id: 'nullable|string|max:64',
+        accept_terms: 'required|bool',
+      },
+      { accept_terms: 'Accepting the terms' },
+    );
+    return { user: completeWelcome(user, data), ...CSRF };
+  },
+  'user',
+);
 
 route('POST', '/auth/2fa', () => {
   throw fail.unauthorized('Your sign-in expired. Please enter your email and password again.');

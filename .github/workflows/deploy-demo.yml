@@ -33,6 +33,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      # The real site must never contain demo code (the in-browser API, its data, simulated sign-in).
+      - run: npm run build
+      - run: npm run check:prod-bundle
       # Pre-builds the public pages as HTML from the demo data and writes 404.html (the app shell).
       - run: npm run build:demo
       # Phones from 320px to 430px, dark and light: no page may be wider than the screen

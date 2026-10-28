@@ -2,6 +2,7 @@ import { ApiError, setTransport } from '@/lib/api';
 import { buildState } from './build';
 import { clearPersisted, loadPersisted, persist, setState } from './db';
 import { dispatch } from './router';
+export { SocialConsent } from './SocialConsent';
 import '@/lib/demo/routes/public';
 import '@/lib/demo/routes/account';
 import '@/lib/demo/routes/admin';

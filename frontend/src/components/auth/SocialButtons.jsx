@@ -1,10 +1,19 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuthProviders } from '@/hooks/useAuth';
 import { cn } from '@/lib/cn';
 import { redirectTo } from '@/lib/redirect';
 import { oauthStartUrl, PROVIDERS } from '@/lib/socialProviders';
 import { ProviderIcon } from './ProviderIcon';
+
+// The demo (GitHub Pages) has no server to sign in through, so its buttons open a simulated consent
+// screen instead. That screen lives in the demo bundle: `@/lib/demo` is an empty stub in every
+// other build, and this branch is removed from them at build time.
+const DemoConsent =
+  import.meta.env.VITE_DEMO_MODE === 'true'
+    ? lazy(() => import('@/lib/demo').then((m) => ({ default: m.SocialConsent })))
+    : null;
 
 // Each provider's button follows its own brand guidelines. Apple's is white with a black logo on
 // the dark theme and black with a white logo on the light one (tokens in styles/theme.css).
@@ -26,17 +35,34 @@ const LOOK = {
  */
 export function SocialButtons({ mode, referralCode, returnTo }) {
   const { data: enabled } = useAuthProviders();
+  const navigate = useNavigate();
   const [busy, setBusy] = useState(null);
+  const [consent, setConsent] = useState(null);
   const providers = PROVIDERS.filter((p) => enabled?.includes(p.id));
   if (providers.length === 0) return null;
 
   const start = (id) => {
+    if (DemoConsent) {
+      setConsent(id);
+      return;
+    }
     setBusy(id);
     redirectTo(oauthStartUrl(id, { mode, returnTo, referralCode }));
   };
 
+  const demoDone = (user) => {
+    setConsent(null);
+    const ref = referralCode ? `?ref=${encodeURIComponent(referralCode)}` : '';
+    navigate(user.welcome ? `/welcome${ref}` : (returnTo ?? '/account'), { replace: true });
+  };
+
   return (
     <div className="flex flex-col gap-6">
+      {consent && DemoConsent && (
+        <Suspense fallback={null}>
+          <DemoConsent provider={consent} onCancel={() => setConsent(null)} onDone={demoDone} />
+        </Suspense>
+      )}
       <div className="flex flex-col gap-3" role="group" aria-label="Continue with a social account">
         {providers.map((p) => (
           <button

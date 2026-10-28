@@ -38,6 +38,9 @@ export function userToPublic(u) {
     themePreference: u.theme_preference ?? null,
     twoFactorEnabled: u.totp_enabled_at !== null,
     createdAt: u.created_at,
+    // Set after a social sign-up until the "almost there" step is finished.
+    welcome: u.signup_provider && !u.onboarded_at ? { provider: u.signup_provider, needsEmail: false } : null,
+    hasPassword: !!getState().passwords[u.id],
   };
 }
 
