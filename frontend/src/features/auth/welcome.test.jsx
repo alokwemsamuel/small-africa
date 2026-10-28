@@ -67,6 +67,16 @@ describe('/welcome', () => {
     expect(screen.getByText(/Bronze membership card is ready/)).toBeInTheDocument();
   });
 
+  it('tells the new member about the welcome bonus, using the amount the restaurant set', async () => {
+    mockApi({
+      ...me(person({ provider: 'google', needsEmail: false })),
+      'GET /site': () => ({ body: { loyalty: { welcomeBonusPoints: 200 } } }),
+    });
+    renderRoutes(routes, '/welcome');
+    expect(await screen.findByText(/Earn 200 bonus points on your first order\./)).toBeInTheDocument();
+    expect(screen.queryByText(/Points start adding up/)).toBeNull();
+  });
+
   it('needs a phone number and the terms, and checks both', async () => {
     mockApi(me(person({ provider: 'apple', needsEmail: false })));
     renderRoutes(routes, '/welcome');

@@ -185,3 +185,23 @@ describe('birthday week', () => {
     expect(week(null, '2027-02-28 12:00')).toBe(false);
   });
 });
+
+describe('welcome bonus', () => {
+  it('defaults to 200 points and 0 switches it off', () => {
+    expect(rules.welcomeBonusPoints()).toBe(200);
+    expect(new LoyaltyRules({ ...SETTINGS, welcome_bonus_points: 350 }).welcomeBonusPoints()).toBe(350);
+    expect(new LoyaltyRules({ ...SETTINGS, welcome_bonus_points: 0 }).welcomeBonusPoints()).toBe(0);
+  });
+
+  it('waits for a confirmed email and refuses a phone or device used before', () => {
+    const ok = { email_verified: true, phone_used_by_other_bonus: false, device_used_by_other_bonus: false };
+    expect(rules.welcomeBonusRejection(ok)).toBeNull();
+    expect(rules.welcomeBonusRejection({ ...ok, email_verified: false })).toBe('Email not verified');
+    expect(rules.welcomeBonusRejection({ ...ok, phone_used_by_other_bonus: true })).toBe(
+      'Phone number already used for a welcome bonus',
+    );
+    expect(rules.welcomeBonusRejection({ ...ok, device_used_by_other_bonus: true })).toBe(
+      'Device already used for a welcome bonus',
+    );
+  });
+});

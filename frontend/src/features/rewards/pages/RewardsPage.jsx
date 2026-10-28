@@ -27,6 +27,7 @@ export function RewardsPage() {
   const rate = (l?.interestRateBp ?? 200) / 100;
   const min = l?.interestMinBalanceNaira ?? 20000;
   const cap = l?.interestCapNaira ?? 5000;
+  const bonus = l?.welcomeBonusPoints ?? 0;
   const example = 50000;
   const exampleInterest = Math.min(cap, Math.floor((example * rate) / 100));
 
@@ -173,6 +174,9 @@ export function RewardsPage() {
 
         <section className="border-accent/40 bg-accent-fill/10 flex flex-col items-start gap-5 rounded-md border p-8 sm:p-12">
           <h2 className="text-4xl">Join the table</h2>
+          {bonus > 0 && (
+            <p className="text-accent text-xl font-semibold">Earn {bonus} bonus points on your first order</p>
+          )}
           <p className="text-secondary max-w-prose">
             Membership is free. Read the{' '}
             <Link to="/rewards-terms" className="text-accent underline">

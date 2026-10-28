@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/Checkbox';
 import { Spinner } from '@/components/ui/Spinner';
 import { TextField } from '@/components/ui/TextField';
 import { useCompleteWelcome, useMe } from '@/hooks/useAuth';
+import { useSite } from '@/hooks/useMenu';
 import { welcomeSchema } from '@/lib/authSchemas';
 import { deviceId } from '@/lib/device';
 import { applyServerErrors } from '@/lib/forms';
@@ -57,6 +58,8 @@ export function WelcomePage() {
 }
 
 function WelcomeSteps({ user }) {
+  const { data: site } = useSite();
+  const bonus = site?.loyalty?.welcomeBonusPoints ?? 0; // 0 when the restaurant has switched it off
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const complete = useCompleteWelcome();
@@ -205,7 +208,10 @@ function WelcomeSteps({ user }) {
           Finish and start earning
         </Button>
         <p className="text-muted -mt-2 text-center text-sm">
-          Your Bronze membership card is ready. Points start adding up from your first order.
+          Your Bronze membership card is ready.{' '}
+          {bonus > 0
+            ? `Earn ${bonus} bonus points on your first order.`
+            : 'Points start adding up from your first order.'}
         </p>
       </form>
     </AuthLayout>

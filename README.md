@@ -40,7 +40,7 @@
 **Under the hood**
 - Strict security headers and CSP, CSRF protection, rate limiting, 2FA, append-only ledgers (see [SECURITY.md](docs/SECURITY.md))
 - Nigeria Data Protection Act 2023: privacy policy, cookie notice, marketing consent
-- 424 automated tests (234 frontend, 190 backend), plus 90 Playwright browser tests that run before every deploy: no page scrolls sideways on phones from 320px to 430px, the phone menu works (full screen, focus, Back button, scroll lock, both themes), and the simulated Google/Apple/Facebook sign-in works end to end
+- 441 automated tests (242 frontend, 199 backend), plus 90 Playwright browser tests that run before every deploy: no page scrolls sideways on phones from 320px to 430px, the phone menu works (full screen, focus, Back button, scroll lock, both themes), and the simulated Google/Apple/Facebook sign-in works end to end
 
 ## Tech stack
 

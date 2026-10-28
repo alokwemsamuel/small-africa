@@ -348,6 +348,70 @@ export function onOrderCompleted(order) {
   }));
   recordSpend(order.user_id, order.reference, lines, parse(order.placed_at ?? order.created_at), order);
   maybeRewardReferral(order.user_id);
+  markWelcomeBonusCandidate(order.user_id, order.id);
+  maybeAwardWelcomeBonus(order.user_id);
+}
+
+/** Only a customer whose very first completed order this is can ever get the welcome bonus. */
+function markWelcomeBonusCandidate(userId, orderId) {
+  if (rules().welcomeBonusPoints() <= 0) return;
+  const earlier = db.find(
+    'orders',
+    (o) =>
+      o.user_id === userId &&
+      o.id !== orderId &&
+      o.payment_status === 'paid' &&
+      ['delivered', 'completed'].includes(o.status) &&
+      o.loyalty_processed_at !== null,
+  );
+  const a = account(userId);
+  if (!earlier && !a.welcome_bonus_status) a.welcome_bonus_status = 'pending';
+}
+
+/** Pays the welcome bonus once; waits while the email is unverified and refuses reused phones. */
+export function maybeAwardWelcomeBonus(userId) {
+  const r = rules();
+  const points = r.welcomeBonusPoints();
+  const a = account(userId);
+  const user = db.byId('users', userId);
+  if (points <= 0 || !user || user.role !== 'customer' || a.welcome_bonus_status !== 'pending') return;
+  const digits = (p) =>
+    String(p ?? '')
+      .replace(/\D/g, '')
+      .slice(-10);
+  const phone = digits(user.phone);
+  const reason = r.welcomeBonusRejection({
+    email_verified: user.email_verified_at !== null,
+    phone_used_by_other_bonus:
+      phone !== '' &&
+      db
+        .where('loyalty_accounts', (x) => x.user_id !== userId && x.welcome_bonus_status === 'awarded')
+        .some((x) => digits(db.byId('users', x.user_id)?.phone) === phone),
+    device_used_by_other_bonus: false,
+  });
+  if (reason === 'Email not verified') return;
+  if (reason !== null) {
+    Object.assign(a, { welcome_bonus_status: 'rejected', welcome_bonus_reason: reason });
+    audit(null, 'loyalty.welcome_bonus_rejected', 'user', userId, { reason });
+    return;
+  }
+  ledger.points(
+    userId,
+    'credit',
+    'bonus',
+    points,
+    'Welcome bonus: your first order',
+    null,
+    `welcome-bonus:${userId}`,
+  );
+  Object.assign(a, { welcome_bonus_status: 'awarded', welcome_bonus_at: sql() });
+  audit(null, 'loyalty.welcome_bonus_awarded', 'user', userId, { points });
+  notify(
+    userId,
+    'welcome_bonus',
+    `${points} welcome bonus points`,
+    `Thank you for your first order, ${user.first_name}. ${points} bonus points are now in your Interest Account.`,
+  );
 }
 
 function recordSpend(userId, reference, lines, at, order = null) {

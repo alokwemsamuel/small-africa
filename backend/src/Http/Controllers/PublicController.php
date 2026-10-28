@@ -89,6 +89,7 @@ final class PublicController
                 'interestCapNaira' => $loyalty['interest_cap_naira'] ?? 5000,
                 'interestMinBalanceNaira' => $loyalty['interest_min_balance_naira'] ?? 20000,
                 'referralCreditNaira' => $loyalty['referral_credit_naira'] ?? 2000,
+                'welcomeBonusPoints' => max(0, (int) ($loyalty['welcome_bonus_points'] ?? 200)), // 0 = switched off
             ],
             'testimonials' => array_map(self::review(...), $this->db->all(
                 "SELECT r.*, d.name AS dish_name FROM reviews r LEFT JOIN dishes d ON d.id = r.dish_id

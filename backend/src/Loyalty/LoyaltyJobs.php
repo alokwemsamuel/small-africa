@@ -42,6 +42,7 @@ final class LoyaltyJobs
             'birthdays' => fn () => $this->birthdays(),
             'anniversaries' => fn () => $this->anniversaries(),
             'referrals' => fn () => $this->pendingReferrals(),
+            'welcomeBonuses' => fn () => $this->pendingWelcomeBonuses(),
             'winBack' => fn () => $this->winBack(),
             'kitchenOffers' => fn () => $this->kitchenOffers(),
         ];
@@ -186,6 +187,15 @@ final class LoyaltyJobs
             }
         }
         return $count;
+    }
+
+    /** Welcome bonuses that were waiting for the customer to verify their email. Returns how many are still waiting. */
+    public function pendingWelcomeBonuses(): int
+    {
+        foreach ($this->db->all("SELECT user_id FROM loyalty_accounts WHERE welcome_bonus_status = 'pending'") as $row) {
+            $this->loyalty->maybeAwardWelcomeBonus((int) $row['user_id']);
+        }
+        return (int) $this->db->scalar("SELECT COUNT(*) FROM loyalty_accounts WHERE welcome_bonus_status = 'pending'");
     }
 
     public function pendingReferrals(): int

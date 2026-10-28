@@ -197,6 +197,7 @@ final class ReferenceSeeder
                 'stamp_rewards' => [['stamp' => 5, 'reward' => 'Free dessert', 'category' => 'desserts'], ['stamp' => 10, 'reward' => 'Free main course', 'category' => 'mains']],
                 'free_delivery_tiers' => ['gold', 'black_diamond'],
                 'anniversary_points' => 250,
+                'welcome_bonus_points' => 200,           // after a new customer's first completed order; 0 = off
                 'streak_visits_per_month' => 3,
                 'streak_bonus_points' => 200,
                 'birthday_points_multiplier' => 2,

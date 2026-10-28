@@ -237,6 +237,82 @@ final class LoyaltyService
 
         $this->recordSpend($userId, $order['reference'], $lines, $at, $orderId);
         $this->maybeRewardReferral($userId);
+        $this->markWelcomeBonusCandidate($userId, $orderId);
+        $this->maybeAwardWelcomeBonus($userId);
+    }
+
+    /**
+     * Only a customer whose very first completed order this is can ever get the welcome bonus, so
+     * customers who ordered before the bonus existed (or while it was switched off) never qualify later.
+     */
+    private function markWelcomeBonusCandidate(int $userId, int $orderId): void
+    {
+        if ($this->rules()->welcomeBonusPoints() <= 0) {
+            return;
+        }
+        $earlier = $this->db->scalar(
+            "SELECT 1 FROM orders WHERE user_id = ? AND id <> ? AND payment_status = 'paid' AND status IN ('delivered','completed') AND loyalty_processed_at IS NOT NULL LIMIT 1",
+            [$userId, $orderId],
+        );
+        if ($earlier) {
+            return;
+        }
+        $this->db->run('INSERT IGNORE INTO loyalty_accounts (user_id) VALUES (?)', [$userId]);
+        $this->db->run("UPDATE loyalty_accounts SET welcome_bonus_status = 'pending' WHERE user_id = ? AND welcome_bonus_status IS NULL", [$userId]);
+    }
+
+    /**
+     * Pays the welcome bonus once, to a customer whose first order is complete. It waits while the
+     * email is unverified (the daily job tries again) and is refused, with the reason kept, when the
+     * phone number or device was already used for a bonus. Safe to call repeatedly.
+     */
+    public function maybeAwardWelcomeBonus(int $userId): void
+    {
+        $points = $this->rules()->welcomeBonusPoints();
+        $account = $this->db->one('SELECT welcome_bonus_status FROM loyalty_accounts WHERE user_id = ?', [$userId]);
+        $user = $this->db->one("SELECT * FROM users WHERE id = ? AND role = 'customer'", [$userId]);
+        if ($points <= 0 || !$user || ($account['welcome_bonus_status'] ?? null) !== 'pending') {
+            return; // off, not a customer, or already settled
+        }
+        $digits = static fn (?string $p): string => substr(preg_replace('/D/', '', (string) $p) ?? '', -10);
+        $phone = $digits($user['phone']);
+        $device = $this->db->scalar('SELECT device_hash FROM referrals WHERE referred_user_id = ? AND device_hash IS NOT NULL LIMIT 1', [$userId]);
+        $reason = $this->rules()->welcomeBonusRejection([
+            'email_verified' => $user['email_verified_at'] !== null,
+            'phone_used_by_other_bonus' => $phone !== '' && (bool) $this->db->scalar(
+                "SELECT 1 FROM loyalty_accounts a JOIN users u ON u.id = a.user_id
+                 WHERE a.user_id <> ? AND a.welcome_bonus_status = 'awarded'
+                 AND RIGHT(REGEXP_REPLACE(COALESCE(u.phone, ''), '[^0-9]', ''), 10) = ?",
+                [$userId, $phone],
+            ),
+            'device_used_by_other_bonus' => $device !== null && (bool) $this->db->scalar(
+                "SELECT 1 FROM referrals r JOIN loyalty_accounts a ON a.user_id = r.referred_user_id
+                 WHERE r.referred_user_id <> ? AND r.device_hash = ? AND a.welcome_bonus_status = 'awarded'",
+                [$userId, $device],
+            ),
+        ]);
+        if ($reason === 'Email not verified') {
+            return; // waits for verification
+        }
+        if ($reason !== null) {
+            $this->db->run("UPDATE loyalty_accounts SET welcome_bonus_status = 'rejected', welcome_bonus_reason = ?, welcome_bonus_at = ? WHERE user_id = ? AND welcome_bonus_status = 'pending'", [$reason, $this->clock->sql(), $userId]);
+            $this->audit->record(null, 'loyalty.welcome_bonus_rejected', 'user', $userId, ['reason' => $reason]);
+            return;
+        }
+        $paid = $this->db->transaction(function () use ($userId, $points): bool {
+            $locked = $this->db->one('SELECT welcome_bonus_status FROM loyalty_accounts WHERE user_id = ? FOR UPDATE', [$userId]);
+            if (($locked['welcome_bonus_status'] ?? '') !== 'pending') {
+                return false;
+            }
+            // The key makes a second payment impossible even if two requests race.
+            $this->ledger->points($userId, 'credit', 'bonus', $points, 'Welcome bonus: your first order', null, "welcome-bonus:{$userId}");
+            $this->db->run("UPDATE loyalty_accounts SET welcome_bonus_status = 'awarded', welcome_bonus_at = ? WHERE user_id = ?", [$this->clock->sql(), $userId]);
+            return true;
+        });
+        if ($paid) {
+            $this->audit->record(null, 'loyalty.welcome_bonus_awarded', 'user', $userId, ['points' => $points]);
+            $this->notifier->notify($userId, 'welcome_bonus', "{$points} welcome bonus points", "Thank you for your first order, {$user['first_name']}. {$points} bonus points are now in your Interest Account.");
+        }
     }
 
     /**

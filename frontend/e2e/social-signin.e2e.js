@@ -100,6 +100,7 @@ for (const theme of THEMES) {
         await expect(page.getByRole('heading', { level: 1, name: 'Welcome to the table' })).toBeVisible();
         await expect(page.getByText('Almost there')).toBeVisible();
         await expect(page.getByText('Ada Okafor')).toBeVisible();
+        await expect(page.getByText(/Earn 200 bonus points on your first order/)).toBeVisible();
         await expect(page.getByLabel(/Referral code/)).toHaveValue('GUEST2026');
         await noSideways(page, width);
 

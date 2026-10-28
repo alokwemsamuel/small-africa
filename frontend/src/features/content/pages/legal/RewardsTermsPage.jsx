@@ -12,6 +12,7 @@ export function RewardsTermsPage() {
   const cap = naira(l?.interestCapNaira ?? 5000);
   const min = naira(l?.interestMinBalanceNaira ?? 20000);
   const referral = naira(l?.referralCreditNaira ?? 2000);
+  const welcomeBonus = l?.welcomeBonusPoints ?? 0;
 
   const sections = [
     {
@@ -101,6 +102,16 @@ export function RewardsTermsPage() {
             Tuesday during their birthday week earns 2× on that dish, not more.
           </li>
           <li>Points are added when an order is delivered or collected.</li>
+          {welcomeBonus > 0 && (
+            <li>
+              <strong>Earn {welcomeBonus} bonus points on your first order.</strong> The bonus is added once
+              per customer, after your first order is completed, whether you joined with email or with Google,
+              Apple or Facebook. It is for new customers only: it doesn’t apply to anyone who had already
+              completed an order. We add it once your email address is confirmed, and we may refuse it where
+              the same phone number or device has already received one. We may change or end the welcome bonus
+              at any time; it never affects points you have already earned.
+            </li>
+          )}
           <li>
             Swap points for dining credit or items from the Rewards Menu. Redeemed points can’t be returned.
           </li>

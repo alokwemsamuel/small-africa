@@ -232,6 +232,30 @@ final class LoyaltyRules
         };
     }
 
+    /** Bonus points after a new customer's first completed order. 0 switches the bonus off. */
+    public function welcomeBonusPoints(): int
+    {
+        return max(0, (int) ($this->settings['welcome_bonus_points'] ?? 200));
+    }
+
+    /**
+     * Anti-abuse rules for a welcome bonus at the moment it would be paid: the same signals as
+     * referrals (a confirmed email, one bonus per phone number, one per device), so opening extra
+     * accounts doesn't earn extra bonuses.
+     *
+     * @param array{email_verified: bool, phone_used_by_other_bonus: bool, device_used_by_other_bonus: bool} $facts
+     * @return string|null rejection reason, or null when the bonus may be paid
+     */
+    public function welcomeBonusRejection(array $facts): ?string
+    {
+        return match (true) {
+            !$facts['email_verified'] => 'Email not verified',
+            $facts['phone_used_by_other_bonus'] => 'Phone number already used for a welcome bonus',
+            $facts['device_used_by_other_bonus'] => 'Device already used for a welcome bonus',
+            default => null,
+        };
+    }
+
     public function referralCreditKobo(): int
     {
         return (int) ($this->settings['referral_credit_naira'] ?? 2000) * 100;

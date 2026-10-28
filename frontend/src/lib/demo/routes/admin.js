@@ -997,6 +997,7 @@ const SETTING_INTS = {
   streak_visits_per_month: [1, 31, 'Visits for the streak bonus'],
   streak_bonus_points: [0, 100000, 'Streak bonus points'],
   anniversary_points: [0, 100000, 'Anniversary bonus points'],
+  welcome_bonus_points: [0, 100000, 'Welcome bonus points'],
   referral_credit_naira: [0, 100000, 'Referral credit'],
   referral_max_per_month: [0, 1000, 'Referral rewards per month'],
   points_expiry_months: [1, 60, 'Points expiry'],

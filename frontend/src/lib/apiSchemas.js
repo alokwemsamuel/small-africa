@@ -122,6 +122,7 @@ export const site = z.object({
     tiers: z.array(z.unknown()),
     earnPointsPer1000Naira: z.number(),
     interestRateBp: z.number(),
+    welcomeBonusPoints: z.number().int().optional(),
   }),
   testimonials: z.array(review),
 });

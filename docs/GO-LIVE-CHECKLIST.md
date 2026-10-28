@@ -32,7 +32,7 @@ Step by step in [SOCIAL-LOGIN-SETUP.md](SOCIAL-LOGIN-SETUP.md). Each provider is
 - [ ] Each provider tested from a private browser window: sign up and finish "Almost there", sign out and sign in, connect and disconnect from Settings. A staff member is refused with a clear message.
 - [ ] `backend/storage/cache` is writable (the providers' public keys are kept there for an hour).
 - [ ] Privacy Policy reviewed by the lawyer together with the Rewards Terms: it now describes the data received from Google, Apple and Facebook and the temporary `sa_oauth` cookie.
-- [ ] **Client decision, welcome points:** a new member gets a Bronze card but no points until their first order, the same as email sign-up. A welcome bonus (for example 100 points on finishing "Almost there") can be added if the restaurant wants one, but it is a loyalty-economics decision.
+- [ ] **Client: confirm the welcome bonus.** New customers get **200 bonus points** after their first completed order (email or social sign-up), once per customer, only if they had no completed order before and have a confirmed email; a phone number or device that already got a bonus is refused. Change the amount, or set it to 0 to switch it off, in Admin → Rewards → Rules ("Welcome bonus"). Facebook sign-ups wait until they confirm their email. It is a loyalty-economics decision (200 points is about ₦2,000 of dining credit at the default rate), so confirm the figure and have the Rewards Terms wording reviewed.
 
 ## Scheduled jobs
 

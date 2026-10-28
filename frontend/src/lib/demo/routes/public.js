@@ -199,6 +199,7 @@ route('GET', '/site', () => {
       interestCapNaira: loyalty.interest_cap_naira ?? 5000,
       interestMinBalanceNaira: loyalty.interest_min_balance_naira ?? 20000,
       referralCreditNaira: loyalty.referral_credit_naira ?? 2000,
+      welcomeBonusPoints: Math.max(0, Number(loyalty.welcome_bonus_points ?? 200)),
     },
     testimonials: db
       .where('reviews', (r) => r.status === 'approved' && r.rating >= 4)

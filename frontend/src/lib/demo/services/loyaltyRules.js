@@ -108,6 +108,19 @@ export class LoyaltyRules {
     return visitsThisMonth === Number(this.s.streak_visits_per_month ?? 3);
   }
 
+  /** Bonus points after a new customer's first completed order. 0 switches the bonus off. */
+  welcomeBonusPoints() {
+    return Math.max(0, Number(this.s.welcome_bonus_points ?? 200));
+  }
+
+  /** Same signals as referrals: a confirmed email, one bonus per phone number and per device. */
+  welcomeBonusRejection(f) {
+    if (!f.email_verified) return 'Email not verified';
+    if (f.phone_used_by_other_bonus) return 'Phone number already used for a welcome bonus';
+    if (f.device_used_by_other_bonus) return 'Device already used for a welcome bonus';
+    return null;
+  }
+
   referralCreditKobo() {
     return Number(this.s.referral_credit_naira ?? 2000) * 100;
   }

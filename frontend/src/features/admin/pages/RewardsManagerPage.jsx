@@ -506,6 +506,7 @@ function Rules() {
           {num('streak_visits_per_month', 'Visits for streak bonus')}
           {num('streak_bonus_points', 'Streak bonus', { suffix: 'points' })}
           {num('anniversary_points', 'Anniversary bonus', { suffix: 'points' })}
+          {num('welcome_bonus_points', 'Welcome bonus (first order, 0 = off)', { suffix: 'points' })}
           {num('referral_credit_naira', 'Referral credit each', { suffix: '₦' })}
           {num('referral_max_per_month', 'Referral rewards per member a month')}
           {num('winback_after_days', '“We miss you” after', { suffix: 'days' })}
