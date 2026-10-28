@@ -70,6 +70,46 @@ export const registerSchema = z
     }
   });
 
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // February: leap day allowed
+
+/**
+ * The "almost there" step after a social sign-up. The birthday is a day and a month only, both or neither.
+ * @param {{ needsEmail?: boolean }} [options] the provider didn't give us an email: ask for it
+ */
+export function welcomeSchema({ needsEmail = false } = {}) {
+  return z
+    .object({
+      email: needsEmail ? email : z.string().optional(),
+      phone: z
+        .string()
+        .trim()
+        .min(1, { error: 'Enter your phone number.' })
+        .refine((v) => nigerianPhone.test(v.replace(/[\s\-()]/g, '')), {
+          error: 'Enter a valid phone number, e.g. 0803 123 4567.',
+        }),
+      birthday_day: z.string(),
+      birthday_month: z.string(),
+      referral_code: z.string().trim().max(20),
+      accept_terms: z
+        .boolean()
+        .refine((v) => v, { error: 'Please accept the Terms, Privacy Policy and Rewards Terms.' }),
+    })
+    .superRefine((v, ctx) => {
+      if (v.birthday_day === '' && v.birthday_month === '') return;
+      const day = Number(v.birthday_day);
+      const month = Number(v.birthday_month);
+      if (v.birthday_day === '' || v.birthday_month === '') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['birthday_day'],
+          message: 'Choose both the day and the month, or leave both empty.',
+        });
+      } else if (!(month >= 1 && month <= 12 && day >= 1 && day <= DAYS_IN_MONTH[month - 1])) {
+        ctx.addIssue({ code: 'custom', path: ['birthday_day'], message: 'That date doesn’t exist.' });
+      }
+    });
+}
+
 export const forgotSchema = z.object({ email });
 
 export const resetSchema = z

@@ -38,6 +38,25 @@ export function useRegister() {
   });
 }
 
+/** Which social sign-ins the server has keys for (empty if none, or the server doesn't know). */
+export function useAuthProviders() {
+  return useQuery({
+    queryKey: ['auth', 'providers'],
+    queryFn: ({ signal }) => api('/auth/providers', { signal }).then((r) => r.providers),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+}
+
+/** The "almost there" step after a first social sign-in. */
+export function useCompleteWelcome() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => api('/auth/welcome', { method: 'POST', body }),
+    onSuccess: (r) => qc.setQueryData(meKey, r.user),
+  });
+}
+
 export function useLogout() {
   const qc = useQueryClient();
   return useMutation({

@@ -90,6 +90,10 @@ The home-page hero video is edited from two stock clips under the [Pexels licenc
 
 `design/tools/build-hero-video.mjs` (ffmpeg + sharp) grades, crossfades and loops the clips, crops the 720×1280 phone version and exports the posters to `frontend/public/hero/`. The original downloads are not committed. The floating gold particles are drawn in code (`GoldParticles.jsx`). The video shows a plated dish and a server's gloved hands only: no identifiable people, logos or branded products.
 
+## Sign-in provider logos
+
+The Google "G", the Apple logo and the Facebook "f" on the Continue with Google / Apple / Facebook buttons (`frontend/src/components/auth/ProviderIcon.jsx`) are trademarks of Google LLC, Apple Inc. and Meta Platforms, Inc. They are used only to label sign-in buttons, with the wording and colours each provider's brand guidelines allow for that purpose ([Google](https://developers.google.com/identity/branding-guidelines), [Apple](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple), [Meta](https://developers.facebook.com/docs/facebook-login/userexperience)). No endorsement is implied. If a provider's guidelines change, update the buttons to match.
+
 ## Code libraries
 
 All open-source under MIT, Apache-2.0, BSD or ISC licences. Full lists are in `frontend/package.json` and `backend/composer.json`. Main libraries: React, React Router, TanStack Query, React Hook Form, Zod, Tailwind CSS, Vite, Lenis (MIT); GSAP with ScrollTrigger (GreenSock standard "no charge" licence, free for commercial use since GSAP 3.13); Slim, Slim-Psr7, phpdotenv (MIT/BSD); PHPMailer (LGPL-2.1, used unmodified as a library). Design tooling: resvg-js (MPL-2.0), sharp (Apache-2.0), puppeteer-core (Apache-2.0); ffmpeg is used locally as a build tool only and is not distributed.

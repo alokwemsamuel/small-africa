@@ -45,6 +45,7 @@ const TermsPage = page(() => import('@/features/content/pages/legal/TermsPage'),
 const StyleGuidePage = page(() => import('@/features/content/pages/StyleGuidePage'), 'StyleGuidePage');
 const LoginPage = page(() => import('@/features/auth/pages/LoginPage'), 'LoginPage');
 const RegisterPage = page(() => import('@/features/auth/pages/RegisterPage'), 'RegisterPage');
+const WelcomePage = page(() => import('@/features/auth/pages/WelcomePage'), 'WelcomePage');
 const ForgotPasswordPage = page(
   () => import('@/features/auth/pages/ForgotPasswordPage'),
   'ForgotPasswordPage',
@@ -91,6 +92,7 @@ export const routes = [
       { path: 'terms', element: <TermsPage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
+      { path: 'welcome', element: <WelcomePage /> },
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'verify-email', element: <VerifyEmailPage /> },

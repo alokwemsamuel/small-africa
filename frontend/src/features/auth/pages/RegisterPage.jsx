@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { deviceId } from '@/lib/device';
 import { AuthLayout } from '@/app/layouts/AuthLayout';
+import { SocialButtons } from '@/components/auth/SocialButtons';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
@@ -65,6 +66,9 @@ export function RegisterPage() {
         </>
       }
     >
+      <div className="mb-8">
+        <SocialButtons mode="sign-up" referralCode={(params.get('ref') ?? '').toUpperCase().slice(0, 20)} />
+      </div>
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
         {formError && <Alert tone="error">{formError}</Alert>}
         <div className="grid gap-6 sm:grid-cols-2">

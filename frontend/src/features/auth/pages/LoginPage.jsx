@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { SocialButtons } from '@/components/auth/SocialButtons';
 import { AuthLayout } from '@/app/layouts/AuthLayout';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -11,6 +12,7 @@ import { applyServerErrors } from '@/lib/forms';
 import { useLogin, useTwoFactorLogin } from '@/hooks/useAuth';
 import { loginSchema, twoFactorSchema } from '@/lib/authSchemas';
 import { isStaff } from '@/lib/roles';
+import { socialErrorMessage } from '@/lib/socialErrors';
 
 const DEMO_ACCOUNTS = [
   { role: 'Super Admin', email: 'admin@smallafrica.demo', password: 'SmallAfrica@Admin2026' },
@@ -29,6 +31,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [twoFactor, setTwoFactor] = useState(false);
+  const [params] = useSearchParams();
+  const socialError = socialErrorMessage(params.get('error'));
 
   const done = (user) => {
     const from = safeRedirect(location.state?.from);
@@ -53,10 +57,20 @@ export function LoginPage() {
         )
       }
     >
+      {socialError && !twoFactor && (
+        <Alert tone="error" className="mb-6">
+          {socialError}
+        </Alert>
+      )}
       {twoFactor ? (
         <TwoFactorForm onDone={done} />
       ) : (
-        <PasswordForm onTwoFactor={() => setTwoFactor(true)} onDone={done} />
+        <>
+          <div className="mb-8">
+            <SocialButtons mode="sign-in" returnTo={safeRedirect(location.state?.from) ?? undefined} />
+          </div>
+          <PasswordForm onTwoFactor={() => setTwoFactor(true)} onDone={done} />
+        </>
       )}
       {env.demoMode && !twoFactor && <DemoCredentials />}
     </AuthLayout>

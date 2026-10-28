@@ -31,6 +31,11 @@ export const user = z.object({
   themePreference: maybe(z.enum(['dark', 'light', 'system'])),
   twoFactorEnabled: z.boolean(),
   createdAt: dateTime,
+  // Set after a social sign-up until the "almost there" step is finished.
+  welcome: maybe(
+    z.object({ provider: z.enum(['google', 'apple', 'facebook']), needsEmail: z.boolean() }),
+  ).optional(),
+  hasPassword: z.boolean().optional(),
 });
 
 const option = z.object({ id, name: text, priceDeltaKobo: kobo, isDefault: z.boolean() });
@@ -333,7 +338,8 @@ export const availability = z.object({
 /** Which schema checks which response: [method, path pattern, schema]. */
 export const RESPONSES = [
   ['GET', /^\/auth\/me$/, z.object({ user: maybe(user) })],
-  ['POST', /^\/auth\/(login|register|2fa)$/, z.object({ user: user.optional() })],
+  ['POST', /^\/auth\/(login|register|2fa|welcome|social)/, z.object({ user: user.optional() })],
+  ['GET', /^\/auth\/providers$/, z.object({ providers: z.array(z.enum(['google', 'apple', 'facebook'])) })],
   ['GET', /^\/menu$/, menu],
   ['GET', /^\/menu\/[a-z0-9-]+$/, dishDetail],
   ['GET', /^\/site$/, site],

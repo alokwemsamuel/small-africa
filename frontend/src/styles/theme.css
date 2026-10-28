@@ -28,6 +28,10 @@
   --sa-overlay: rgb(14 12 10 / 0.85); /* sticky header backdrop */
   --sa-show-on-dark: block;
   --sa-show-on-light: none;
+  /* "Continue with Apple": white with a black logo on dark, black with a white logo on light. */
+  --sa-apple-bg: #ffffff;
+  --sa-apple-fg: #000000;
+  --sa-apple-border: #ffffff;
 }
 
 [data-theme='light'] {
@@ -52,4 +56,7 @@
   --sa-overlay: rgb(246 239 227 / 0.88);
   --sa-show-on-dark: none;
   --sa-show-on-light: block;
+  --sa-apple-bg: #000000;
+  --sa-apple-fg: #ffffff;
+  --sa-apple-border: #000000;
 }
