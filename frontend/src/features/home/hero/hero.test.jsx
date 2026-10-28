@@ -58,7 +58,8 @@ describe('Hero', () => {
     media([]);
     const { container } = render();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Three kitchens.One table.');
-    await waitFor(() => expect(container.querySelector('video')).not.toBeNull());
+    // The video starts once the page has loaded and the browser is idle (a timer here), so allow for a busy machine.
+    await waitFor(() => expect(container.querySelector('video')).not.toBeNull(), { timeout: 5000 });
     const video = container.querySelector('video');
     expect(video.muted).toBe(true);
     expect(video).toHaveAttribute('playsinline');
@@ -80,8 +81,9 @@ describe('Hero', () => {
   it('uses the vertical 720×1280 cut on phones', async () => {
     media(['orientation: portrait']);
     const { container } = render();
-    await waitFor(() =>
-      expect(sources(container)).toEqual(['/hero/hero-720x1280.webm', '/hero/hero-720x1280.mp4']),
+    await waitFor(
+      () => expect(sources(container)).toEqual(['/hero/hero-720x1280.webm', '/hero/hero-720x1280.mp4']),
+      { timeout: 5000 },
     );
   });
 
