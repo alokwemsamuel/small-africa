@@ -42,13 +42,13 @@ Step by step in [SOCIAL-LOGIN-SETUP.md](SOCIAL-LOGIN-SETUP.md). Each provider is
 
 ## Accounts and data
 
-- [ ] Demo accounts removed or given new passwords; demo data never seeded in production (`--demo` is refused when `APP_ENV=production`).
+- [ ] No `@smallafrica.demo` account exists in the production database (the seeder never creates them when `APP_ENV=production`; the first Super Admin comes from `bin/create-admin.php`), and demo data is never seeded (`--demo` is refused).
 - [ ] Super Admin and Manager accounts use strong passwords and two-factor authentication.
 - [ ] `APP_KEY` generated for production and backed up securely (it encrypts 2FA secrets).
 - [ ] SMTP email configured (`MAIL_DRIVER=smtp`) and a test email received (staff invitations, receipts and interest emails depend on it).
 - [ ] Database backups scheduled and one restore tested; `backend/storage/uploads` (menu photos) included in the backups.
 - [ ] `DEMO_TOOLS=false` (the "Simulate month-end interest" button is refused in production anyway).
-- [ ] Real staff invited from Admin → Staff & roles; demo staff accounts suspended.
+- [ ] Real staff invited from Admin → Staff & roles.
 
 ## Security and quality
 

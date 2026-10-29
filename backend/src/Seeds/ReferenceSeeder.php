@@ -28,16 +28,30 @@ final class ReferenceSeeder
     /** @var array<string, int> */
     private array $categoryIds = [];
 
-    public function __construct(private Database $db, private string $seedDir)
-    {
+    /**
+     * @param bool $production  APP_ENV=production: the demo accounts have public passwords, so they must never exist
+     * @param bool $withAccounts whether to create the demo/staff accounts (turn off to seed reference data only)
+     */
+    public function __construct(
+        private Database $db,
+        private string $seedDir,
+        private bool $production = false,
+        private bool $withAccounts = true,
+    ) {
     }
 
     public function run(): void
     {
+        // Checked before anything is written, so a refused run leaves the database untouched.
+        if ($this->production && $this->withAccounts) {
+            throw new \RuntimeException('Refusing to create the demo accounts with APP_ENV=production: their passwords are public. Seed the reference data only, then run bin/create-admin.php.');
+        }
         $this->db->transaction(function (): void {
             $this->kitchens();
             $this->categories();
-            $this->users();
+            if ($this->withAccounts) {
+                $this->users();
+            }
             $this->menu();
             $this->settings();
             $this->openingHours();

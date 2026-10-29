@@ -13,6 +13,10 @@ const MARKERS = [
   'small-africa-demo:',
   'DEMO VERSION',
   'Reset demo data',
+  // The demo logins and the box that shows them.
+  '@smallafrica.demo',
+  'SmallAfrica@',
+  'Demo credentials',
 ];
 
 function* files(dir) {

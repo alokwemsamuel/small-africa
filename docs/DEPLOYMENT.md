@@ -104,7 +104,8 @@ cp .env.example .env
 php bin/generate-key.php        # paste the APP_KEY line into .env, and keep a safe copy of it
 nano .env                       # fill in the production settings below
 php bin/migrate.php
-php bin/seed.php                # menu, settings and the starting staff accounts. Never use --demo here.
+php bin/seed.php                # menu, settings and rewards only: with APP_ENV=production it creates no accounts. Never use --demo here.
+ADMIN_PASSWORD='a long passphrase' php bin/create-admin.php you@yourdomain.com "First" "Last"   # the first Super Admin
 chmod -R 750 storage            # includes storage/cache, where sign-in providers' public keys are kept for an hour
 ```
 
@@ -142,9 +143,10 @@ Upload **everything inside `frontend/dist/`** (including the hidden `.htaccess`)
 **5. HTTPS.** Turn on the host's free SSL certificate for the domain (and `www.`) and force
 HTTPS. Then set `APP_HTTPS=true` and `SESSION_SECURE=true` in `.env`.
 
-**6. First sign-in.** Sign in as `admin@smallafrica.demo` and **straight away** change its
-email and password, turn on two-factor authentication, invite the real staff from
-**Admin → Staff & roles**, and suspend the other seeded accounts (see the go-live checklist).
+**6. First sign-in.** Sign in as the Super Admin you created with `bin/create-admin.php`, turn on
+two-factor authentication and invite the real staff from **Admin → Staff & roles**. The demo accounts
+(`…@smallafrica.demo`, with public passwords) are never created on a production database: the seeder
+refuses to.
 
 ### What the web server does (`frontend/public/.htaccess`)
 

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Seeds reference data into an empty, migrated database.
+ * Seeds reference data into an empty, migrated database. With APP_ENV=production it creates no accounts.
  *
  *   php bin/seed.php           seed DB_DATABASE
  *   php bin/seed.php --test    seed DB_TEST_DATABASE
@@ -31,7 +31,14 @@ if ((int) $db->scalar('SELECT COUNT(*) FROM users') > 0) {
 }
 
 $start = microtime(true);
-(new ReferenceSeeder($db, dirname(__DIR__) . '/seeds'))->run();
+// Production gets the menu, settings and rewards only. The demo accounts have public passwords,
+// so they are never created there: bin/create-admin.php makes the first real administrator.
+$production = $config->isProduction();
+(new ReferenceSeeder($db, dirname(__DIR__) . '/seeds', $production, !$production))->run();
+if ($production) {
+    echo "Production: seeded the menu and settings only. No demo accounts were created; run bin/create-admin.php next.
+";
+}
 if (in_array('--demo', array_slice($argv, 1), true)) {
     if ($config->isProduction()) {
         fwrite(STDERR, "Refusing to seed demo data with APP_ENV=production.\n");
