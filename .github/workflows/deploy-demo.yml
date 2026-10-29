@@ -48,7 +48,7 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report
           retention-days: 7
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist
